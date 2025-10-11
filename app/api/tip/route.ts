@@ -1,27 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// x402 Payment Requirements for tipping
-const TIP_PAYMENT_REQUIREMENTS = {
-  x402Version: 1,
-  accepts: [
-    {
-      scheme: "exact",
-      network: "base", // Base network
-      maxAmountRequired: "1000000000", // 1000 USDC in atomic units (6 decimals)
-      resource: "/api/tip",
-      description: "Send a tip to a Base app user",
-      mimeType: "application/json",
-      payTo: process.env.TIP_RECIPIENT_ADDRESS || "0x0000000000000000000000000000000000000000",
-      maxTimeoutSeconds: 300,
-      asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-      extra: {
-        name: "USD Coin",
-        version: "2"
-      }
-    }
-  ]
-}
-
 // Platform fee configuration
 const PLATFORM_FEE_PERCENTAGE = 0.02 // 2%
 const MINIMUM_FEE = 0.01 // $0.01 minimum
@@ -29,13 +7,34 @@ const MAXIMUM_FEE = 0.50 // $0.50 maximum
 
 export async function POST(request: NextRequest) {
   try {
-    const { recipient, amount, message, emoji } = await request.json()
+    const { recipient, amount, message, emoji, recipientAddress } = await request.json()
     
     // Check if payment header is present
     const paymentHeader = request.headers.get('x-payment')
     
     if (!paymentHeader) {
-      // Return 402 Payment Required
+      // Return 402 Payment Required with dynamic recipient
+      const TIP_PAYMENT_REQUIREMENTS = {
+        x402Version: 1,
+        accepts: [
+          {
+            scheme: "exact",
+            network: "base",
+            maxAmountRequired: "1000000000", // 1000 USDC max
+            resource: "/api/tip",
+            description: `Send a tip to ${recipient}`,
+            mimeType: "application/json",
+            payTo: recipientAddress || "0x0000000000000000000000000000000000000000", // Tip goes to recipient
+            maxTimeoutSeconds: 300,
+            asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+            extra: {
+              name: "USD Coin",
+              version: "2"
+            }
+          }
+        ]
+      }
+      
       return NextResponse.json({
         ...TIP_PAYMENT_REQUIREMENTS,
         error: "Payment required to send tip"
@@ -46,26 +45,46 @@ export async function POST(request: NextRequest) {
     const paymentPayload = JSON.parse(Buffer.from(paymentHeader, 'base64').toString())
     
     // Verify payment with x402 facilitator
-    const verificationResponse = await verifyPayment(paymentPayload, TIP_PAYMENT_REQUIREMENTS.accepts[0])
+    const verificationResponse = await verifyPayment(paymentPayload, {
+      scheme: "exact",
+      network: "base",
+      maxAmountRequired: "1000000000",
+      resource: "/api/tip",
+      description: `Send a tip to ${recipient}`,
+      mimeType: "application/json",
+      payTo: recipientAddress,
+      maxTimeoutSeconds: 300,
+      asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      extra: { name: "USD Coin", version: "2" }
+    })
     
     if (!verificationResponse.isValid) {
       return NextResponse.json({
-        ...TIP_PAYMENT_REQUIREMENTS,
         error: verificationResponse.invalidReason || "Payment verification failed"
       }, { status: 402 })
     }
     
     // Settle payment
-    const settlementResponse = await settlePayment(paymentPayload, TIP_PAYMENT_REQUIREMENTS.accepts[0])
+    const settlementResponse = await settlePayment(paymentPayload, {
+      scheme: "exact",
+      network: "base",
+      maxAmountRequired: "1000000000",
+      resource: "/api/tip",
+      description: `Send a tip to ${recipient}`,
+      mimeType: "application/json",
+      payTo: recipientAddress,
+      maxTimeoutSeconds: 300,
+      asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      extra: { name: "USD Coin", version: "2" }
+    })
     
     if (!settlementResponse.success) {
       return NextResponse.json({
-        ...TIP_PAYMENT_REQUIREMENTS,
         error: settlementResponse.error || "Payment settlement failed"
       }, { status: 402 })
     }
     
-    // Calculate platform fee
+    // Calculate platform fee (your commission)
     const tipAmount = parseFloat(amount)
     const platformFee = Math.max(
       MINIMUM_FEE,
@@ -76,6 +95,7 @@ export async function POST(request: NextRequest) {
     // Process the tip
     const tipResult = await processTip({
       recipient,
+      recipientAddress,
       amount: tipAmount,
       platformFee,
       recipientAmount,
@@ -95,7 +115,8 @@ export async function POST(request: NextRequest) {
       },
       fees: {
         platformFee: platformFee.toFixed(2),
-        recipientAmount: recipientAmount.toFixed(2)
+        recipientAmount: recipientAmount.toFixed(2),
+        platformFeeRecipient: process.env.PLATFORM_FEE_RECIPIENT || "0xCfd58ff6B92C856b03F4143e38Bc5835cB70b4D2"
       }
     })
     
@@ -164,6 +185,7 @@ async function processTip(tipData: any) {
   // 2. Send notifications to the recipient
   // 3. Update user statistics
   // 4. Log the transaction
+  // 5. Send platform fee to your address
   
   console.log('Processing tip:', tipData)
   
