@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .tip-button {
+    @apply bg-gradient-to-r from-base-500 to-base-600 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200;
+  }
+  
+  .tip-card {
+    @apply bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-lg transition-shadow duration-200;
+  }
+  
+  .emoji-picker {
+    @apply grid grid-cols-6 gap-3 p-4 bg-gray-50 rounded-lg;
+  }
+  
+  .catchy-message {
+    @apply p-3 text-sm bg-gradient-to-r from-base-50 to-base-100 border border-base-200 rounded-lg hover:from-base-100 hover:to-base-200 transition-all duration-200 cursor-pointer;
+  }
+}
