@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import TipForm from '@/components/TipForm'
-import TipHistory from '@/components/TipHistory'
+import TipForm from '../components/TipForm'
+import TipHistory from '../components/TipHistory'
 import { Heart, Zap, Star, Gift, Users } from 'lucide-react'
 
 export default function Home() {
