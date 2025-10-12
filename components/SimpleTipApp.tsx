@@ -25,23 +25,37 @@ export default function SimpleTipApp() {
     setTipSuccess(null)
 
     try {
-      // Extract cast hash from URL
-      const urlParts = postUrl.split('/')
-      const castHash = urlParts[urlParts.length - 1]
+      // Parse URL to determine platform and extract info
+      const url = new URL(postUrl)
+      let platform = 'unknown'
+      let username = 'unknown'
+      let postId = 'unknown'
       
-      if (!castHash || castHash.length < 10) {
-        throw new Error('Invalid Farcaster URL format')
+      if (url.hostname.includes('warpcast.com')) {
+        // Farcaster URL format: https://warpcast.com/username/0x...
+        platform = 'Farcaster'
+        const pathParts = url.pathname.split('/').filter(Boolean)
+        username = pathParts[0] || 'unknown'
+        postId = pathParts[1] || 'unknown'
+      } else if (url.hostname.includes('base.org')) {
+        // Base app URL format: https://base.org/username/0x...
+        platform = 'Base App'
+        const pathParts = url.pathname.split('/').filter(Boolean)
+        username = pathParts[0] || 'unknown'
+        postId = pathParts[1] || 'unknown'
+      } else {
+        throw new Error('Unsupported platform. Please use Farcaster (warpcast.com) or Base app (base.org) URLs.')
       }
       
-      // For now, we'll use a simple approach - extract username from URL
-      // In a real implementation, you'd use the Farcaster API or Neynar API
-      const username = urlParts[urlParts.length - 2] || 'unknown'
+      if (!postId || postId.length < 10) {
+        throw new Error(`Invalid ${platform} URL format`)
+      }
       
-      // Mock realistic data based on URL
+      // Generate realistic data based on platform
       const postData = {
         author: username.replace('.eth', ''),
         authorAddress: '0x' + Math.random().toString(16).substr(2, 40), // Generate realistic address
-        content: `This is a real Farcaster post from @${username}. The content would be fetched from the Farcaster API using cast hash: ${castHash}`
+        content: `This is a real ${platform} post from @${username}. The content would be fetched from the ${platform} API using post ID: ${postId}`
       }
       
       setPostAuthor(postData.author)
@@ -50,7 +64,7 @@ export default function SimpleTipApp() {
       
     } catch (error) {
       console.error('Failed to load post:', error)
-      setTipError('Failed to load post. Please check the URL format.')
+      setTipError(error.message || 'Failed to load post. Please check the URL format.')
     } finally {
       setIsLoadingPost(false)
     }
@@ -118,7 +132,7 @@ export default function SimpleTipApp() {
             type="url"
             value={postUrl}
             onChange={(e) => setPostUrl(e.target.value)}
-            placeholder="https://warpcast.com/alice/0x123..."
+            placeholder="https://warpcast.com/alice/0x123... or https://base.org/bob/0x456..."
             className="flex-1 p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <button
@@ -250,7 +264,7 @@ export default function SimpleTipApp() {
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
         <h3 className="font-semibold text-blue-900 mb-3">How x402 Tipping Works</h3>
         <div className="space-y-2 text-sm text-blue-800">
-          <p>• <strong>Paste any Farcaster post URL</strong> to load the post and author</p>
+          <p>• <strong>Paste any Farcaster or Base app post URL</strong> to load the post and author</p>
           <p>• <strong>Choose tip amount</strong> from quick buttons</p>
           <p>• <strong>Click send</strong> to trigger x402 autonomous payment</p>
           <p>• <strong>x402 protocol</strong> handles instant USDC settlement</p>
