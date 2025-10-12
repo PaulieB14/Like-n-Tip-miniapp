@@ -43,6 +43,8 @@ export default function UltimateBaseIntegration() {
     txHash?: string
     recipient?: string
   }>>([])
+  const [isAddingMiniApp, setIsAddingMiniApp] = useState(false)
+  const [addMiniAppResult, setAddMiniAppResult] = useState('')
 
   useEffect(() => {
     const saved = localStorage.getItem('ultimateBaseAutoTipSettings')
@@ -66,6 +68,31 @@ export default function UltimateBaseIntegration() {
   const completeOnboarding = () => {
     localStorage.setItem('hasSeenOnboarding', 'true')
     setShowOnboarding(false)
+  }
+
+  const handleAddMiniApp = async () => {
+    if (!isInMiniApp) {
+      setAddMiniAppResult('This feature only works within Base app')
+      return
+    }
+
+    setIsAddingMiniApp(true)
+    setAddMiniAppResult('')
+    
+    try {
+      const response = await sdk.actions.addMiniApp()
+      
+      if (response.notificationDetails) {
+        setAddMiniAppResult('✅ Mini App added with notifications enabled!')
+      } else {
+        setAddMiniAppResult('✅ Mini App added without notifications')
+      }
+    } catch (error: any) {
+      console.error('Failed to add mini app:', error)
+      setAddMiniAppResult(`❌ Error: ${error.message || 'Failed to add mini app'}`)
+    } finally {
+      setIsAddingMiniApp(false)
+    }
   }
 
   const sendTipWithBaseAccount = async (recipientAddress: string, amount: number, message: string) => {
@@ -279,6 +306,35 @@ export default function UltimateBaseIntegration() {
                   <p className="text-sm text-amber-700">Connect your Base app wallet to enable auto-tipping</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Add Mini App Button */}
+          {isInMiniApp && (
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-blue-900">Add to Base App</p>
+                    <p className="text-sm text-blue-700">Add this mini app to your Base app for auto-tipping</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleAddMiniApp}
+                  disabled={isAddingMiniApp}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+                >
+                  {isAddingMiniApp ? 'Adding...' : 'Add Mini App'}
+                </button>
+              </div>
+              {addMiniAppResult && (
+                <div className="mt-3 p-3 bg-white rounded-lg border">
+                  <p className="text-sm">{addMiniAppResult}</p>
+                </div>
+              )}
             </div>
           )}
 
