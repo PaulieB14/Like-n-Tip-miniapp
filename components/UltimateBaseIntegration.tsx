@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useAccount, useWriteContract } from 'wagmi'
-import { Heart, Zap, Settings, CheckCircle, Wallet, Sparkles, Shield, Bolt, User, MapPin, Smartphone, Bell, Star, Gift, TrendingUp, ArrowRight, Play, Home, History } from 'lucide-react'
+import { Heart, Zap, Settings, CheckCircle, Wallet, Sparkles, Shield, Bolt, User, MapPin, Smartphone, Bell, Star, Gift, TrendingUp, ArrowRight, Play, Home, History, MessageCircle } from 'lucide-react'
 import { useBaseAccountCapabilities } from '@/lib/useBaseAccountCapabilities'
 import { useQuickAuth } from '@/lib/useQuickAuth'
 import { useMiniAppContext } from '@/lib/useMiniAppContext'
 import { sdk } from '@farcaster/miniapp-sdk'
 import TipDemo from './TipDemo'
+import CommentTipDemo from './CommentTipDemo'
 
 interface AutoTipSettings {
   enabled: boolean
@@ -36,7 +37,7 @@ export default function UltimateBaseIntegration() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingStep, setOnboardingStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('demo')
+  const [activeTab, setActiveTab] = useState('comments')
   const [recentTips, setRecentTips] = useState<Array<{
     postId: string
     amount: number
@@ -603,6 +604,7 @@ export default function UltimateBaseIntegration() {
       <div className="px-4 py-6 pb-24">
         {activeTab === 'home' && renderHomeTab()}
         {activeTab === 'demo' && <TipDemo />}
+        {activeTab === 'comments' && <CommentTipDemo />}
         {activeTab === 'history' && renderHistoryTab()}
         {activeTab === 'profile' && renderProfileTab()}
       </div>
@@ -628,6 +630,16 @@ export default function UltimateBaseIntegration() {
           >
             <Gift className="h-5 w-5 mb-1" />
             <span className="text-xs font-medium">Demo</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('comments')}
+            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+              activeTab === 'comments' ? 'text-blue-500' : 'text-slate-500'
+            }`}
+          >
+            <MessageCircle className="h-5 w-5 mb-1" />
+            <span className="text-xs font-medium">Comments</span>
           </button>
           
           <button
