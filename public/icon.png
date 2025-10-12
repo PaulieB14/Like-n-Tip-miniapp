@@ -1,0 +1,21 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0052ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="200" fill="url(#bg)"/>
+  
+  <!-- App icon -->
+  <rect x="200" y="200" width="624" height="624" rx="150" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.3)" stroke-width="8"/>
+  <text x="512" y="580" font-family="Arial" font-size="300" text-anchor="middle" fill="white">💖</text>
+  
+  <!-- Floating elements -->
+  <circle cx="150" cy="150" r="15" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="874" cy="200" r="10" fill="rgba(255,255,255,0.2)"/>
+  <circle cx="200" cy="824" r="10" fill="rgba(255,255,255,0.25)"/>
+  <circle cx="824" cy="824" r="15" fill="rgba(255,255,255,0.2)"/>
+</svg>

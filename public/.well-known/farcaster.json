@@ -26,7 +26,7 @@
     "tags": ["social", "tipping", "base", "miniapp", "crypto"],
     "heroImageUrl": "https://like-n-tip-miniapp.vercel.app/og-image.svg",
     "tagline": "Tip with every like",
-    "ogTitle": "LIke n Tip - Ultimate Base Mini App",
+    "ogTitle": "LIke n Tip - Base Mini App",
     "ogDescription": "Seamlessly tip when you like posts in Base app. Features Mini App Context, Quick Auth, and Base Account capabilities.",
     "ogImageUrl": "https://like-n-tip-miniapp.vercel.app/og-image.svg",
     "noindex": false
