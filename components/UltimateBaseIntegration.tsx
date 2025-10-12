@@ -92,7 +92,7 @@ export default function UltimateBaseIntegration() {
       }
     } catch (error: any) {
       console.error('Failed to add mini app:', error)
-      setAddMiniAppResult(`❌ Error: ${error.message || 'Failed to add mini app'}`)
+      setAddMiniAppResult('❌ Error: ' + (error.message || 'Failed to add mini app'))
     } finally {
       setIsAddingMiniApp(false)
     }
@@ -117,7 +117,7 @@ export default function UltimateBaseIntegration() {
       // Calculate amounts for real transaction
       // Real transaction implementation would go here
       
-      const mockTxHash = `0x${Math.random().toString(16).substr(2, 40)}`
+      const mockTxHash = '0x' + Math.random().toString(16).substr(2, 40)
       return mockTxHash
     } catch (error) {
       console.error('Tip transaction failed:', error)
@@ -209,7 +209,7 @@ export default function UltimateBaseIntegration() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-          <div className={`w-20 h-20 mx-auto mb-6 bg-gradient-to-r ${currentStep.color} rounded-2xl flex items-center justify-center`}>
+          <div className={'w-20 h-20 mx-auto mb-6 bg-gradient-to-r ' + currentStep.color + ' rounded-2xl flex items-center justify-center'}>
             <IconComponent className="h-10 w-10 text-white" />
           </div>
           
@@ -220,9 +220,9 @@ export default function UltimateBaseIntegration() {
             {onboardingSteps.map((_, index) => (
               <div
                 key={index}
-                className={`w-2 h-2 rounded-full ${
+                className={'w-2 h-2 rounded-full ' + (
                   index === onboardingStep ? 'bg-blue-500' : 'bg-slate-300'
-                }`}
+                )}
               />
             ))}
           </div>
@@ -341,7 +341,7 @@ export default function UltimateBaseIntegration() {
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-slate-900">Comment Tipping</h3>
-            <div className={`w-3 h-3 rounded-full ${settings.commentTippingEnabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+            <div className={'w-3 h-3 rounded-full ' + (settings.commentTippingEnabled ? 'bg-green-500' : 'bg-gray-300')}></div>
           </div>
           <p className="text-slate-600 text-sm mb-4">
             {settings.commentTippingEnabled ? 'Comment tipping is enabled' : 'Comment tipping is disabled'}
@@ -358,10 +358,10 @@ export default function UltimateBaseIntegration() {
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-slate-900">Wallet Status</h3>
-            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+            <div className={'w-3 h-3 rounded-full ' + (isConnected ? 'bg-green-500' : 'bg-gray-300')}></div>
           </div>
           <p className="text-slate-600 text-sm mb-4">
-            {isConnected ? `Connected: ${address?.slice(0, 6)}...${address?.slice(-4)}` : 'Wallet not connected'}
+            {isConnected ? 'Connected: ' + address?.slice(0, 6) + '...' + address?.slice(-4) : 'Wallet not connected'}
           </p>
           {!isConnected && (
             <button
@@ -572,7 +572,7 @@ export default function UltimateBaseIntegration() {
                     </div>
                     <div>
                       <p className="font-medium text-slate-900">
-                        {tip.recipient ? `@${tip.recipient}` : `Post ${tip.postId.slice(-6)}`}
+                        {tip.recipient ? '@' + tip.recipient : 'Post ' + tip.postId.slice(-6)}
                       </p>
                       <p className="text-sm text-slate-600">
                         {tip.timestamp.toLocaleTimeString()}
@@ -727,9 +727,9 @@ export default function UltimateBaseIntegration() {
         <div className="flex justify-around">
           <button
             onClick={() => setActiveTab('home')}
-            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
+            className={'flex flex-col items-center py-2 px-2 rounded-lg transition-colors ' + (
               activeTab === 'home' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
-            }`}
+            )}
           >
             <Heart className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">Tip</span>
@@ -737,9 +737,9 @@ export default function UltimateBaseIntegration() {
           
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
+            className={'flex flex-col items-center py-2 px-2 rounded-lg transition-colors ' + (
               activeTab === 'history' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
-            }`}
+            )}
           >
             <History className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">History</span>
@@ -747,9 +747,9 @@ export default function UltimateBaseIntegration() {
           
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
+            className={'flex flex-col items-center py-2 px-2 rounded-lg transition-colors ' + (
               activeTab === 'profile' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
-            }`}
+            )}
           >
             <User className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">Profile</span>
@@ -783,14 +783,14 @@ export default function UltimateBaseIntegration() {
                   </div>
                   <button
                     onClick={() => updateSettings({ commentTippingEnabled: !settings.commentTippingEnabled })}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    className={'relative inline-flex h-6 w-11 items-center rounded-full transition-colors ' + (
                       settings.commentTippingEnabled ? 'bg-green-500' : 'bg-slate-300'
-                    }`}
+                    )}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      className={'inline-block h-4 w-4 transform rounded-full bg-white transition-transform ' + (
                         settings.commentTippingEnabled ? 'translate-x-6' : 'translate-x-1'
-                      }`}
+                      )}
                     />
                   </button>
                 </div>
