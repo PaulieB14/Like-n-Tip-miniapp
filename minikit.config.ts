@@ -14,7 +14,7 @@ export const minikitConfig = {
     version: "1",
     name: "Like n Tip",
     homeUrl: ROOT_URL,
-    iconUrl: `${ROOT_URL}/icon.svg`,
+    iconUrl: `${ROOT_URL}/icon.png`,
     splashImageUrl: `${ROOT_URL}/splash.svg`,
     splashBackgroundColor: "#0052ff",
     webhookUrl: `${ROOT_URL}/api/webhook`,
