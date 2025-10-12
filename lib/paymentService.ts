@@ -1,4 +1,4 @@
-import { parseUnits } from 'viem'
+import { parseEther } from 'viem'
 import { base } from 'wagmi/chains'
 
 // USDC contract address on Base
@@ -60,7 +60,7 @@ export class PaymentService {
       console.log('Sending real tip:', { recipientAddress, amount, message })
 
       // Convert amount to wei (USDC has 6 decimals)
-      const amountInWei = parseUnits(amount.toString(), 6)
+      const amountInWei = parseEther(amount.toString(), 'wei', 6)
 
       // Call the USDC transfer function
       const txHash = await this.writeContract({
