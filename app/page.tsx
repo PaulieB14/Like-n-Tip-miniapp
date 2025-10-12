@@ -1,15 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import TipForm from '../components/TipForm'
-import TipHistory from '../components/TipHistory'
-import LikeToTip from '../components/LikeToTip'
-import { Heart, Zap, Star, Gift, Users, MessageSquare } from 'lucide-react'
+import BaseAppIntegration from '../components/BaseAppIntegration'
+import { Heart, Zap, Star, Users, MessageSquare, Settings } from 'lucide-react'
 
 export default function Home() {
   const [isReady, setIsReady] = useState(false)
   const [user, setUser] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'demo' | 'form' | 'history'>('demo')
+  const [activeTab, setActiveTab] = useState<'integration' | 'demo' | 'settings'>('integration')
 
   useEffect(() => {
     // Simulate mini app initialization
@@ -56,7 +54,7 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">LIke n Tip</h1>
-                <p className="text-base-600 text-sm">Like a post? Send a tip!</p>
+                <p className="text-base-600 text-sm">Auto-tip when you like posts in Base app</p>
               </div>
             </div>
             {user && (
@@ -74,10 +72,10 @@ export default function Home() {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Like a Post? <span className="text-base-500">Send a Tip!</span>
+            Like a Post? <span className="text-base-500">Auto-Tip!</span>
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            The revolutionary like-to-tip experience for Base app. Click like, then tip instantly!
+            Set your default tip amount and automatically send tips every time you like a post in Base app.
           </p>
           
           {/* Feature Icons */}
@@ -88,10 +86,10 @@ export default function Home() {
             </div>
             <div className="flex flex-col items-center">
               <Zap className="h-8 w-8 text-yellow-500 mb-2" />
-              <span className="text-sm text-gray-600">Tip</span>
+              <span className="text-sm text-gray-600">Auto-Tip</span>
             </div>
             <div className="flex flex-col items-center">
-              <Gift className="h-8 w-8 text-green-500 mb-2" />
+              <Star className="h-8 w-8 text-green-500 mb-2" />
               <span className="text-sm text-gray-600">Reward</span>
             </div>
             <div className="flex flex-col items-center">
@@ -105,6 +103,17 @@ export default function Home() {
         <div className="flex justify-center mb-8">
           <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
             <button
+              onClick={() => setActiveTab('integration')}
+              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'integration'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Zap className="h-4 w-4 inline mr-2" />
+              Auto-Tip
+            </button>
+            <button
               onClick={() => setActiveTab('demo')}
               className={`px-6 py-3 rounded-md text-sm font-medium transition-colors duration-200 ${
                 activeTab === 'demo'
@@ -116,90 +125,110 @@ export default function Home() {
               Demo
             </button>
             <button
-              onClick={() => setActiveTab('form')}
+              onClick={() => setActiveTab('settings')}
               className={`px-6 py-3 rounded-md text-sm font-medium transition-colors duration-200 ${
-                activeTab === 'form'
+                activeTab === 'settings'
                   ? 'bg-white text-gray-900 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <Heart className="h-4 w-4 inline mr-2" />
-              Send Tip
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors duration-200 ${
-                activeTab === 'history'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Star className="h-4 w-4 inline mr-2" />
-              History
+              <Settings className="h-4 w-4 inline mr-2" />
+              Settings
             </button>
           </div>
         </div>
 
         {/* Tab Content */}
+        {activeTab === 'integration' && (
+          <div className="max-w-2xl mx-auto">
+            <BaseAppIntegration 
+              currentUser={user}
+              onLike={(postId, authorAddress) => {
+                console.log('Base app like:', { postId, authorAddress })
+              }}
+              onTip={(authorAddress, amount, message) => {
+                console.log('Base app tip:', { authorAddress, amount, message })
+              }}
+            />
+          </div>
+        )}
+
         {activeTab === 'demo' && (
           <div className="max-w-2xl mx-auto">
             <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Try the Like-to-Tip Experience!</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">How It Works</h3>
               <p className="text-gray-600 mb-6">
-                This simulates how the feature would work in Base app posts. Click the like button below to see the magic happen!
+                This mini app integrates directly with Base app's like system. Here's how it works:
               </p>
               
-              {/* Sample Post */}
-              <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-base-500 to-base-600 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">A</span>
-                  </div>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-base-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">1</div>
                   <div>
-                    <p className="font-medium text-gray-900">@alice</p>
-                    <p className="text-sm text-gray-500">2 hours ago</p>
+                    <h4 className="font-medium text-gray-900">Set Your Default Tip</h4>
+                    <p className="text-sm text-gray-600">Choose how much you want to tip when you like posts (e.g., $0.10, $0.25, $1.00)</p>
                   </div>
                 </div>
-                <p className="text-gray-800 mb-4">
-                  "Just built an amazing Base mini app! The x402 protocol makes payments so seamless. Can't wait to see what the community builds! 🚀"
-                </p>
                 
-                {/* Like to Tip Button */}
-                <div className="flex items-center justify-between">
-                  <LikeToTip 
-                    postId="demo-post-123"
-                    authorUsername="@alice"
-                    authorAddress="0x1234567890123456789012345678901234567890"
-                    postContent="Just built an amazing Base mini app! The x402 protocol makes payments so seamless. Can't wait to see what the community builds! 🚀"
-                  />
-                  <div className="text-sm text-gray-500">
-                    💬 12 comments
+                <div className="flex items-start space-x-3">
+                  <div className="bg-base-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">2</div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Like Posts in Base App</h4>
+                    <p className="text-sm text-gray-600">Use Base app normally - like posts as you always do</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start space-x-3">
+                  <div className="bg-base-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">3</div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Auto-Tip Sent</h4>
+                    <p className="text-sm text-gray-600">Your preset tip amount is automatically sent to the post author via x402 protocol</p>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">How it works:</h4>
-                <ol className="text-sm text-blue-800 space-y-1">
-                  <li>1. Click the "Like" button on any post</li>
-                  <li>2. A tip modal automatically appears</li>
-                  <li>3. Choose your tip amount and send instantly</li>
-                  <li>4. The author gets your tip with a nice message!</li>
-                </ol>
+              <div className="mt-6 p-4 bg-green-50 rounded-lg">
+                <h4 className="font-medium text-green-900 mb-2">Perfect for Base App!</h4>
+                <p className="text-sm text-green-800">
+                  This creates a seamless experience where liking posts automatically rewards creators. 
+                  No extra steps, no complex UI - just like and tip!
+                </p>
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'form' && (
-          <div className="mb-12">
-            <TipForm />
-          </div>
-        )}
-
-        {activeTab === 'history' && (
-          <div>
-            <TipHistory />
+        {activeTab === 'settings' && (
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Integration Settings</h3>
+              <p className="text-gray-600 mb-6">
+                Configure how the auto-tip system works with Base app.
+              </p>
+              
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 mb-2">Base App Integration</h4>
+                  <p className="text-sm text-gray-600 mb-3">
+                    This mini app hooks into Base app's like system to automatically send tips.
+                  </p>
+                  <div className="text-sm text-gray-500">
+                    <p>• Detects when you like posts in Base app</p>
+                    <p>• Automatically sends your preset tip amount</p>
+                    <p>• Uses x402 protocol for seamless payments</p>
+                    <p>• Works with USDC on Base network</p>
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-2">Technical Details</h4>
+                  <p className="text-sm text-blue-800">
+                    The integration works by registering a handler with Base app's like system. 
+                    When you like a post, it triggers the auto-tip functionality with your preset amount.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </main>
@@ -211,7 +240,7 @@ export default function Home() {
             Built with ❤️ for the Base app community
           </p>
           <p className="text-gray-500 text-xs mt-2">
-            Revolutionary like-to-tip experience powered by x402 protocol
+            Seamless auto-tipping integrated with Base app's like system
           </p>
         </div>
       </footer>

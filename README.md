@@ -1,25 +1,60 @@
-# LIke n Tip - Base Mini App
+# LIke n Tip - Base App Auto-Tip Integration
 
-A catchy tipping mini app for Base app that enables users to send tips with fun messages and emojis using the x402 payment protocol.
+A revolutionary Base mini app that automatically sends tips when you like posts in Base app. Set your default tip amount once, then every time you like a post, a tip is automatically sent to the author!
 
-## 🚀 Features
+## 🚀 Revolutionary Features
 
-- **Instant Tipping**: Send tips to Base app users instantly
-- **Catchy Messages**: Pre-built fun messages and emoji picker
-- **x402 Integration**: Seamless payments using Coinbase's x402 protocol
-- **Base Mini App**: Native integration with Base app ecosystem
-- **USDC on Base**: Fee-free payments using USDC on Base network
-- **Tip History**: Track sent and received tips
-- **Group Chat Focus**: Perfect for Base app group chats
-- **Platform Fee**: 2% platform fee (transparent and fair)
+- **Auto-Tip on Like**: Set your default tip amount and automatically tip when you like posts
+- **Seamless Integration**: Works directly with Base app's existing like system
+- **No Extra Steps**: Just like posts normally - tips are sent automatically
+- **x402 Protocol**: Powered by Coinbase's x402 for instant, fee-free payments
+- **USDC on Base**: All tips sent in USDC on Base network
+- **Super Low Friction**: Set amount once, tip forever
+- **Platform Commission**: 2% platform fee (transparent and fair)
 
 ## 🎯 Core Value Proposition
 
-**The one thing this app does really well: Makes tipping fun and social**
+**The one thing this app does really well: Makes tipping automatic and effortless**
 
-- **Why someone would use it every day**: Quick, one-tap tipping in group chats with fun emoji reactions
-- **Why someone would share it**: Makes group chats more rewarding and creates positive social interactions
-- **Perfect for**: Creator communities, gaming groups, and social circles
+- **Why someone would use it every day**: Set your tip amount once, then every like automatically rewards creators
+- **Why someone would share it**: Creates a culture of automatic appreciation in Base app
+- **Perfect for**: Creator communities, social interactions, and building a tipping culture
+
+## 🛠 How It Works
+
+### **1. Set Your Default Tip Amount**
+- Choose from preset amounts: $0.01, $0.05, $0.10, $0.25, $0.50, $1.00
+- Or set a custom amount
+- Enable/disable auto-tipping anytime
+
+### **2. Like Posts in Base App**
+- Use Base app normally
+- Like posts as you always do
+- No extra steps or UI changes
+
+### **3. Auto-Tip Sent**
+- Your preset tip amount is automatically sent
+- Uses x402 protocol for instant payments
+- Author receives tip with "Liked your post! 💖" message
+
+## 🏗 Base App Integration
+
+This mini app integrates directly with Base app's like system:
+
+```typescript
+// Base app integration example
+window.baseAppAutoTipHandler = (postId, authorAddress, authorUsername) => {
+  if (autoTipEnabled && defaultAmount > 0) {
+    sendTip(authorAddress, defaultAmount, "Liked your post! 💖")
+  }
+}
+```
+
+### **Integration Points:**
+- **Like Detection**: Hooks into Base app's like system
+- **Auto-Tip Trigger**: Automatically sends tips when likes are detected
+- **x402 Payments**: Uses Coinbase's facilitator for seamless payments
+- **USDC on Base**: All transactions on Base network
 
 ## 🛠 Tech Stack
 
@@ -28,7 +63,7 @@ A catchy tipping mini app for Base app that enables users to send tips with fun 
 - **Payments**: x402 protocol with Coinbase facilitator
 - **Blockchain**: Base network, USDC
 - **Mini App**: Base Mini App structure
-- **Icons**: Lucide React
+- **Integration**: Base app like system hooks
 
 ## 🚀 Getting Started
 
@@ -37,14 +72,14 @@ A catchy tipping mini app for Base app that enables users to send tips with fun 
 - Node.js 18+ 
 - Base app account
 - MetaMask or compatible wallet
-- USDC on Base network for testing
+- USDC on Base network for tipping
 
 ### Installation
 
 1. Clone the repository:
 ```bash
-git clone <your-repo-url>
-cd like-n-tip
+git clone https://github.com/PaulieB14/Like-n-Tip-miniapp.git
+cd Like-n-Tip-miniapp
 ```
 
 2. Install dependencies:
@@ -65,16 +100,13 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 💰 x402 Payment Flow
+## 💰 Auto-Tip Flow
 
-This app implements the x402 payment protocol for seamless tipping:
-
-1. **Payment Request**: User initiates a tip
-2. **402 Response**: Server responds with payment requirements
-3. **Payment Header**: Client creates x402 payment payload
-4. **Verification**: Server verifies payment via Coinbase facilitator
-5. **Settlement**: Payment is settled on Base network
-6. **Success**: Tip is processed and user receives confirmation
+1. **User sets default tip amount** (e.g., $0.10)
+2. **User likes a post in Base app**
+3. **Auto-tip handler detects the like**
+4. **Tip is automatically sent via x402**
+5. **Author receives tip instantly**
 
 ## 🏗 Base Mini App Setup
 
@@ -89,8 +121,8 @@ To deploy as a Base mini app:
 ## 🔧 Environment Variables
 
 ```bash
-# Base Account Address (where tips will be sent)
-TIP_RECIPIENT_ADDRESS=0x...
+# Platform Fee Recipient (your commission address)
+PLATFORM_FEE_RECIPIENT=0xCfd58ff6B92C856b03F4143e38Bc5835cB70b4D2
 
 # x402 Facilitator URL
 X402_FACILITATOR_URL=https://facilitator.x402.org
@@ -119,7 +151,10 @@ like-n-tip/
 │   ├── layout.tsx                  # Root layout
 │   └── page.tsx                    # Main app page
 ├── components/
-│   ├── TipForm.tsx                 # Main tipping form
+│   ├── BaseAppIntegration.tsx      # Main auto-tip integration
+│   ├── AutoTipSettings.tsx         # Settings component
+│   ├── StreamlinedLikeButton.tsx   # Like button component
+│   ├── TipForm.tsx                 # Traditional tip form
 │   └── TipHistory.tsx              # Tip history display
 ├── minikit.config.ts               # Base mini app configuration
 ├── package.json                    # Dependencies
@@ -131,11 +166,11 @@ like-n-tip/
 
 This app follows Base app best practices:
 
-- **Simple & Focused**: One core function - catchy tipping
-- **Low Friction**: No complex setup, just connect wallet and tip
-- **Group Chat Focus**: Perfect for social interactions
+- **Simple & Focused**: One core function - automatic tipping on likes
+- **Zero Friction**: Set once, tip forever
+- **Seamless Integration**: Works with existing Base app UI
 - **Onchain Native**: Built for Base's crypto-native users
-- **Fun & Engaging**: Emojis and catchy messages make it social
+- **Creator Economy**: Automatically rewards content creators
 
 ## 🚀 Deployment
 
@@ -153,6 +188,23 @@ This app follows Base app best practices:
 3. Update manifest with credentials
 4. Test with Base Build preview tool
 5. Post your app URL in Base app to publish
+
+## 🎯 Use Cases
+
+### **For Users:**
+- Set a small default tip (e.g., $0.10) and automatically reward creators
+- Build a culture of appreciation in Base app
+- Support creators without thinking about it
+
+### **For Creators:**
+- Get automatically rewarded when people like your posts
+- Build sustainable creator economy
+- Focus on content, not monetization
+
+### **For Base App:**
+- Creates automatic value flow
+- Builds stronger creator economy
+- Increases engagement and retention
 
 ## 🤝 Contributing
 
@@ -180,3 +232,5 @@ For support, join the Base Discord community or open an issue on GitHub.
 ---
 
 Built with ❤️ for the Base app community
+
+**Revolutionary auto-tipping that makes every like count!** 🚀
