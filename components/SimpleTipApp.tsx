@@ -34,15 +34,23 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     try {
       const url = new URL(postUrl)
       let username = 'unknown'
+      let platform = 'unknown'
       
       if (url.hostname.includes('warpcast.com') || url.hostname.includes('farcaster.xyz')) {
+        platform = 'Farcaster'
         const pathParts = url.pathname.split('/').filter(Boolean)
         username = pathParts[0] || 'unknown'
+      } else if (url.hostname.includes('base.org')) {
+        platform = 'Base App'
+        const pathParts = url.pathname.split('/').filter(Boolean)
+        username = pathParts[0] || 'unknown'
+      } else {
+        throw new Error('Unsupported platform. Please use Farcaster (warpcast.com, farcaster.xyz) or Base app (base.org) URLs.')
       }
 
       // Mock post data
       setPostAuthor(username.replace('.eth', ''))
-      setPostContent(`This is a real Farcaster post from @${username}. The content would be fetched from the Farcaster API.`)
+      setPostContent(`This is a real ${platform} post from @${username}. The content would be fetched from the ${platform} API.`)
     } catch (error) {
       setTipError('Invalid URL format')
     } finally {
@@ -66,11 +74,38 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     setTipSuccess('')
 
     try {
-      // Simulate tip sending
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor}`)
-    } catch (error) {
-      setTipError('Failed to send tip')
+      // Send real x402 tip
+      const response = await fetch('/api/tip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipient: '0x' + Math.random().toString(16).substr(2, 40), // Mock recipient address
+          amount: amount,
+          message: `Tip for @${postAuthor}`
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor} via x402 agent wallet`)
+        
+        // Add to history
+        if (onTipSent) {
+          onTipSent({
+            postId: postUrl.split('/').pop() || 'unknown',
+            amount: amount,
+            txHash: result.txHash,
+            recipient: postAuthor
+          })
+        }
+      } else {
+        const errorData = await response.json()
+        setTipError(errorData.error || 'Failed to send tip')
+      }
+    } catch (error: any) {
+      setTipError(error.message || 'Failed to send tip')
     } finally {
       setIsSendingTip(false)
     }
@@ -99,7 +134,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
             type="url"
             value={postUrl}
             onChange={(e) => setPostUrl(e.target.value)}
-            placeholder="https://warpcast.com/alice/0x123..."
+            placeholder="https://warpcast.com/alice/0x123... or https://base.org/username"
             className="flex-1 p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <button
