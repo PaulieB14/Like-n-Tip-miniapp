@@ -12,7 +12,7 @@ export const minikitConfig = {
   },
   miniapp: {
     version: "1",
-    name: "LIke n Tip",
+    name: "Like n Tip",
     homeUrl: ROOT_URL,
     iconUrl: `${ROOT_URL}/icon.svg`,
     splashImageUrl: `${ROOT_URL}/splash.svg`,
@@ -29,7 +29,7 @@ export const minikitConfig = {
     tags: ["social", "tipping", "base", "miniapp", "crypto"],
     heroImageUrl: `${ROOT_URL}/og-image.svg`,
     tagline: "Tip with every like",
-    ogTitle: "LIke n Tip - Ultimate Base Mini App",
+    ogTitle: "Like n Tip - Ultimate Base Mini App",
     ogDescription: "Seamlessly tip when you like posts in Base app. Features Mini App Context, Quick Auth, and Base Account capabilities.",
     ogImageUrl: `${ROOT_URL}/og-image.svg`,
     noindex: false

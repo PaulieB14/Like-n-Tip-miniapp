@@ -6,7 +6,7 @@ import Providers from '@/components/WagmiProvider'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'LIke n Tip - Ultimate Base Mini App',
+  title: 'Like n Tip - Ultimate Base Mini App',
   description: 'Seamlessly tip when you like posts in Base app. Features Mini App Context, Quick Auth, and Base Account capabilities.',
 }
 
@@ -24,11 +24,11 @@ export default function RootLayout({
             version: 'next',
             imageUrl: 'https://like-n-tip-miniapp.vercel.app/og-image.svg',
             button: {
-              title: 'Open LIke n Tip',
+              title: 'Open Like n Tip',
               action: {
                 type: 'launch_frame',
                 url: 'https://like-n-tip-miniapp.vercel.app',
-                name: 'LIke n Tip',
+                name: 'Like n Tip',
                 splashImageUrl: 'https://like-n-tip-miniapp.vercel.app/splash.svg',
                 splashBackgroundColor: '#0052ff'
               }

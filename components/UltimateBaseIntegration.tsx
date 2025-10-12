@@ -6,6 +6,7 @@ import { Heart, Zap, Settings, CheckCircle, Wallet, Sparkles, Shield, Bolt, User
 import { useBaseAccountCapabilities } from '@/lib/useBaseAccountCapabilities'
 import { useQuickAuth } from '@/lib/useQuickAuth'
 import { useMiniAppContext } from '@/lib/useMiniAppContext'
+import { sdk } from '@farcaster/miniapp-sdk'
 
 interface AutoTipSettings {
   enabled: boolean
@@ -129,6 +130,25 @@ export default function UltimateBaseIntegration() {
       signIn()
     }
   }, [isInMiniApp, isAuthenticated, authLoading, signIn])
+
+  // Call sdk.actions.ready() when app is loaded
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        // Check if we're in a mini app
+        const isInMiniApp = await sdk.isInMiniApp()
+        if (isInMiniApp) {
+          // Call ready() to hide splash screen and display content
+          await sdk.actions.ready()
+          console.log('Mini app is ready and splash screen hidden')
+        }
+      } catch (error) {
+        console.error('Error initializing mini app:', error)
+      }
+    }
+
+    initializeApp()
+  }, [])
 
   // Onboarding Flow
   if (showOnboarding) {
