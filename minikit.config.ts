@@ -27,11 +27,11 @@ export const minikitConfig = {
     ],
     primaryCategory: "social",
     tags: ["social", "tipping", "base", "miniapp", "crypto"],
-    heroImageUrl: `${ROOT_URL}/og-image.svg`,
+    heroImageUrl: `${ROOT_URL}/og-image.png`,
     tagline: "Tip with every like",
     ogTitle: "Like n Tip - Ultimate Base Mini App",
     ogDescription: "Seamlessly tip when you like posts in Base app. Features Mini App Context, Quick Auth, and Base Account capabilities.",
-    ogImageUrl: `${ROOT_URL}/og-image.svg`,
+    ogImageUrl: `${ROOT_URL}/og-image.png`,
     noindex: false
   },
 } as const
