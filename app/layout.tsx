@@ -22,7 +22,7 @@ export default function RootLayout({
           name="fc:miniapp"
           content={JSON.stringify({
             version: 'next',
-            imageUrl: 'https://like-n-tip-miniapp.vercel.app/og-image.svg',
+            imageUrl: 'https://like-n-tip-miniapp.vercel.app/og-image.png',
             button: {
               title: 'Open Like n Tip',
               action: {
