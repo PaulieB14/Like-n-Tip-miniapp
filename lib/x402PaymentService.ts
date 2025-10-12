@@ -148,11 +148,12 @@ export async function createTipPayment(
       'base'
     )
 
-    // Create tip endpoint (this would be your tip service endpoint)
-    const tipEndpoint = `/api/tip?recipient=${recipientAddress}&amount=${amount}&message=${encodeURIComponent(message)}`
-
-    // Execute x402 payment flow
-    const result = await paymentService.executePaymentFlow(tipEndpoint)
+    // Execute x402 payment flow with tip details
+    const result = await paymentService.executePaymentFlow('/api/tip', {
+      recipient: recipientAddress,
+      amount: amount,
+      message: message
+    })
 
     return result
   } catch (error: any) {
