@@ -462,12 +462,12 @@ export default function UltimateBaseIntegration() {
                   </div>
                   <button
                     onClick={() => updateSettings({ enabled: !settings.enabled })}
-                    disabled={!isConnected}
+                    
                     className={`px-4 py-2 rounded-lg font-medium transition-colors duration-200 ${
                       settings.enabled 
                         ? 'bg-green-500 text-white' 
                         : 'bg-gray-300 text-gray-700'
-                    } ${!isConnected ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    } `}
                   >
                     {settings.enabled ? 'ON' : 'OFF'}
                   </button>
