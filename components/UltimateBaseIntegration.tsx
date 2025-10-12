@@ -338,6 +338,30 @@ export default function UltimateBaseIntegration() {
             </div>
           )}
 
+          {/* Demo Tip Button */}
+          {settings.enabled && isConnected && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+                    <Gift className="h-4 w-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-green-900">Demo Auto-Tip</p>
+                    <p className="text-sm text-green-700">Test the auto-tip functionality</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleBaseAppLike('demo-post-123', '0x1234567890123456789012345678901234567890', 'Demo User')}
+                  disabled={isLoading}
+                  className="px-4 py-2 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
+                >
+                  {isLoading ? 'Sending...' : `Send $${settings.defaultAmount.toFixed(2)} Tip`}
+                </button>
+              </div>
+            </div>
+          )}
+
           {isLoading && (
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
               <div className="flex items-center space-x-3">
@@ -346,6 +370,25 @@ export default function UltimateBaseIntegration() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Current Limitations */}
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center">
+            <Bell className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-amber-900">Current Status</h3>
+            <p className="text-sm text-amber-700">Auto-tip on like is not yet available</p>
+          </div>
+        </div>
+        <div className="space-y-3 text-sm text-amber-800">
+          <p>• <strong>Base app doesn't currently expose like events</strong> to mini apps</p>
+          <p>• <strong>Auto-tip functionality is ready</strong> but needs Base app integration</p>
+          <p>• <strong>Use the demo button below</strong> to test the tip functionality</p>
+          <p>• <strong>Real auto-tip will work</strong> once Base app adds like event support</p>
         </div>
       </div>
 
