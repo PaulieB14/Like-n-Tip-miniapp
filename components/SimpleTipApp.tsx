@@ -109,9 +109,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     }
 
     // Validate tip amount
-    const validation = validateTipAmount(amount)
-    if (!validation.valid) {
-      setTipError(validation.error || 'Invalid tip amount')
+    if (amount <= 0 || amount > 1000) {
+      setTipError('Tip amount must be between $0.01 and $1000')
       return
     }
 
