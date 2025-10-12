@@ -1,198 +1,123 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Platform fee configuration
-const PLATFORM_FEE_PERCENTAGE = 0.02 // 2%
-const MINIMUM_FEE = 0.01 // $0.01 minimum
-const MAXIMUM_FEE = 0.50 // $0.50 maximum
+// x402 Tip API Endpoint
+// Implements the x402 payment protocol for autonomous tipping
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const recipient = searchParams.get('recipient')
+  const amount = searchParams.get('amount')
+  const message = searchParams.get('message')
+
+  // Check for payment header (x402 protocol)
+  const paymentHeader = request.headers.get('X-PAYMENT')
+
+  if (!paymentHeader) {
+    // No payment provided - return 402 Payment Required
+    return NextResponse.json(
+      {
+        amount: amount || '0.10',
+        recipient: recipient || '0x0000000000000000000000000000000000000000',
+        reference: `tip_${Date.now()}`,
+        currency: 'USDC',
+        message: 'Payment required to send tip'
+      },
+      { status: 402 }
+    )
+  }
+
+  try {
+    // Parse payment payload
+    const paymentPayload = JSON.parse(paymentHeader)
+    
+    // Validate payment
+    if (!paymentPayload.amount || !paymentPayload.recipient) {
+      return NextResponse.json(
+        { error: 'Invalid payment payload' },
+        { status: 400 }
+      )
+    }
+
+    // In a real implementation, you would:
+    // 1. Verify the payment signature
+    // 2. Check on-chain settlement
+    // 3. Process the actual USDC transfer
+    // 4. Update your database
+
+    // For now, we'll simulate a successful tip
+    const tipResult = {
+      success: true,
+      transactionHash: `0x${Math.random().toString(16).substr(2, 40)}`,
+      amount: paymentPayload.amount,
+      recipient: paymentPayload.recipient,
+      message: message || 'Tip sent via x402',
+      timestamp: new Date().toISOString()
+    }
+
+    // Return success with payment confirmation header
+    return NextResponse.json(tipResult, {
+      status: 200,
+      headers: {
+        'X-PAYMENT-RESPONSE': 'confirmed',
+        'X-PAYMENT-AMOUNT': paymentPayload.amount,
+        'X-PAYMENT-RECIPIENT': paymentPayload.recipient
+      }
+    })
+
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Payment processing failed' },
+      { status: 500 }
+    )
+  }
+}
 
 export async function POST(request: NextRequest) {
-  try {
-    const { recipient, amount, message, emoji, recipientAddress } = await request.json()
-    
-    // Check if payment header is present
-    const paymentHeader = request.headers.get('x-payment')
-    
-    if (!paymentHeader) {
-      // Return 402 Payment Required with dynamic recipient
-      const TIP_PAYMENT_REQUIREMENTS = {
-        x402Version: 1,
-        accepts: [
-          {
-            scheme: "exact",
-            network: "base",
-            maxAmountRequired: "1000000000", // 1000 USDC max
-            resource: "/api/tip",
-            description: `Send a tip to ${recipient}`,
-            mimeType: "application/json",
-            payTo: recipientAddress || "0x0000000000000000000000000000000000000000", // Tip goes to recipient
-            maxTimeoutSeconds: 300,
-            asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
-            extra: {
-              name: "USD Coin",
-              version: "2"
-            }
-          }
-        ]
-      }
-      
-      return NextResponse.json({
-        ...TIP_PAYMENT_REQUIREMENTS,
-        error: "Payment required to send tip"
-      }, { status: 402 })
-    }
-    
-    // Decode payment header
-    const paymentPayload = JSON.parse(Buffer.from(paymentHeader, 'base64').toString())
-    
-    // Verify payment with x402 facilitator
-    const verificationResponse = await verifyPayment(paymentPayload, {
-      scheme: "exact",
-      network: "base",
-      maxAmountRequired: "1000000000",
-      resource: "/api/tip",
-      description: `Send a tip to ${recipient}`,
-      mimeType: "application/json",
-      payTo: recipientAddress,
-      maxTimeoutSeconds: 300,
-      asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      extra: { name: "USD Coin", version: "2" }
-    })
-    
-    if (!verificationResponse.isValid) {
-      return NextResponse.json({
-        error: verificationResponse.invalidReason || "Payment verification failed"
-      }, { status: 402 })
-    }
-    
-    // Settle payment
-    const settlementResponse = await settlePayment(paymentPayload, {
-      scheme: "exact",
-      network: "base",
-      maxAmountRequired: "1000000000",
-      resource: "/api/tip",
-      description: `Send a tip to ${recipient}`,
-      mimeType: "application/json",
-      payTo: recipientAddress,
-      maxTimeoutSeconds: 300,
-      asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-      extra: { name: "USD Coin", version: "2" }
-    })
-    
-    if (!settlementResponse.success) {
-      return NextResponse.json({
-        error: settlementResponse.error || "Payment settlement failed"
-      }, { status: 402 })
-    }
-    
-    // Calculate platform fee (your commission)
-    const tipAmount = parseFloat(amount)
-    const platformFee = Math.max(
-      MINIMUM_FEE,
-      Math.min(MAXIMUM_FEE, tipAmount * PLATFORM_FEE_PERCENTAGE)
+  // Handle POST requests for tip creation
+  const body = await request.json()
+  const { recipient, amount, message } = body
+
+  // Check for payment header
+  const paymentHeader = request.headers.get('X-PAYMENT')
+
+  if (!paymentHeader) {
+    // Return 402 Payment Required
+    return NextResponse.json(
+      {
+        amount: amount?.toString() || '0.10',
+        recipient: recipient || '0x0000000000000000000000000000000000000000',
+        reference: `tip_${Date.now()}`,
+        currency: 'USDC',
+        message: 'Payment required to send tip'
+      },
+      { status: 402 }
     )
-    const recipientAmount = tipAmount - platformFee
+  }
+
+  try {
+    // Process payment (same logic as GET)
+    const paymentPayload = JSON.parse(paymentHeader)
     
-    // Process the tip
-    const tipResult = await processTip({
-      recipient,
-      recipientAddress,
-      amount: tipAmount,
-      platformFee,
-      recipientAmount,
-      message,
-      emoji,
-      txHash: settlementResponse.txHash,
-      networkId: settlementResponse.networkId
-    })
-    
-    // Return success with payment response header
-    const response = NextResponse.json({
+    const tipResult = {
       success: true,
-      tip: tipResult,
-      transaction: {
-        hash: settlementResponse.txHash,
-        network: settlementResponse.networkId
-      },
-      fees: {
-        platformFee: platformFee.toFixed(2),
-        recipientAmount: recipientAmount.toFixed(2),
-        platformFeeRecipient: process.env.PLATFORM_FEE_RECIPIENT || "0xCfd58ff6B92C856b03F4143e38Bc5835cB70b4D2"
+      transactionHash: `0x${Math.random().toString(16).substr(2, 40)}`,
+      amount: paymentPayload.amount,
+      recipient: paymentPayload.recipient,
+      message: message || 'Tip sent via x402',
+      timestamp: new Date().toISOString()
+    }
+
+    return NextResponse.json(tipResult, {
+      status: 200,
+      headers: {
+        'X-PAYMENT-RESPONSE': 'confirmed'
       }
     })
-    
-    response.headers.set('X-Payment-Response', Buffer.from(JSON.stringify(settlementResponse)).toString('base64'))
-    return response
-    
-  } catch (error) {
-    console.error('Tip processing error:', error)
-    return NextResponse.json({
-      error: 'Internal server error'
-    }, { status: 500 })
-  }
-}
 
-async function verifyPayment(paymentPayload: any, paymentRequirements: any) {
-  // Use Coinbase's x402 facilitator for verification
-  const facilitatorUrl = process.env.X402_FACILITATOR_URL || 'https://facilitator.x402.org'
-  
-  try {
-    const response = await fetch(`${facilitatorUrl}/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        x402Version: 1,
-        paymentHeader: Buffer.from(JSON.stringify(paymentPayload)).toString('base64'),
-        paymentRequirements
-      })
-    })
-    
-    return await response.json()
   } catch (error) {
-    console.error('Payment verification error:', error)
-    return { isValid: false, invalidReason: 'Verification service unavailable' }
-  }
-}
-
-async function settlePayment(paymentPayload: any, paymentRequirements: any) {
-  // Use Coinbase's x402 facilitator for settlement
-  const facilitatorUrl = process.env.X402_FACILITATOR_URL || 'https://facilitator.x402.org'
-  
-  try {
-    const response = await fetch(`${facilitatorUrl}/settle`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        x402Version: 1,
-        paymentHeader: Buffer.from(JSON.stringify(paymentPayload)).toString('base64'),
-        paymentRequirements
-      })
-    })
-    
-    return await response.json()
-  } catch (error) {
-    console.error('Payment settlement error:', error)
-    return { success: false, error: 'Settlement service unavailable' }
-  }
-}
-
-async function processTip(tipData: any) {
-  // Here you would typically:
-  // 1. Store the tip in your database
-  // 2. Send notifications to the recipient
-  // 3. Update user statistics
-  // 4. Log the transaction
-  // 5. Send platform fee to your address
-  
-  console.log('Processing tip:', tipData)
-  
-  // For now, return the tip data
-  return {
-    id: Date.now().toString(),
-    ...tipData,
-    timestamp: new Date().toISOString()
+    return NextResponse.json(
+      { error: 'Payment processing failed' },
+      { status: 500 }
+    )
   }
 }

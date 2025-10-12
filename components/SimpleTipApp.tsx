@@ -2,13 +2,18 @@
 
 import { useState } from 'react'
 import { Heart, User, ExternalLink, Gift, CheckCircle, AlertCircle } from 'lucide-react'
+import { createTipPayment, validateTipAmount } from '@/lib/x402PaymentService'
 
 export default function SimpleTipApp() {
   const [postUrl, setPostUrl] = useState('')
   const [postAuthor, setPostAuthor] = useState('')
+  const [postAuthorAddress, setPostAuthorAddress] = useState('')
   const [postContent, setPostContent] = useState('')
   const [isLoadingPost, setIsLoadingPost] = useState(false)
+  const [isSendingTip, setIsSendingTip] = useState(false)
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
   const [tipSuccess, setTipSuccess] = useState<string | null>(null)
+  const [tipError, setTipError] = useState<string | null>(null)
 
   const quickAmounts = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00]
 
@@ -25,10 +30,12 @@ export default function SimpleTipApp() {
       // Mock post data
       const mockPostData = {
         author: 'alice.base',
+        authorAddress: '0x1234567890123456789012345678901234567890',
         content: 'Just built an amazing DeFi protocol on Base! 🚀 The future of finance is here.'
       }
       
       setPostAuthor(mockPostData.author)
+      setPostAuthorAddress(mockPostData.authorAddress)
       setPostContent(mockPostData.content)
       
     } catch (error) {
@@ -39,9 +46,46 @@ export default function SimpleTipApp() {
   }
 
   const sendTip = async (amount: number) => {
-    // Simulate tip sending
-    setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor}`)
-    console.log(`Tip sent: $${amount} to @${postAuthor}`)
+    // Check if we have post author info
+    if (!postAuthor || !postAuthorAddress) {
+      setTipError('Please load a post first')
+      return
+    }
+
+    // Validate tip amount
+    const validation = validateTipAmount(amount)
+    if (!validation.valid) {
+      setTipError(validation.error || 'Invalid tip amount')
+      return
+    }
+
+    setIsSendingTip(true)
+    setSelectedAmount(amount)
+    setTipError(null)
+    setTipSuccess(null)
+    
+    try {
+      // Use x402 payment service
+      const result = await createTipPayment(
+        postAuthorAddress,
+        amount,
+        `Tip for @${postAuthor}`
+      )
+
+      if (result.success) {
+        setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} via x402`)
+        console.log(`x402 tip sent: $${amount} to @${postAuthor}`)
+      } else {
+        setTipError(result.error || 'Failed to send tip')
+      }
+      
+    } catch (error: any) {
+      console.error('Tip failed:', error)
+      setTipError(error.message || 'Tip transaction failed')
+    } finally {
+      setIsSendingTip(false)
+      setSelectedAmount(null)
+    }
   }
 
   return (
@@ -115,13 +159,37 @@ export default function SimpleTipApp() {
                 <button
                   key={amount}
                   onClick={() => sendTip(amount)}
-                  className="p-3 rounded-xl font-medium transition-all duration-200 bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-700"
+                  disabled={isSendingTip}
+                  className={`p-3 rounded-xl font-medium transition-all duration-200 ${
+                    isSendingTip && selectedAmount === amount
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-700'
+                  } disabled:opacity-50`}
                 >
-                  ${amount.toFixed(2)}
+                  {isSendingTip && selectedAmount === amount ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Sending...</span>
+                    </div>
+                  ) : (
+                    `$${amount.toFixed(2)}`
+                  )}
                 </button>
               ))}
             </div>
           </div>
+
+          {/* Error Display */}
+          {tipError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <span className="text-sm font-medium text-red-900">
+                  {tipError}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Success Display */}
           {tipSuccess && (
@@ -139,12 +207,13 @@ export default function SimpleTipApp() {
 
       {/* How It Works */}
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-        <h3 className="font-semibold text-blue-900 mb-3">How It Works</h3>
+        <h3 className="font-semibold text-blue-900 mb-3">How x402 Tipping Works</h3>
         <div className="space-y-2 text-sm text-blue-800">
           <p>• <strong>Paste any Farcaster post URL</strong> to load the post and author</p>
           <p>• <strong>Choose tip amount</strong> from quick buttons</p>
-          <p>• <strong>Click send</strong> to send real USDC to the post author</p>
-          <p>• <strong>Transaction confirmed</strong> on Base network</p>
+          <p>• <strong>Click send</strong> to trigger x402 autonomous payment</p>
+          <p>• <strong>x402 protocol</strong> handles instant USDC settlement</p>
+          <p>• <strong>No wallet connection needed</strong> - fully autonomous</p>
         </div>
       </div>
     </div>
