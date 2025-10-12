@@ -1,79 +1,8 @@
 import { useState, useEffect } from 'react'
 import { sdk } from '@farcaster/miniapp-sdk'
 
-interface MiniAppUser {
-  fid: number
-  username?: string
-  displayName?: string
-  pfpUrl?: string
-  bio?: string
-  location?: {
-    placeId?: string
-    description?: string
-  }
-}
-
-interface MiniAppCast {
-  author: {
-    fid: number
-    username?: string
-    displayName?: string
-    pfpUrl?: string
-  }
-  hash: string
-  timestamp: number
-  text: string
-  embeds: string[]
-  channelKey?: string
-}
-
-interface MiniAppLocation {
-  type: 'cast_embed' | 'cast_share' | 'notification' | 'launcher' | 'channel' | 'open_miniapp'
-  embed?: string
-  cast?: MiniAppCast
-  notification?: {
-    notificationId: string
-    title: string
-    body: string
-  }
-  channel?: {
-    key: string
-    name: string
-    imageUrl?: string
-  }
-  referrerDomain?: string
-}
-
-interface MiniAppClient {
-  platformType: 'web' | 'mobile'
-  clientFid: number
-  added: boolean
-  safeAreaInsets?: {
-    top: number
-    bottom: number
-    left: number
-    right: number
-  }
-  notificationDetails?: {
-    url: string
-    token: string
-  }
-}
-
-interface MiniAppFeatures {
-  haptics: boolean
-  cameraAndMicrophoneAccess?: boolean
-}
-
-interface MiniAppContext {
-  user: MiniAppUser
-  location: MiniAppLocation
-  client: MiniAppClient
-  features: MiniAppFeatures
-}
-
 export function useMiniAppContext() {
-  const [context, setContext] = useState<MiniAppContext | null>(null)
+  const [context, setContext] = useState<any>(null)
   const [isInMiniApp, setIsInMiniApp] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
