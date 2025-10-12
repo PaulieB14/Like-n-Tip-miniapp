@@ -39,8 +39,8 @@ export default function SimpleTipApp() {
       let username = 'unknown'
       let postId = 'unknown'
       
-      if (url.hostname.includes('warpcast.com')) {
-        // Farcaster URL format: https://warpcast.com/username/0x...
+      if (url.hostname.includes('warpcast.com') || url.hostname.includes('farcaster.xyz')) {
+        // Farcaster URL format: https://warpcast.com/username/0x... or https://farcaster.xyz/username
         platform = 'Farcaster'
         const pathParts = url.pathname.split('/').filter(Boolean)
         username = pathParts[0] || 'unknown'
@@ -55,11 +55,15 @@ export default function SimpleTipApp() {
         console.log('Base app detected:', { username, postId })
       } else {
         console.log('Unsupported platform:', url.hostname)
-        throw new Error('Unsupported platform. Please use Farcaster (warpcast.com) or Base app (base.org) URLs.')
+        throw new Error('Unsupported platform. Please use Farcaster (warpcast.com, farcaster.xyz) or Base app (base.org) URLs.')
       }
       
-      if (!postId || postId.length < 10) {
-        throw new Error(`Invalid ${platform} URL format`)
+      // For farcaster.xyz URLs, postId might be empty (just username)
+      if (platform === 'Farcaster' && url.hostname.includes('farcaster.xyz')) {
+        // farcaster.xyz/pdic format - just username, no postId needed
+        postId = 'profile'
+      } else if (!postId || postId.length < 10) {
+        throw new Error(`Invalid ${platform} URL format - need post ID`)
       }
       
       // Generate realistic data based on platform
@@ -151,7 +155,7 @@ export default function SimpleTipApp() {
             type="url"
             value={postUrl}
             onChange={(e) => setPostUrl(e.target.value)}
-            placeholder="https://warpcast.com/alice/0x123... or https://base.org/bob/0x456..."
+            placeholder="https://farcaster.xyz/pdic or https://warpcast.com/alice/0x123..."
             className="flex-1 p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <button
