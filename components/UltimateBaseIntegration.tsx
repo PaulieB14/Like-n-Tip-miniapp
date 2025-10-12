@@ -7,6 +7,7 @@ import { useBaseAccountCapabilities } from '@/lib/useBaseAccountCapabilities'
 import { useQuickAuth } from '@/lib/useQuickAuth'
 import { useMiniAppContext } from '@/lib/useMiniAppContext'
 import { sdk } from '@farcaster/miniapp-sdk'
+import TipDemo from './TipDemo'
 
 interface AutoTipSettings {
   enabled: boolean
@@ -35,7 +36,7 @@ export default function UltimateBaseIntegration() {
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingStep, setOnboardingStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('home')
+  const [activeTab, setActiveTab] = useState('demo')
   const [recentTips, setRecentTips] = useState<Array<{
     postId: string
     amount: number
@@ -601,6 +602,7 @@ export default function UltimateBaseIntegration() {
       {/* Main Content */}
       <div className="px-4 py-6 pb-24">
         {activeTab === 'home' && renderHomeTab()}
+        {activeTab === 'demo' && <TipDemo />}
         {activeTab === 'history' && renderHistoryTab()}
         {activeTab === 'profile' && renderProfileTab()}
       </div>
@@ -616,6 +618,16 @@ export default function UltimateBaseIntegration() {
           >
             <Home className="h-5 w-5 mb-1" />
             <span className="text-xs font-medium">Home</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('demo')}
+            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+              activeTab === 'demo' ? 'text-blue-500' : 'text-slate-500'
+            }`}
+          >
+            <Gift className="h-5 w-5 mb-1" />
+            <span className="text-xs font-medium">Demo</span>
           </button>
           
           <button
