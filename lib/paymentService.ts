@@ -1,4 +1,4 @@
-import { parseEther } from 'viem'
+import { parseUnits } from 'viem'
 import { base } from 'wagmi/chains'
 
 // USDC contract address on Base
