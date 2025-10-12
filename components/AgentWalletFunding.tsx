@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAccount, useWriteContract } from 'wagmi'
 import { Wallet, DollarSign, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
+import { parseUnits } from 'viem'
+import { base } from 'wagmi/chains'
 
 interface AgentWalletFundingProps {
   onFundingComplete?: () => void
@@ -13,25 +16,55 @@ interface AgentWalletInfo {
   hasEnoughFunds: boolean
 }
 
+// USDC contract on Base
+const USDC_CONTRACT = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const
+const USDC_ABI = [
+  {
+    "inputs": [
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "transfer",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const
+
 export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFundingProps) {
+  const { address: userAddress, isConnected } = useAccount()
+  const { writeContract } = useWriteContract()
+  
   const [agentInfo, setAgentInfo] = useState<AgentWalletInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [fundingAmount, setFundingAmount] = useState(10)
+  const [fundingAmount, setFundingAmount] = useState(1.0)
   const [isFunding, setIsFunding] = useState(false)
+  const [fundingError, setFundingError] = useState<string | null>(null)
+  const [fundingSuccess, setFundingSuccess] = useState<string | null>(null)
 
-  // Quick funding amounts
-  const quickAmounts = [5, 10, 25, 50, 100]
+  // Quick funding amounts (micropayments need small funding)
+  const quickAmounts = [0.1, 0.5, 1.0, 2.0, 5.0]
 
   useEffect(() => {
     loadAgentInfo()
-  }, [])
+  }, [userAddress])
 
   const loadAgentInfo = async () => {
     try {
       setIsLoading(true)
       
-      // Get agent wallet info from API
-      const response = await fetch('/api/agent-wallet')
+      if (!userAddress) {
+        // Show placeholder when no wallet connected
+        setAgentInfo({
+          address: 'Connect wallet to see agent address',
+          balance: 0,
+          hasEnoughFunds: false
+        })
+        return
+      }
+      
+      // Get user-specific agent wallet info from API
+      const response = await fetch(`/api/user-agent-wallet?userAddress=${userAddress}`)
       if (response.ok) {
         const data = await response.json()
         setAgentInfo(data)
@@ -56,31 +89,51 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
   }
 
   const handleFundWallet = async (amount: number) => {
+    if (!isConnected || !userAddress) {
+      setFundingError('Please connect your Base wallet first')
+      return
+    }
+
+    if (!agentInfo?.address) {
+      setFundingError('Agent wallet address not available')
+      return
+    }
+
     setIsFunding(true)
+    setFundingError(null)
+    setFundingSuccess(null)
+
     try {
-      // In a real implementation, this would:
-      // 1. Open Base wallet
-      // 2. Show USDC transfer to agent wallet
-      // 3. Wait for transaction confirmation
-      // 4. Update balance
+      // Convert amount to USDC units (6 decimals)
+      const amountInUnits = parseUnits(amount.toString(), 6)
+
+      // Send USDC to agent wallet
+      const txHash = await writeContract({
+        address: USDC_CONTRACT,
+        abi: USDC_ABI,
+        functionName: 'transfer',
+        args: [agentInfo.address as `0x${string}`, amountInUnits],
+        chainId: base.id,
+        account: userAddress,
+      })
+
+      setFundingSuccess(`Successfully sent $${amount.toFixed(3)} USDC to agent wallet!`)
       
-      // For now, simulate the funding process
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      // Simulate successful funding
+      // Update local balance
       if (agentInfo) {
         setAgentInfo({
           ...agentInfo,
           balance: agentInfo.balance + amount,
-          hasEnoughFunds: (agentInfo.balance + amount) >= 5
+          hasEnoughFunds: (agentInfo.balance + amount) >= 0.01 // Much lower threshold for micropayments
         })
       }
       
       if (onFundingComplete) {
         onFundingComplete()
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Funding failed:', error)
+      setFundingError(error.message || 'Funding transaction failed')
     } finally {
       setIsFunding(false)
     }
@@ -211,10 +264,34 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
             </button>
           </div>
 
+          {!isConnected && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-sm text-red-800">
+                <strong>Connect Wallet Required:</strong> Please connect your Base wallet to fund the agent.
+              </p>
+            </div>
+          )}
+
+          {fundingError && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-sm text-red-800">
+                <strong>Error:</strong> {fundingError}
+              </p>
+            </div>
+          )}
+
+          {fundingSuccess && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl">
+              <p className="text-sm text-green-800">
+                <strong>Success:</strong> {fundingSuccess}
+              </p>
+            </div>
+          )}
+
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
             <p className="text-sm text-blue-800">
-              <strong>How it works:</strong> You'll be prompted to send USDC from your Base wallet 
-              to the agent wallet. The agent will then use these funds to send tips autonomously.
+              <strong>How it works:</strong> Send USDC from your Base wallet to the agent wallet. 
+              The agent will use these funds for micropayments ($0.001-$0.005 per tip).
             </p>
           </div>
         </div>
@@ -226,9 +303,9 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
           <div className="flex items-center space-x-3">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <div>
-              <h3 className="font-semibold text-green-900">Ready to Tip!</h3>
+              <h3 className="font-semibold text-green-900">Ready for Micropayments!</h3>
               <p className="text-sm text-green-700">
-                Agent wallet has sufficient funds for autonomous tipping
+                Agent wallet has sufficient funds for autonomous micropayments ($0.001-$0.005 per tip)
               </p>
             </div>
           </div>

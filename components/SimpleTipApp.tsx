@@ -22,7 +22,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const [tipSuccess, setTipSuccess] = useState('')
   const [tipError, setTipError] = useState('')
 
-  const quickAmounts = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00]
+  const quickAmounts = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05]
 
   const loadPost = async () => {
     if (!postUrl.trim()) return
@@ -188,8 +188,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         <div className="space-y-2 text-sm text-blue-800">
           <p>• <strong>Fund agent wallet</strong> with USDC (one-time setup)</p>
           <p>• <strong>Paste any Farcaster or Base app post URL</strong> to load the post and author</p>
-          <p>• <strong>Choose tip amount</strong> from quick buttons</p>
-          <p>• <strong>Click send</strong> to trigger x402 autonomous payment</p>
+          <p>• <strong>Choose micropayment amount</strong> ($0.001-$0.005) from quick buttons</p>
+          <p>• <strong>Click send</strong> to trigger x402 autonomous micropayment</p>
           <p>• <strong>Agent wallet sends USDC</strong> instantly without user approval</p>
           <p>• <strong>Automatic comment</strong> posted to the original post</p>
         </div>
