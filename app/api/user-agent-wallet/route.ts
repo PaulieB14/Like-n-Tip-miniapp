@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createWalletClient, http } from 'viem'
+import { createPublicClient, http } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { base } from 'viem/chains'
 
@@ -44,9 +44,8 @@ export async function GET(request: NextRequest) {
     // Generate user-specific agent wallet
     const agentWallet = generateUserAgentWallet(userAddress)
     
-    // Create wallet client to check balance
-    const client = createWalletClient({
-      account: privateKeyToAccount(agentWallet.privateKey),
+    // Create public client to check balance
+    const client = createPublicClient({
       chain: base,
       transport: http(process.env.BASE_RPC_URL),
     })
