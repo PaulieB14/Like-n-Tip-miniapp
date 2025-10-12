@@ -7,9 +7,7 @@ import { useBaseAccountCapabilities } from '@/lib/useBaseAccountCapabilities'
 import { useQuickAuth } from '@/lib/useQuickAuth'
 import { useMiniAppContext } from '@/lib/useMiniAppContext'
 import { sdk } from '@farcaster/miniapp-sdk'
-import TipDemo from './TipDemo'
-import CommentTipDemo from './CommentTipDemo'
-import UniversalCommentTip from './UniversalCommentTip'
+import SimpleTipApp from './SimpleTipApp'
 
 interface AutoTipSettings {
   enabled: boolean
@@ -699,21 +697,12 @@ export default function UltimateBaseIntegration() {
                 <Heart className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h1 className="text-base font-bold text-slate-900">Tip in Comments</h1>
-                <p className="text-xs text-slate-600">Tip creators via comments</p>
+                <h1 className="text-base font-bold text-slate-900">Simple Tip App</h1>
+                <p className="text-xs text-slate-600">Send real USDC tips to creators</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-2">
-              {/* Comment Tipping Status */}
-              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                settings.commentTippingEnabled 
-                  ? 'bg-green-100 text-green-700' 
-                  : 'bg-gray-100 text-gray-600'
-              }`}>
-                {settings.commentTippingEnabled ? '🟢 Active' : '⚪ Inactive'}
-              </div>
-              
               {/* Settings Button */}
               <button
                 onClick={() => setShowSettings(true)}
@@ -728,18 +717,7 @@ export default function UltimateBaseIntegration() {
 
       {/* Main Content - Mobile Optimized */}
       <div className="px-3 py-4 pb-20">
-        {activeTab === 'home' && renderHomeTab()}
-        {activeTab === 'universal' && <UniversalCommentTip onTipSent={(amount, recipient, txHash, postUrl) => {
-          setRecentTips(prev => [{
-            postId: postUrl || 'universal-tip',
-            amount,
-            timestamp: new Date(),
-            txHash,
-            recipient
-          }, ...prev.slice(0, 9)])
-        }} />}
-        {activeTab === 'demo' && <TipDemo />}
-        {activeTab === 'comments' && <CommentTipDemo />}
+        {activeTab === 'home' && <SimpleTipApp />}
         {activeTab === 'history' && renderHistoryTab()}
         {activeTab === 'profile' && renderProfileTab()}
       </div>
@@ -748,23 +726,13 @@ export default function UltimateBaseIntegration() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-1">
         <div className="flex justify-around">
           <button
-            onClick={() => setActiveTab('universal')}
+            onClick={() => setActiveTab('home')}
             className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
-              activeTab === 'universal' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
+              activeTab === 'home' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
             }`}
           >
-            <MessageCircle className="h-4 w-4 mb-1" />
-            <span className="text-xs font-medium">Tip Any Post</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('demo')}
-            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
-              activeTab === 'demo' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
-            }`}
-          >
-            <Gift className="h-4 w-4 mb-1" />
-            <span className="text-xs font-medium">Demo</span>
+            <Heart className="h-4 w-4 mb-1" />
+            <span className="text-xs font-medium">Tip</span>
           </button>
           
           <button

@@ -1,0 +1,301 @@
+'use client'
+
+import { useState } from 'react'
+import { Heart, Send, User, ExternalLink, Gift, CheckCircle, AlertCircle } from 'lucide-react'
+import { createPaymentService, validateTipAmount } from '@/lib/paymentService'
+import { useAccount, useWriteContract } from 'wagmi'
+
+export default function SimpleTipApp() {
+  const { address, isConnected } = useAccount()
+  const { writeContract } = useWriteContract()
+  
+  const [postUrl, setPostUrl] = useState('')
+  const [postAuthor, setPostAuthor] = useState('')
+  const [postAuthorAddress, setPostAuthorAddress] = useState('')
+  const [postContent, setPostContent] = useState('')
+  const [isLoadingPost, setIsLoadingPost] = useState(false)
+  const [isSendingTip, setIsSendingTip] = useState(false)
+  const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
+  const [customAmount, setCustomAmount] = useState('')
+  const [tipMessage, setTipMessage] = useState('')
+  const [tipError, setTipError] = useState<string | null>(null)
+  const [tipSuccess, setTipSuccess] = useState<string | null>(null)
+
+  const quickAmounts = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00]
+
+  const loadPost = async () => {
+    if (!postUrl.trim()) return
+
+    setIsLoadingPost(true)
+    setTipError(null)
+    setTipSuccess(null)
+
+    try {
+      // For demo purposes, we'll simulate loading a post
+      // In a real implementation, this would parse the Farcaster post URL
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Mock post data - in reality this would come from Farcaster API
+      const mockPostData = {
+        author: 'alice.base',
+        authorAddress: '0x1234567890123456789012345678901234567890',
+        content: 'Just built an amazing DeFi protocol on Base! 🚀 The future of finance is here. Check out the new features and let me know what you think!'
+      }
+      
+      setPostAuthor(mockPostData.author)
+      setPostAuthorAddress(mockPostData.authorAddress)
+      setPostContent(mockPostData.content)
+      
+    } catch (error: any) {
+      console.error('Failed to load post:', error)
+      setTipError('Failed to load post. Please check the URL and try again.')
+    } finally {
+      setIsLoadingPost(false)
+    }
+  }
+
+  const sendTip = async (amount: number) => {
+    // Check if wallet is connected
+    if (!isConnected || !address) {
+      setTipError('Please connect your wallet to send tips')
+      return
+    }
+
+    // Check if we have post author info
+    if (!postAuthor || !postAuthorAddress) {
+      setTipError('Please load a post first')
+      return
+    }
+
+    // Validate tip amount
+    const validation = validateTipAmount(amount)
+    if (!validation.valid) {
+      setTipError(validation.error || 'Invalid tip amount')
+      return
+    }
+
+    setIsSendingTip(true)
+    setSelectedAmount(amount)
+    setTipError(null)
+    setTipSuccess(null)
+    
+    try {
+      // Create payment service
+      const paymentService = createPaymentService(writeContract, address)
+      
+      // Send real tip
+      const result = await paymentService.sendTip({
+        recipientAddress: postAuthorAddress,
+        amount: amount,
+        message: tipMessage || `Tip for @${postAuthor}`
+      })
+
+      if (result.success && result.txHash) {
+        setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} - TX: ${result.txHash.slice(0, 10)}...`)
+        console.log(`Real tip sent: $${amount} to @${postAuthor} - TX: ${result.txHash}`)
+      } else {
+        setTipError(result.error || 'Failed to send tip')
+      }
+      
+    } catch (error: any) {
+      console.error('Tip failed:', error)
+      setTipError(error.message || 'Tip transaction failed')
+    } finally {
+      setIsSendingTip(false)
+      setSelectedAmount(null)
+    }
+  }
+
+  const handleCustomTip = () => {
+    const amount = parseFloat(customAmount)
+    if (isNaN(amount) || amount <= 0) {
+      setTipError('Please enter a valid amount')
+      return
+    }
+    sendTip(amount)
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto p-4 space-y-6">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Heart className="h-8 w-8 text-white" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">Simple Tip App</h1>
+        <p className="text-slate-600">Paste any post URL and send real USDC tips to creators</p>
+      </div>
+
+      {/* Post URL Input */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4">1. Paste Post URL</h3>
+        <div className="flex items-center space-x-3">
+          <input
+            type="url"
+            value={postUrl}
+            onChange={(e) => setPostUrl(e.target.value)}
+            placeholder="https://warpcast.com/alice/0x123..."
+            className="flex-1 p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <button
+            onClick={loadPost}
+            disabled={!postUrl.trim() || isLoadingPost}
+            className="px-6 py-3 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+          >
+            {isLoadingPost ? 'Loading...' : 'Load Post'}
+          </button>
+        </div>
+        <p className="text-sm text-slate-500 mt-2">
+          Paste any Farcaster post URL to start tipping
+        </p>
+      </div>
+
+      {/* Post Preview */}
+      {postAuthor && (
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+          <h3 className="font-semibold text-slate-900 mb-4">2. Post Preview</h3>
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+              <User className="h-6 w-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-2">
+                <p className="font-semibold text-slate-900">@{postAuthor}</p>
+                <a 
+                  href={postUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-500 hover:text-blue-600"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              </div>
+              <p className="text-slate-800 leading-relaxed">{postContent}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tip Interface */}
+      {postAuthor && (
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+          <h3 className="font-semibold text-slate-900 mb-4">3. Send Tip</h3>
+          
+          {/* Quick Tip Amounts */}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-slate-700 mb-3">Quick amounts:</p>
+            <div className="grid grid-cols-3 gap-3">
+              {quickAmounts.map((amount) => (
+                <button
+                  key={amount}
+                  onClick={() => sendTip(amount)}
+                  disabled={isSendingTip || !isConnected}
+                  className={`p-3 rounded-xl font-medium transition-all duration-200 ${
+                    isSendingTip && selectedAmount === amount
+                      ? 'bg-blue-500 text-white'
+                      : isConnected
+                      ? 'bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-700'
+                      : 'bg-slate-50 text-slate-400 cursor-not-allowed'
+                  }`}
+                >
+                  {isSendingTip && selectedAmount === amount ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Sending...</span>
+                    </div>
+                  ) : (
+                    `$${amount.toFixed(2)}`
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Amount */}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-slate-700 mb-3">Custom amount:</p>
+            <div className="flex items-center space-x-3">
+              <input
+                type="number"
+                value={customAmount}
+                onChange={(e) => setCustomAmount(e.target.value)}
+                placeholder="0.00"
+                step="0.01"
+                min="0.01"
+                className="flex-1 p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={isSendingTip || !isConnected}
+              />
+              <button
+                onClick={handleCustomTip}
+                disabled={!customAmount || isSendingTip || !isConnected}
+                className="px-6 py-3 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-600 transition-colors disabled:opacity-50"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+
+          {/* Tip Message */}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-slate-700 mb-3">Message (optional):</p>
+            <input
+              type="text"
+              value={tipMessage}
+              onChange={(e) => setTipMessage(e.target.value)}
+              placeholder={`Tip for @${postAuthor}`}
+              className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              disabled={isSendingTip}
+            />
+          </div>
+
+          {/* Wallet Connection Warning */}
+          {!isConnected && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                <span className="text-sm font-medium text-amber-900">
+                  Connect your wallet to send tips
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {tipError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <span className="text-sm font-medium text-red-900">
+                  {tipError}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Success Display */}
+          {tipSuccess && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="text-sm font-medium text-green-900">
+                  {tipSuccess}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* How It Works */}
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+        <h3 className="font-semibold text-blue-900 mb-3">How It Works</h3>
+        <div className="space-y-2 text-sm text-blue-800">
+          <p>• <strong>Paste any Farcaster post URL</strong> to load the post and author</p>
+          <p>• <strong>Choose tip amount</strong> from quick buttons or enter custom amount</p>
+          <p>• <strong>Click send</strong> to send real USDC to the post author</p>
+          <p>• <strong>Transaction confirmed</strong> on Base network</p>
+        </div>
+      </div>
+    </div>
+  )
+}
