@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import BaseAppIntegration from '../components/BaseAppIntegration'
-import { Heart, Zap, Star, Users, MessageSquare, Settings } from 'lucide-react'
+import { Heart, Zap, Star, Users, MessageSquare, Settings, Sparkles, Gift, Crown } from 'lucide-react'
 
 export default function Home() {
   const [isReady, setIsReady] = useState(false)
@@ -33,32 +33,47 @@ export default function Home() {
 
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-base-50 to-base-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-base-500 mx-auto mb-4"></div>
-          <p className="text-base-600 font-medium">Loading LIke n Tip...</p>
+      <div className="min-h-screen bg-gradient-to-br from-base-50 via-white to-base-100 flex items-center justify-center">
+        <div className="text-center slide-up">
+          <div className="floating-animation mb-6">
+            <div className="bg-gradient-to-r from-base-500 to-base-600 p-6 rounded-full w-20 h-20 mx-auto flex items-center justify-center pulse-glow">
+              <Heart className="h-10 w-10 text-white fill-current" />
+            </div>
+          </div>
+          <p className="text-base-600 font-medium text-lg">Loading LIke n Tip...</p>
+          <div className="mt-4 flex justify-center space-x-1">
+            <div className="w-2 h-2 bg-base-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-base-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-base-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-base-500/10 rounded-full blur-3xl floating-animation"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-base-600/10 rounded-full blur-3xl floating-animation" style={{ animationDelay: '2s' }}></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-base-200">
-        <div className="max-w-4xl mx-auto px-4 py-6">
+      <header className="relative bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto mobile-container py-4 sm:py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-base-500 to-base-600 p-3 rounded-full">
-                <Heart className="h-6 w-6 text-white" />
+            <div className="flex items-center space-x-3 bounce-in">
+              <div className="bg-gradient-to-r from-base-500 to-base-600 p-3 rounded-full shadow-lg pulse-glow">
+                <Heart className="h-6 w-6 text-white fill-current" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">LIke n Tip</h1>
-                <p className="text-base-600 text-sm">Auto-tip when you like posts in Base app</p>
+                <h1 className="text-xl sm:text-2xl font-bold gradient-text">LIke n Tip</h1>
+                <p className="text-base-600 text-xs sm:text-sm">Revolutionary auto-tip for Base app</p>
               </div>
             </div>
             {user && (
-              <div className="text-right">
+              <div className="text-right hidden sm:block">
                 <p className="text-sm text-gray-600">Welcome back!</p>
                 <p className="font-medium text-gray-900">{user.username || 'Base User'}</p>
               </div>
@@ -68,46 +83,61 @@ export default function Home() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="relative max-w-6xl mx-auto mobile-container py-6 sm:py-8">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Like a Post? <span className="text-base-500">Auto-Tip!</span>
+        <div className="text-center mb-8 sm:mb-12 slide-up">
+          <div className="floating-animation mb-6">
+            <div className="bg-gradient-to-r from-base-500 to-base-600 p-4 sm:p-6 rounded-full w-16 h-16 sm:w-20 sm:h-20 mx-auto flex items-center justify-center pulse-glow">
+              <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
+            </div>
+          </div>
+          
+          <h2 className="mobile-text-large font-bold text-gray-900 mb-4">
+            Like a Post? <span className="gradient-text">Auto-Tip!</span>
           </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Set your default tip amount and automatically send tips every time you like a post in Base app.
+          <p className="mobile-text text-gray-600 mb-6 sm:mb-8 max-w-2xl mx-auto">
+            Set your default tip amount and automatically send tips every time you like a post in Base app. 
+            Revolutionary like-to-tip experience! 🚀
           </p>
           
           {/* Feature Icons */}
-          <div className="flex justify-center space-x-8 mb-8">
-            <div className="flex flex-col items-center">
-              <Heart className="h-8 w-8 text-red-500 mb-2" />
-              <span className="text-sm text-gray-600">Like</span>
+          <div className="flex justify-center flex-wrap gap-4 sm:gap-8 mb-6 sm:mb-8">
+            <div className="flex flex-col items-center bounce-in" style={{ animationDelay: '0.1s' }}>
+              <div className="bg-gradient-to-r from-red-500 to-pink-500 p-3 rounded-full shadow-lg">
+                <Heart className="h-6 w-6 sm:h-8 sm:w-8 text-white fill-current" />
+              </div>
+              <span className="mobile-text-small text-gray-600 mt-2">Like</span>
             </div>
-            <div className="flex flex-col items-center">
-              <Zap className="h-8 w-8 text-yellow-500 mb-2" />
-              <span className="text-sm text-gray-600">Auto-Tip</span>
+            <div className="flex flex-col items-center bounce-in" style={{ animationDelay: '0.2s' }}>
+              <div className="bg-gradient-to-r from-yellow-500 to-orange-500 p-3 rounded-full shadow-lg">
+                <Zap className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </div>
+              <span className="mobile-text-small text-gray-600 mt-2">Auto-Tip</span>
             </div>
-            <div className="flex flex-col items-center">
-              <Star className="h-8 w-8 text-green-500 mb-2" />
-              <span className="text-sm text-gray-600">Reward</span>
+            <div className="flex flex-col items-center bounce-in" style={{ animationDelay: '0.3s' }}>
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-3 rounded-full shadow-lg">
+                <Gift className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </div>
+              <span className="mobile-text-small text-gray-600 mt-2">Reward</span>
             </div>
-            <div className="flex flex-col items-center">
-              <Users className="h-8 w-8 text-blue-500 mb-2" />
-              <span className="text-sm text-gray-600">Social</span>
+            <div className="flex flex-col items-center bounce-in" style={{ animationDelay: '0.4s' }}>
+              <div className="bg-gradient-to-r from-blue-500 to-cyan-500 p-3 rounded-full shadow-lg">
+                <Crown className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </div>
+              <span className="mobile-text-small text-gray-600 mt-2">Premium</span>
             </div>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex justify-center mb-8">
-          <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex justify-center mb-6 sm:mb-8">
+          <div className="flex space-x-1 bg-white/80 backdrop-blur-md rounded-xl p-1 shadow-lg border border-white/20">
             <button
               onClick={() => setActiveTab('integration')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors duration-200 ${
+              className={`mobile-button rounded-lg font-medium transition-all duration-300 ${
                 activeTab === 'integration'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-gradient-to-r from-base-500 to-base-600 text-white shadow-lg transform scale-105'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
               }`}
             >
               <Zap className="h-4 w-4 inline mr-2" />
@@ -115,10 +145,10 @@ export default function Home() {
             </button>
             <button
               onClick={() => setActiveTab('demo')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors duration-200 ${
+              className={`mobile-button rounded-lg font-medium transition-all duration-300 ${
                 activeTab === 'demo'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-gradient-to-r from-base-500 to-base-600 text-white shadow-lg transform scale-105'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
               }`}
             >
               <MessageSquare className="h-4 w-4 inline mr-2" />
@@ -126,10 +156,10 @@ export default function Home() {
             </button>
             <button
               onClick={() => setActiveTab('settings')}
-              className={`px-6 py-3 rounded-md text-sm font-medium transition-colors duration-200 ${
+              className={`mobile-button rounded-lg font-medium transition-all duration-300 ${
                 activeTab === 'settings'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-gradient-to-r from-base-500 to-base-600 text-white shadow-lg transform scale-105'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
               }`}
             >
               <Settings className="h-4 w-4 inline mr-2" />
@@ -139,108 +169,147 @@ export default function Home() {
         </div>
 
         {/* Tab Content */}
-        {activeTab === 'integration' && (
-          <div className="max-w-2xl mx-auto">
-            <BaseAppIntegration 
-              currentUser={user}
-              onLike={(postId, authorAddress) => {
-                console.log('Base app like:', { postId, authorAddress })
-              }}
-              onTip={(authorAddress, amount, message) => {
-                console.log('Base app tip:', { authorAddress, amount, message })
-              }}
-            />
-          </div>
-        )}
-
-        {activeTab === 'demo' && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">How It Works</h3>
-              <p className="text-gray-600 mb-6">
-                This mini app integrates directly with Base app's like system. Here's how it works:
-              </p>
-              
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="bg-base-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">1</div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Set Your Default Tip</h4>
-                    <p className="text-sm text-gray-600">Choose how much you want to tip when you like posts (e.g., $0.10, $0.25, $1.00)</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <div className="bg-base-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">2</div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Like Posts in Base App</h4>
-                    <p className="text-sm text-gray-600">Use Base app normally - like posts as you always do</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start space-x-3">
-                  <div className="bg-base-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold">3</div>
-                  <div>
-                    <h4 className="font-medium text-gray-900">Auto-Tip Sent</h4>
-                    <p className="text-sm text-gray-600">Your preset tip amount is automatically sent to the post author via x402 protocol</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-green-50 rounded-lg">
-                <h4 className="font-medium text-green-900 mb-2">Perfect for Base App!</h4>
-                <p className="text-sm text-green-800">
-                  This creates a seamless experience where liking posts automatically rewards creators. 
-                  No extra steps, no complex UI - just like and tip!
-                </p>
-              </div>
+        <div className="slide-up">
+          {activeTab === 'integration' && (
+            <div className="max-w-4xl mx-auto">
+              <BaseAppIntegration 
+                currentUser={user}
+                onLike={(postId, authorAddress) => {
+                  console.log('Base app like:', { postId, authorAddress })
+                }}
+                onTip={(authorAddress, amount, message) => {
+                  console.log('Base app tip:', { authorAddress, amount, message })
+                }}
+              />
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'settings' && (
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Integration Settings</h3>
-              <p className="text-gray-600 mb-6">
-                Configure how the auto-tip system works with Base app.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-2">Base App Integration</h4>
-                  <p className="text-sm text-gray-600 mb-3">
-                    This mini app hooks into Base app's like system to automatically send tips.
+          {activeTab === 'demo' && (
+            <div className="max-w-4xl mx-auto">
+              <div className="tip-card mb-6">
+                <div className="text-center mb-6">
+                  <div className="floating-animation mb-4">
+                    <div className="bg-gradient-to-r from-base-500 to-base-600 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center pulse-glow">
+                      <Sparkles className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">How It Works</h3>
+                  <p className="mobile-text text-gray-600">
+                    Revolutionary auto-tipping that integrates seamlessly with Base app's like system.
                   </p>
-                  <div className="text-sm text-gray-500">
-                    <p>• Detects when you like posts in Base app</p>
-                    <p>• Automatically sends your preset tip amount</p>
-                    <p>• Uses x402 protocol for seamless payments</p>
-                    <p>• Works with USDC on Base network</p>
+                </div>
+                
+                <div className="mobile-grid gap-6">
+                  <div className="flex items-start space-x-4 bounce-in" style={{ animationDelay: '0.1s' }}>
+                    <div className="bg-gradient-to-r from-base-500 to-base-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold shadow-lg">1</div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Set Your Default Tip</h4>
+                      <p className="mobile-text-small text-gray-600">Choose how much you want to tip when you like posts (e.g., $0.10, $0.25, $1.00)</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4 bounce-in" style={{ animationDelay: '0.2s' }}>
+                    <div className="bg-gradient-to-r from-base-500 to-base-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold shadow-lg">2</div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Like Posts in Base App</h4>
+                      <p className="mobile-text-small text-gray-600">Use Base app normally - like posts as you always do</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-4 bounce-in" style={{ animationDelay: '0.3s' }}>
+                    <div className="bg-gradient-to-r from-base-500 to-base-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold shadow-lg">3</div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Auto-Tip Sent</h4>
+                      <p className="mobile-text-small text-gray-600">Your preset tip amount is automatically sent to the post author via x402 protocol</p>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Technical Details</h4>
-                  <p className="text-sm text-blue-800">
-                    The integration works by registering a handler with Base app's like system. 
-                    When you like a post, it triggers the auto-tip functionality with your preset amount.
+                <div className="mt-8 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-2 rounded-full">
+                      <Crown className="h-5 w-5 text-white" />
+                    </div>
+                    <h4 className="font-semibold text-green-900">Perfect for Base App!</h4>
+                  </div>
+                  <p className="mobile-text-small text-green-800">
+                    This creates a seamless experience where liking posts automatically rewards creators. 
+                    No extra steps, no complex UI - just like and tip! 🚀
                   </p>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="max-w-4xl mx-auto">
+              <div className="tip-card">
+                <div className="text-center mb-6">
+                  <div className="floating-animation mb-4">
+                    <div className="bg-gradient-to-r from-base-500 to-base-600 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center pulse-glow">
+                      <Settings className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Integration Settings</h3>
+                  <p className="mobile-text text-gray-600">
+                    Configure how the auto-tip system works with Base app.
+                  </p>
+                </div>
+                
+                <div className="mobile-grid gap-6">
+                  <div className="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl border border-gray-200">
+                    <h4 className="font-semibold text-gray-900 mb-3">Base App Integration</h4>
+                    <p className="mobile-text-small text-gray-600 mb-4">
+                      This mini app hooks into Base app's like system to automatically send tips.
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-base-500 rounded-full"></div>
+                        <span className="mobile-text-small text-gray-600">Detects when you like posts in Base app</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-base-500 rounded-full"></div>
+                        <span className="mobile-text-small text-gray-600">Automatically sends your preset tip amount</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-base-500 rounded-full"></div>
+                        <span className="mobile-text-small text-gray-600">Uses x402 protocol for seamless payments</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-2 h-2 bg-base-500 rounded-full"></div>
+                        <span className="mobile-text-small text-gray-600">Works with USDC on Base network</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200">
+                    <h4 className="font-semibold text-blue-900 mb-3">Technical Details</h4>
+                    <p className="mobile-text-small text-blue-800">
+                      The integration works by registering a handler with Base app's like system. 
+                      When you like a post, it triggers the auto-tip functionality with your preset amount.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-base-200 mt-16">
-        <div className="max-w-4xl mx-auto px-4 py-8 text-center">
-          <p className="text-gray-600 text-sm">
+      <footer className="relative bg-white/80 backdrop-blur-md border-t border-white/20 mt-16">
+        <div className="max-w-6xl mx-auto mobile-container py-6 sm:py-8 text-center">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <div className="bg-gradient-to-r from-base-500 to-base-600 p-2 rounded-full">
+              <Heart className="h-4 w-4 text-white fill-current" />
+            </div>
+            <span className="font-semibold text-gray-900">LIke n Tip</span>
+          </div>
+          <p className="mobile-text-small text-gray-600 mb-2">
             Built with ❤️ for the Base app community
           </p>
-          <p className="text-gray-500 text-xs mt-2">
-            Seamless auto-tipping integrated with Base app's like system
+          <p className="mobile-text-small text-gray-500">
+            Revolutionary auto-tipping integrated with Base app's like system
           </p>
         </div>
       </footer>
