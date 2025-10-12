@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
   async headers() {
     return [
       {
@@ -9,10 +8,6 @@ const nextConfig = {
           {
             key: 'Content-Type',
             value: 'application/json',
-          },
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
           },
         ],
       },
