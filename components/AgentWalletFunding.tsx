@@ -113,7 +113,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
         abi: USDC_ABI,
         functionName: 'transfer',
         args: [agentInfo.address as `0x${string}`, amountInUnits],
-        chainId: base.id,
+        chain: base,
         account: userAddress,
       })
 
