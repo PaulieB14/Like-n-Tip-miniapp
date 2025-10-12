@@ -1,13 +1,12 @@
 // Farcaster Comment Service
 // Handles posting comments to Farcaster posts
 
-export interface CommentData {
+export interface PostCommentParams {
   postUrl: string
   message: string
-  authorFid?: number
 }
 
-export interface CommentResult {
+export interface PostCommentResult {
   success: boolean
   commentHash?: string
   error?: string
@@ -20,183 +19,31 @@ export class FarcasterCommentService {
     this.apiKey = apiKey
   }
 
-  /**
-   * Post a comment to a Farcaster post
-   * This would integrate with Farcaster API or Neynar API
-   */
-  async postComment(commentData: CommentData): Promise<CommentResult> {
-    try {
-      console.log('Posting comment:', commentData)
-      
-      // For now, we'll simulate the comment posting
-      // In a real implementation, you'd use the Farcaster API or Neynar API
-      
-      // Extract post hash from URL
-      const postHash = this.extractPostHash(commentData.postUrl)
-      if (!postHash) {
-        return {
-          success: false,
-          error: 'Could not extract post hash from URL'
-        }
-      }
+  async postComment({ postUrl, message }: PostCommentParams): Promise<PostCommentResult> {
+    console.log('Simulating Farcaster comment post:', { postUrl, message, apiKey: this.apiKey })
+    
+    // In a real implementation, you would use a Farcaster API client (e.g., Neynar)
+    // to post a comment to the specified post.
+    // This would involve:
+    // 1. Authenticating with the Farcaster API (e.g., using a signer)
+    // 2. Constructing the cast (comment) payload
+    // 3. Sending the cast transaction
 
-      // Simulate API call to post comment
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Generate mock comment hash
-      const commentHash = `0x${Math.random().toString(16).substr(2, 40)}`
-      
-      console.log('Comment posted successfully:', commentHash)
-      
-      return {
-        success: true,
-        commentHash: commentHash
-      }
-      
-    } catch (error: any) {
-      console.error('Failed to post comment:', error)
-      return {
-        success: false,
-        error: error.message || 'Failed to post comment'
-      }
+    await new Promise(resolve => setTimeout(resolve, 1500)) // Simulate API call
+
+    const mockCommentHash = `0x${Math.random().toString(16).substr(2, 40)}`
+    console.log('Mock Farcaster comment posted:', mockCommentHash)
+
+    return { success: true, commentHash: mockCommentHash }
+  }
+
+  static generateTipMessage(amount: number, currency: string): string {
+    if (amount >= 1.00) {
+      return `💰 Tipped $${amount.toFixed(2)} ${currency} via Like n Tip`
+    } else if (amount >= 0.50) {
+      return `💸 Tipped $${amount.toFixed(2)} ${currency} via Like n Tip`
+    } else {
+      return `🪙 Tipped $${amount.toFixed(2)} ${currency} via Like n Tip`
     }
-  }
-
-  /**
-   * Extract post hash from Farcaster URL
-   */
-  private extractPostHash(url: string): string | null {
-    try {
-      const urlObj = new URL(url)
-      const pathParts = urlObj.pathname.split('/').filter(Boolean)
-      
-      // For URLs like https://warpcast.com/username/0x123...
-      if (pathParts.length >= 2) {
-        const postHash = pathParts[1]
-        if (postHash.startsWith('0x') && postHash.length >= 10) {
-          return postHash
-        }
-      }
-      
-      // For URLs like https://farcaster.xyz/username
-      // We can't extract a specific post hash, so return the username
-      if (pathParts.length >= 1) {
-        return pathParts[0]
-      }
-      
-      return null
-    } catch (error) {
-      console.error('Error extracting post hash:', error)
-      return null
-    }
-  }
-
-  /**
-   * Generate tip comment message
-   */
-  static generateTipMessage(amount: number, currency: string = 'USDC'): string {
-    const emoji = amount >= 1 ? '💰' : amount >= 0.5 ? '💸' : '🪙'
-    return `${emoji} Tipped $${amount.toFixed(2)} ${currency} via Like n Tip`
-  }
-}
-
-// Handles posting comments to Farcaster posts
-
-export interface CommentData {
-  postUrl: string
-  message: string
-  authorFid?: number
-}
-
-export interface CommentResult {
-  success: boolean
-  commentHash?: string
-  error?: string
-}
-
-export class FarcasterCommentService {
-  private apiKey: string
-
-  constructor(apiKey: string) {
-    this.apiKey = apiKey
-  }
-
-  /**
-   * Post a comment to a Farcaster post
-   * This would integrate with Farcaster API or Neynar API
-   */
-  async postComment(commentData: CommentData): Promise<CommentResult> {
-    try {
-      console.log('Posting comment:', commentData)
-      
-      // For now, we'll simulate the comment posting
-      // In a real implementation, you'd use the Farcaster API or Neynar API
-      
-      // Extract post hash from URL
-      const postHash = this.extractPostHash(commentData.postUrl)
-      if (!postHash) {
-        return {
-          success: false,
-          error: 'Could not extract post hash from URL'
-        }
-      }
-
-      // Simulate API call to post comment
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Generate mock comment hash
-      const commentHash = `0x${Math.random().toString(16).substr(2, 40)}`
-      
-      console.log('Comment posted successfully:', commentHash)
-      
-      return {
-        success: true,
-        commentHash: commentHash
-      }
-      
-    } catch (error: any) {
-      console.error('Failed to post comment:', error)
-      return {
-        success: false,
-        error: error.message || 'Failed to post comment'
-      }
-    }
-  }
-
-  /**
-   * Extract post hash from Farcaster URL
-   */
-  private extractPostHash(url: string): string | null {
-    try {
-      const urlObj = new URL(url)
-      const pathParts = urlObj.pathname.split('/').filter(Boolean)
-      
-      // For URLs like https://warpcast.com/username/0x123...
-      if (pathParts.length >= 2) {
-        const postHash = pathParts[1]
-        if (postHash.startsWith('0x') && postHash.length >= 10) {
-          return postHash
-        }
-      }
-      
-      // For URLs like https://farcaster.xyz/username
-      // We can't extract a specific post hash, so return the username
-      if (pathParts.length >= 1) {
-        return pathParts[0]
-      }
-      
-      return null
-    } catch (error) {
-      console.error('Error extracting post hash:', error)
-      return null
-    }
-  }
-
-  /**
-   * Generate tip comment message
-   */
-  static generateTipMessage(amount: number, currency: string = 'USDC'): string {
-    const emoji = amount >= 1 ? '💰' : amount >= 0.5 ? '💸' : '🪙'
-    return `${emoji} Tipped $${amount.toFixed(2)} ${currency} via Like n Tip`
   }
 }
