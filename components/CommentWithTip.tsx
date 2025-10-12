@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { MessageCircle, Send, Gift, CheckCircle, AlertCircle } from 'lucide-react'
 import { parseCommentForTip, formatTipAmount, type CommentTipResult } from '@/lib/commentTipParser'
+import { createPaymentService, validateTipAmount, type TipResult } from '@/lib/paymentService'
+import { useAccount, useWriteContract } from 'wagmi'
 
 interface CommentWithTipProps {
   postId: string
@@ -17,11 +19,15 @@ export default function CommentWithTip({
   postAuthorAddress,
   onTipSent
 }: CommentWithTipProps) {
+  const { address, isConnected } = useAccount()
+  const { writeContract } = useWriteContract()
+  
   const [comment, setComment] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showTipPreview, setShowTipPreview] = useState(false)
   const [tipResult, setTipResult] = useState<CommentTipResult | null>(null)
   const [submittedComment, setSubmittedComment] = useState('')
+  const [tipError, setTipError] = useState<string | null>(null)
 
   const handleCommentChange = (value: string) => {
     setComment(value)
@@ -35,23 +41,45 @@ export default function CommentWithTip({
   const handleSubmit = async () => {
     if (!comment.trim()) return
 
+    // Check if wallet is connected
+    if (!isConnected || !address) {
+      setTipError('Please connect your wallet to send tips')
+      return
+    }
+
     setIsSubmitting(true)
+    setTipError(null)
     
     try {
-      // Simulate comment submission
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // If there's a tip, process it
+      // If there's a tip, process it first
       if (tipResult?.hasTip && tipResult.tip) {
-        // Simulate tip transaction
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // Validate tip amount
+        const validation = validateTipAmount(tipResult.tip.amount)
+        if (!validation.valid) {
+          setTipError(validation.error || 'Invalid tip amount')
+          setIsSubmitting(false)
+          return
+        }
+
+        // Create payment service
+        const paymentService = createPaymentService(writeContract, address)
         
-        const mockTxHash = `0x${Math.random().toString(16).substr(2, 40)}`
-        
-        // Callback to parent
-        onTipSent?.(tipResult.tip.amount, postAuthor, mockTxHash)
-        
-        console.log(`Tip sent: ${formatTipAmount(tipResult.tip.amount)} to @${postAuthor} - TX: ${mockTxHash}`)
+        // Send real tip
+        const paymentResult = await paymentService.sendTip({
+          recipientAddress: postAuthorAddress,
+          amount: tipResult.tip.amount,
+          message: tipResult.tip.message
+        })
+
+        if (paymentResult.success && paymentResult.txHash) {
+          // Callback to parent
+          onTipSent?.(tipResult.tip.amount, postAuthor, paymentResult.txHash)
+          console.log(`Real tip sent: ${formatTipAmount(tipResult.tip.amount)} to @${postAuthor} - TX: ${paymentResult.txHash}`)
+        } else {
+          setTipError(paymentResult.error || 'Failed to send tip')
+          setIsSubmitting(false)
+          return
+        }
       }
       
       // Submit the cleaned comment (without tip part)
@@ -63,8 +91,9 @@ export default function CommentWithTip({
       setTipResult(null)
       setShowTipPreview(false)
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to submit comment:', error)
+      setTipError(error.message || 'Failed to submit comment')
     } finally {
       setIsSubmitting(false)
     }
@@ -103,6 +132,23 @@ export default function CommentWithTip({
                     "{tipResult.cleanedComment}"
                   </p>
                 )}
+                {!isConnected && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    ⚠️ Connect wallet to send real tips
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Error Display */}
+            {tipError && (
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center space-x-1">
+                  <AlertCircle className="h-3 w-3 text-red-600" />
+                  <span className="text-xs font-medium text-red-900">
+                    {tipError}
+                  </span>
+                </div>
               </div>
             )}
             

@@ -9,6 +9,7 @@ import { useMiniAppContext } from '@/lib/useMiniAppContext'
 import { sdk } from '@farcaster/miniapp-sdk'
 import TipDemo from './TipDemo'
 import CommentTipDemo from './CommentTipDemo'
+import UniversalCommentTip from './UniversalCommentTip'
 
 interface AutoTipSettings {
   enabled: boolean
@@ -16,6 +17,7 @@ interface AutoTipSettings {
   quickAmounts: number[]
   useSponsoredGas: boolean
   useAtomicBatch: boolean
+  commentTippingEnabled: boolean
 }
 
 export default function UltimateBaseIntegration() {
@@ -31,13 +33,14 @@ export default function UltimateBaseIntegration() {
     quickAmounts: [0.01, 0.05, 0.10, 0.25, 0.50, 1.00],
     useSponsoredGas: true,
     useAtomicBatch: true,
+    commentTippingEnabled: false,
   })
 
   const [showSettings, setShowSettings] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [onboardingStep, setOnboardingStep] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
-  const [activeTab, setActiveTab] = useState('comments')
+  const [activeTab, setActiveTab] = useState('home')
   const [recentTips, setRecentTips] = useState<Array<{
     postId: string
     amount: number
@@ -257,47 +260,165 @@ export default function UltimateBaseIntegration() {
   // Main Content
   const renderHomeTab = () => (
     <div className="space-y-6">
-      {/* Primary CTA - Auto-Tip Status */}
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold mb-1">Auto-Tip Status</h2>
-              <p className="text-blue-100">Seamlessly tip creators when you like their posts</p>
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+            <MessageCircle className="h-6 w-6" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">Tip in Comments</h2>
+            <p className="text-blue-100">Tip creators by including amounts in your comments</p>
+          </div>
+        </div>
+        
+        {!settings.commentTippingEnabled && (
+          <button
+            onClick={() => setShowSettings(true)}
+            className="w-full bg-white text-blue-600 font-semibold py-3 rounded-xl hover:bg-blue-50 transition-colors"
+          >
+            Enable Comment Tipping
+          </button>
+        )}
+      </div>
+
+      {/* How It Works */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4">How Comment Tipping Works</h3>
+        <div className="space-y-4">
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-blue-600 font-bold text-sm">1</span>
             </div>
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <Heart className="h-6 w-6 text-white" />
+            <div>
+              <h4 className="font-medium text-slate-900">Paste Post URL</h4>
+              <p className="text-sm text-slate-600">Copy any Farcaster post URL and paste it to load the post</p>
+            </div>
+          </div>
+          
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-green-600 font-bold text-sm">2</span>
+            </div>
+            <div>
+              <h4 className="font-medium text-slate-900">Write Comment with Tip</h4>
+              <p className="text-sm text-slate-600">Include tip amounts like "$0.10 tip" or "💖 $0.25" in your comment</p>
+            </div>
+          </div>
+          
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-purple-600 font-bold text-sm">3</span>
+            </div>
+            <div>
+              <h4 className="font-medium text-slate-900">Auto-Send Tip</h4>
+              <p className="text-sm text-slate-600">System detects tips and sends real USDC automatically</p>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="p-6">
+      {/* Tip Examples */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4">Tip Examples</h3>
+        <div className="space-y-3">
+          <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+            <p className="text-sm font-medium text-green-900">"Great post! $0.10 tip"</p>
+            <p className="text-xs text-green-700">Sends $0.10 USDC to the author</p>
+          </div>
+          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <p className="text-sm font-medium text-blue-900">"Amazing work! 💖 $0.25"</p>
+            <p className="text-xs text-blue-700">Sends $0.25 USDC with emoji</p>
+          </div>
+          <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <p className="text-sm font-medium text-purple-900">"Here's 0.50 USDC for this"</p>
+            <p className="text-xs text-purple-700">Sends $0.50 USDC in natural language</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Status Cards */}
+      <div className="grid grid-cols-1 gap-4">
+        {/* Comment Tipping Status */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                settings.enabled && isConnected 
-                  ? 'bg-green-100 text-green-600' 
-                  : 'bg-slate-100 text-slate-400'
-              }`}>
-                <Heart className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-900">Auto-Tip</h3>
-                <p className="text-sm text-slate-600">
-                  {settings.enabled && isConnected 
-                    ? `$${settings.defaultAmount.toFixed(2)} USDC per like`
-                    : 'Disabled'
-                  }
-                </p>
-              </div>
-            </div>
+            <h3 className="font-semibold text-slate-900">Comment Tipping</h3>
+            <div className={`w-3 h-3 rounded-full ${settings.commentTippingEnabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+          </div>
+          <p className="text-slate-600 text-sm mb-4">
+            {settings.commentTippingEnabled ? 'Comment tipping is enabled' : 'Comment tipping is disabled'}
+          </p>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="w-full bg-slate-100 text-slate-700 font-medium py-2 rounded-xl hover:bg-slate-200 transition-colors"
+          >
+            {settings.commentTippingEnabled ? 'Configure' : 'Enable'}
+          </button>
+        </div>
+
+        {/* Wallet Status */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-slate-900">Wallet Status</h3>
+            <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+          </div>
+          <p className="text-slate-600 text-sm mb-4">
+            {isConnected ? `Connected: ${address?.slice(0, 6)}...${address?.slice(-4)}` : 'Wallet not connected'}
+          </p>
+          {!isConnected && (
             <button
               onClick={() => setShowSettings(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors"
+              className="w-full bg-blue-500 text-white font-medium py-2 rounded-xl hover:bg-blue-600 transition-colors"
             >
-              {settings.enabled ? 'Configure' : 'Enable'}
+              Connect Wallet
             </button>
+          )}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4">Get Started</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setActiveTab('universal')}
+            className="p-4 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors"
+          >
+            <MessageCircle className="h-6 w-6 text-blue-600 mb-2" />
+            <p className="font-medium text-blue-900">Tip Any Post</p>
+          </button>
+          <button
+            onClick={() => setActiveTab('demo')}
+            className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-colors"
+          >
+            <Gift className="h-6 w-6 text-green-600 mb-2" />
+            <p className="font-medium text-green-900">Try Demo</p>
+          </button>
+        </div>
+      </div>
+
+      {/* Features */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4">Features</h3>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <span className="text-sm text-slate-700">Works with any Farcaster post</span>
           </div>
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <span className="text-sm text-slate-700">Real USDC transactions on Base</span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <span className="text-sm text-slate-700">Multiple tip formats supported</span>
+          </div>
+          <div className="flex items-center space-x-3">
+            <CheckCircle className="h-5 w-5 text-green-500" />
+            <span className="text-sm text-slate-700">Clean comments without tip parts</span>
+          </div>
+        </div>
+      </div>
 
           {!isConnected && (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
@@ -583,19 +704,24 @@ export default function UltimateBaseIntegration() {
               </div>
             </div>
             
-            {/* User Profile Display - Mobile Optimized */}
-            {user && (
-              <div className="flex items-center space-x-1">
-                {user.pfpUrl && (
-                  <img 
-                    src={user.pfpUrl} 
-                    alt="Profile" 
-                    className="w-5 h-5 rounded-full border border-white shadow-sm" 
-                  />
-                )}
-                <span className="text-xs font-medium text-slate-900 hidden sm:block">@{user.username}</span>
+            <div className="flex items-center space-x-2">
+              {/* Comment Tipping Status */}
+              <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                settings.commentTippingEnabled 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                {settings.commentTippingEnabled ? '🟢 Active' : '⚪ Inactive'}
               </div>
-            )}
+              
+              {/* Settings Button */}
+              <button
+                onClick={() => setShowSettings(true)}
+                className="p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -603,6 +729,15 @@ export default function UltimateBaseIntegration() {
       {/* Main Content - Mobile Optimized */}
       <div className="px-3 py-4 pb-20">
         {activeTab === 'home' && renderHomeTab()}
+        {activeTab === 'universal' && <UniversalCommentTip onTipSent={(amount, recipient, txHash, postUrl) => {
+          setRecentTips(prev => [{
+            postId: postUrl || 'universal-tip',
+            amount,
+            timestamp: new Date(),
+            txHash,
+            recipient
+          }, ...prev.slice(0, 9)])
+        }} />}
         {activeTab === 'demo' && <TipDemo />}
         {activeTab === 'comments' && <CommentTipDemo />}
         {activeTab === 'history' && renderHistoryTab()}
@@ -613,13 +748,13 @@ export default function UltimateBaseIntegration() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-1">
         <div className="flex justify-around">
           <button
-            onClick={() => setActiveTab('comments')}
+            onClick={() => setActiveTab('universal')}
             className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
-              activeTab === 'comments' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
+              activeTab === 'universal' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
             }`}
           >
             <MessageCircle className="h-4 w-4 mb-1" />
-            <span className="text-xs font-medium">Comments</span>
+            <span className="text-xs font-medium">Tip Any Post</span>
           </button>
           
           <button
@@ -671,7 +806,29 @@ export default function UltimateBaseIntegration() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Enable/Disable */}
+              {/* Comment Tipping Toggle */}
+              <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-semibold text-green-900">Comment Tipping</h4>
+                    <p className="text-sm text-green-700">Enable tip-in-comments functionality</p>
+                  </div>
+                  <button
+                    onClick={() => updateSettings({ commentTippingEnabled: !settings.commentTippingEnabled })}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      settings.commentTippingEnabled ? 'bg-green-500' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        settings.commentTippingEnabled ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto-Tip on Like */}
               <div className="p-4 bg-slate-50 rounded-xl">
                 <div className="flex items-center justify-between">
                   <div>
