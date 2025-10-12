@@ -19,9 +19,13 @@ export default function SimpleTipApp() {
   const quickAmounts = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00]
 
   const loadPost = async () => {
+    console.log('=== LOAD POST FUNCTION CALLED ===')
     console.log('Load Post clicked, URL:', postUrl)
+    alert('loadPost function called!')
+    
     if (!postUrl.trim()) {
       console.log('No URL provided')
+      alert('No URL provided')
       return
     }
 
@@ -161,6 +165,9 @@ export default function SimpleTipApp() {
           <button
             onClick={() => {
               console.log('Button clicked!')
+              console.log('postUrl:', postUrl)
+              console.log('isLoadingPost:', isLoadingPost)
+              alert('Button clicked! Check console for details.')
               loadPost()
             }}
             disabled={!postUrl.trim() || isLoadingPost}
