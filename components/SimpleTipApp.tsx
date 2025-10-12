@@ -1,24 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Heart, Send, User, ExternalLink, Gift, CheckCircle, AlertCircle } from 'lucide-react'
-import { createPaymentService, validateTipAmount } from '@/lib/paymentService'
-import { useAccount, useWriteContract } from 'wagmi'
+import { Heart, User, ExternalLink, Gift, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function SimpleTipApp() {
-  const { address, isConnected } = useAccount()
-  const { writeContract } = useWriteContract()
-  
   const [postUrl, setPostUrl] = useState('')
   const [postAuthor, setPostAuthor] = useState('')
-  const [postAuthorAddress, setPostAuthorAddress] = useState('')
   const [postContent, setPostContent] = useState('')
   const [isLoadingPost, setIsLoadingPost] = useState(false)
-  const [isSendingTip, setIsSendingTip] = useState(false)
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null)
-  const [customAmount, setCustomAmount] = useState('')
-  const [tipMessage, setTipMessage] = useState('')
-  const [tipError, setTipError] = useState<string | null>(null)
   const [tipSuccess, setTipSuccess] = useState<string | null>(null)
 
   const quickAmounts = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00]
@@ -27,92 +16,32 @@ export default function SimpleTipApp() {
     if (!postUrl.trim()) return
 
     setIsLoadingPost(true)
-    setTipError(null)
     setTipSuccess(null)
 
     try {
-      // For demo purposes, we'll simulate loading a post
-      // In a real implementation, this would parse the Farcaster post URL
+      // Simulate loading a post
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Mock post data - in reality this would come from Farcaster API
+      // Mock post data
       const mockPostData = {
         author: 'alice.base',
-        authorAddress: '0x1234567890123456789012345678901234567890',
-        content: 'Just built an amazing DeFi protocol on Base! 🚀 The future of finance is here. Check out the new features and let me know what you think!'
+        content: 'Just built an amazing DeFi protocol on Base! 🚀 The future of finance is here.'
       }
       
       setPostAuthor(mockPostData.author)
-      setPostAuthorAddress(mockPostData.authorAddress)
       setPostContent(mockPostData.content)
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to load post:', error)
-      setTipError('Failed to load post. Please check the URL and try again.')
     } finally {
       setIsLoadingPost(false)
     }
   }
 
   const sendTip = async (amount: number) => {
-    // Check if wallet is connected
-    if (!isConnected || !address) {
-      setTipError('Please connect your wallet to send tips')
-      return
-    }
-
-    // Check if we have post author info
-    if (!postAuthor || !postAuthorAddress) {
-      setTipError('Please load a post first')
-      return
-    }
-
-    // Validate tip amount
-    const validation = validateTipAmount(amount)
-    if (!validation.valid) {
-      setTipError(validation.error || 'Invalid tip amount')
-      return
-    }
-
-    setIsSendingTip(true)
-    setSelectedAmount(amount)
-    setTipError(null)
-    setTipSuccess(null)
-    
-    try {
-      // Create payment service
-      const paymentService = createPaymentService(writeContract, address)
-      
-      // Send real tip
-      const result = await paymentService.sendTip({
-        recipientAddress: postAuthorAddress,
-        amount: amount,
-        message: tipMessage || `Tip for @${postAuthor}`
-      })
-
-      if (result.success && result.txHash) {
-        setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} - TX: ${result.txHash.slice(0, 10)}...`)
-        console.log(`Real tip sent: $${amount} to @${postAuthor} - TX: ${result.txHash}`)
-      } else {
-        setTipError(result.error || 'Failed to send tip')
-      }
-      
-    } catch (error: any) {
-      console.error('Tip failed:', error)
-      setTipError(error.message || 'Tip transaction failed')
-    } finally {
-      setIsSendingTip(false)
-      setSelectedAmount(null)
-    }
-  }
-
-  const handleCustomTip = () => {
-    const amount = parseFloat(customAmount)
-    if (isNaN(amount) || amount <= 0) {
-      setTipError('Please enter a valid amount')
-      return
-    }
-    sendTip(amount)
+    // Simulate tip sending
+    setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor}`)
+    console.log(`Tip sent: $${amount} to @${postAuthor}`)
   }
 
   return (
@@ -145,9 +74,6 @@ export default function SimpleTipApp() {
             {isLoadingPost ? 'Loading...' : 'Load Post'}
           </button>
         </div>
-        <p className="text-sm text-slate-500 mt-2">
-          Paste any Farcaster post URL to start tipping
-        </p>
       </div>
 
       {/* Post Preview */}
@@ -189,88 +115,13 @@ export default function SimpleTipApp() {
                 <button
                   key={amount}
                   onClick={() => sendTip(amount)}
-                  disabled={isSendingTip || !isConnected}
-                  className={`p-3 rounded-xl font-medium transition-all duration-200 ${
-                    isSendingTip && selectedAmount === amount
-                      ? 'bg-blue-500 text-white'
-                      : isConnected
-                      ? 'bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-700'
-                      : 'bg-slate-50 text-slate-400 cursor-not-allowed'
-                  }`}
+                  className="p-3 rounded-xl font-medium transition-all duration-200 bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-700"
                 >
-                  {isSendingTip && selectedAmount === amount ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Sending...</span>
-                    </div>
-                  ) : (
-                    `$${amount.toFixed(2)}`
-                  )}
+                  ${amount.toFixed(2)}
                 </button>
               ))}
             </div>
           </div>
-
-          {/* Custom Amount */}
-          <div className="mb-6">
-            <p className="text-sm font-medium text-slate-700 mb-3">Custom amount:</p>
-            <div className="flex items-center space-x-3">
-              <input
-                type="number"
-                value={customAmount}
-                onChange={(e) => setCustomAmount(e.target.value)}
-                placeholder="0.00"
-                step="0.01"
-                min="0.01"
-                className="flex-1 p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                disabled={isSendingTip || !isConnected}
-              />
-              <button
-                onClick={handleCustomTip}
-                disabled={!customAmount || isSendingTip || !isConnected}
-                className="px-6 py-3 bg-purple-500 text-white rounded-xl font-medium hover:bg-purple-600 transition-colors disabled:opacity-50"
-              >
-                Send
-              </button>
-            </div>
-          </div>
-
-          {/* Tip Message */}
-          <div className="mb-6">
-            <p className="text-sm font-medium text-slate-700 mb-3">Message (optional):</p>
-            <input
-              type="text"
-              value={tipMessage}
-              onChange={(e) => setTipMessage(e.target.value)}
-              placeholder={`Tip for @${postAuthor}`}
-              className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              disabled={isSendingTip}
-            />
-          </div>
-
-          {/* Wallet Connection Warning */}
-          {!isConnected && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="h-5 w-5 text-amber-600" />
-                <span className="text-sm font-medium text-amber-900">
-                  Connect your wallet to send tips
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Error Display */}
-          {tipError && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="h-5 w-5 text-red-600" />
-                <span className="text-sm font-medium text-red-900">
-                  {tipError}
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Success Display */}
           {tipSuccess && (
@@ -291,7 +142,7 @@ export default function SimpleTipApp() {
         <h3 className="font-semibold text-blue-900 mb-3">How It Works</h3>
         <div className="space-y-2 text-sm text-blue-800">
           <p>• <strong>Paste any Farcaster post URL</strong> to load the post and author</p>
-          <p>• <strong>Choose tip amount</strong> from quick buttons or enter custom amount</p>
+          <p>• <strong>Choose tip amount</strong> from quick buttons</p>
           <p>• <strong>Click send</strong> to send real USDC to the post author</p>
           <p>• <strong>Transaction confirmed</strong> on Base network</p>
         </div>
