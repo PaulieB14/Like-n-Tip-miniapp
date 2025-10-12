@@ -2,8 +2,18 @@
 
 import { useState } from 'react'
 import { Heart, User, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react'
+import AgentWalletFunding from './AgentWalletFunding'
 
-export default function SimpleTipApp() {
+interface SimpleTipAppProps {
+  onTipSent?: (tipData: {
+    postId: string
+    amount: number
+    txHash?: string
+    recipient?: string
+  }) => void
+}
+
+export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const [postUrl, setPostUrl] = useState('')
   const [postAuthor, setPostAuthor] = useState('')
   const [postContent, setPostContent] = useState('')
@@ -75,11 +85,15 @@ export default function SimpleTipApp() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Simple Tip App</h1>
         <p className="text-slate-600">Paste any post URL and send real USDC tips to creators</p>
+        <p className="text-sm text-blue-600 mt-2">💡 Agent wallet handles payments - fund once, tip freely</p>
       </div>
+
+      {/* Agent Wallet Funding */}
+      <AgentWalletFunding />
 
       {/* Post URL Input */}
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-        <h3 className="font-semibold text-slate-900 mb-4">1. Paste Post URL</h3>
+        <h3 className="font-semibold text-slate-900 mb-4">2. Paste Post URL</h3>
         <div className="flex items-center space-x-3">
           <input
             type="url"
@@ -101,7 +115,7 @@ export default function SimpleTipApp() {
       {/* Post Preview */}
       {postAuthor && (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">2. Post Preview</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">3. Post Preview</h3>
           <div className="flex items-start space-x-4">
             <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">
               <User className="h-6 w-6 text-white" />
@@ -127,7 +141,7 @@ export default function SimpleTipApp() {
       {/* Tip Interface */}
       {postAuthor && (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">3. Send Tip</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">4. Send Tip</h3>
 
           {/* Quick Tip Amounts */}
           <div className="mb-6">
@@ -170,12 +184,14 @@ export default function SimpleTipApp() {
 
       {/* How It Works */}
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-        <h3 className="font-semibold text-blue-900 mb-3">How It Works</h3>
+        <h3 className="font-semibold text-blue-900 mb-3">How x402 Tipping Works</h3>
         <div className="space-y-2 text-sm text-blue-800">
-          <p>• <strong>Paste any Farcaster post URL</strong> to load the post and author</p>
+          <p>• <strong>Fund agent wallet</strong> with USDC (one-time setup)</p>
+          <p>• <strong>Paste any Farcaster or Base app post URL</strong> to load the post and author</p>
           <p>• <strong>Choose tip amount</strong> from quick buttons</p>
-          <p>• <strong>Click send</strong> to send USDC tip</p>
-          <p>• <strong>Real transactions</strong> on Base network</p>
+          <p>• <strong>Click send</strong> to trigger x402 autonomous payment</p>
+          <p>• <strong>Agent wallet sends USDC</strong> instantly without user approval</p>
+          <p>• <strong>Automatic comment</strong> posted to the original post</p>
         </div>
       </div>
     </div>
