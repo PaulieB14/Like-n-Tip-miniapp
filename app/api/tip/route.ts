@@ -26,7 +26,32 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  // For GET requests with payment, redirect to POST
+  return NextResponse.json({ error: 'Use POST method for payments' }, { status: 405 })
+}
+
+export async function POST(request: NextRequest) {
   try {
+    const body = await request.json()
+    const { recipient, amount, message } = body
+
+    // Check for payment header (x402 protocol)
+    const paymentHeader = request.headers.get('X-PAYMENT')
+
+    if (!paymentHeader) {
+      // No payment provided - return 402 Payment Required
+      return NextResponse.json(
+        {
+          amount: amount || '0.10',
+          recipient: recipient || '0x0000000000000000000000000000000000000000',
+          reference: `tip_${Date.now()}`,
+          currency: 'USDC',
+          message: 'Payment required to send tip'
+        },
+        { status: 402 }
+      )
+    }
+
     // Parse payment payload
     const paymentPayload = JSON.parse(paymentHeader)
     
