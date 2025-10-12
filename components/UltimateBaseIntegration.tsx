@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { Heart, Settings, User, History } from 'lucide-react'
 import SimpleTipApp from './SimpleTipApp'
 
+// Import the Farcaster SDK
+import { sdk } from '@farcaster/miniapp-sdk'
+
 export default function UltimateBaseIntegration() {
   const [activeTab, setActiveTab] = useState('home')
   const [isReady, setIsReady] = useState(false)
@@ -19,49 +22,23 @@ export default function UltimateBaseIntegration() {
   useEffect(() => {
     const dismissSplash = async () => {
       try {
-        // Check if we're in a Base app environment with multiple SDK detection methods
-        const sdk = (window as any).sdk || (window as any).farcaster || (window as any).miniapp
+        console.log('Calling sdk.actions.ready()...')
         
-        if (typeof window !== 'undefined' && sdk && sdk.actions && sdk.actions.ready) {
-          console.log('SDK found, calling ready...')
-          
-          // Call ready immediately when SDK is available
-          await sdk.actions.ready()
-          setIsReady(true)
-          console.log('Splash screen dismissed - interface ready')
-        } else {
-          console.log('SDK not found, checking for alternative methods...')
-          
-          // Try alternative SDK detection
-          if ((window as any).farcaster && (window as any).farcaster.ready) {
-            await (window as any).farcaster.ready()
-            setIsReady(true)
-            console.log('Farcaster SDK ready called')
-          } else {
-            // Set ready even if no SDK found (for web preview)
-            setIsReady(true)
-            console.log('No SDK found, setting ready anyway')
-          }
-        }
+        // Call ready using the imported SDK
+        await sdk.actions.ready()
+        setIsReady(true)
+        console.log('Splash screen dismissed - interface ready')
       } catch (error) {
         console.log('Error calling ready:', error)
-        setIsReady(true) // Set ready even if error occurs
+        // Set ready even if error occurs (for web preview)
+        setIsReady(true)
       }
     }
     
-    // Try to call ready immediately, then retry multiple times
-    dismissSplash()
+    // Call ready after a short delay to ensure interface is loaded
+    const timer = setTimeout(dismissSplash, 100)
     
-    // Retry after delays in case SDK loads later
-    const timer1 = setTimeout(dismissSplash, 500)
-    const timer2 = setTimeout(dismissSplash, 1000)
-    const timer3 = setTimeout(dismissSplash, 2000)
-    
-    return () => {
-      clearTimeout(timer1)
-      clearTimeout(timer2)
-      clearTimeout(timer3)
-    }
+    return () => clearTimeout(timer)
   }, [])
 
   const renderHomeTab = () => (
