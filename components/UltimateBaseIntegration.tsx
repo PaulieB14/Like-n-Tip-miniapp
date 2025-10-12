@@ -102,8 +102,6 @@ export default function UltimateBaseIntegration() {
         amount: amount,
         message: message,
         capabilities: capabilities,
-        useSponsoredGas: settings.useSponsoredGas,
-        useAtomicBatch: settings.useAtomicBatch,
       })
 
       // Calculate amounts for real transaction
@@ -490,106 +488,6 @@ export default function UltimateBaseIntegration() {
                 />
               </div>
 
-              {settings.enabled && (
-                <>
-                  {/* Default Amount */}
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-3">
-                      Default Tip Amount (USDC)
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {settings.quickAmounts.map((amount) => (
-                        <button
-                          key={amount}
-                          onClick={() => updateSettings({ defaultAmount: amount })}
-                          className={`p-3 text-sm rounded-xl border-2 transition-all duration-200 ${
-                            settings.defaultAmount === amount
-                              ? 'bg-blue-500 text-white border-blue-500 shadow-lg'
-                              : 'bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50'
-                          }`}
-                        >
-                          ${amount.toFixed(2)}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Custom Amount */}
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                      Custom Amount
-                    </label>
-                    <input
-                      type="number"
-                      value={settings.defaultAmount}
-                      onChange={(e) => updateSettings({ defaultAmount: parseFloat(e.target.value) || 0 })}
-                      placeholder="0.10"
-                      step="0.01"
-                      min="0.01"
-                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    />
-                  </div>
-
-                  {/* Base Account Features */}
-                  {isBaseAccount && (
-                    <div className="space-y-4">
-                      <h4 className="font-semibold text-slate-900">Base Account Features</h4>
-                      
-                      <div className="p-4 bg-blue-50 rounded-xl">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h5 className="font-medium text-blue-900">Sponsored Gas</h5>
-                            <p className="text-sm text-blue-700">App pays gas fees for you</p>
-                          </div>
-                          <button
-                            onClick={() => updateSettings({ useSponsoredGas: !settings.useSponsoredGas })}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                              settings.useSponsoredGas ? 'bg-blue-500' : 'bg-slate-300'
-                            }`}
-                          >
-                            <span
-                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                                settings.useSponsoredGas ? 'translate-x-5' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="p-4 bg-purple-50 rounded-xl">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h5 className="font-medium text-purple-900">Atomic Batch</h5>
-                            <p className="text-sm text-purple-700">Optimize transaction performance</p>
-                          </div>
-                          <button
-                            onClick={() => updateSettings({ useAtomicBatch: !settings.useAtomicBatch })}
-                            className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                              settings.useAtomicBatch ? 'bg-purple-500' : 'bg-slate-300'
-                            }`}
-                          >
-                            <span
-                              className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                                settings.useAtomicBatch ? 'translate-x-5' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              <button
-                onClick={() => {
-                  localStorage.setItem("ultimateBaseAutoTipSettings", JSON.stringify(settings))
-                  setShowSettings(false)
-                }}
-                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 px-4 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
-              >
-                Save Settings
-              </button>
             </div>
           </div>
         </div>
