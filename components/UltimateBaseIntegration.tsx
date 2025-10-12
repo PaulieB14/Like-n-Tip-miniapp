@@ -6,6 +6,7 @@ import SimpleTipApp from './SimpleTipApp'
 
 export default function UltimateBaseIntegration() {
   const [activeTab, setActiveTab] = useState('home')
+  const [isReady, setIsReady] = useState(false)
   const [recentTips, setRecentTips] = useState<Array<{
     postId: string
     amount: number
@@ -14,21 +15,30 @@ export default function UltimateBaseIntegration() {
     recipient?: string
   }>>([])
 
-  // Dismiss splash screen when component mounts
+  // Dismiss splash screen when interface is ready
   useEffect(() => {
     const dismissSplash = async () => {
       try {
         // Check if we're in a Base app environment
         if (typeof window !== 'undefined' && (window as any).sdk) {
+          // Wait for DOM to be ready and interface to be rendered
+          await new Promise(resolve => setTimeout(resolve, 300))
+          
+          // Call ready to hide the splash screen
           await (window as any).sdk.actions.ready()
-          console.log('Splash screen dismissed')
+          setIsReady(true)
+          console.log('Splash screen dismissed - interface ready')
         }
       } catch (error) {
-        console.log('Not in Base app environment or SDK not available')
+        console.log('Not in Base app environment or SDK not available:', error)
+        setIsReady(true) // Set ready even if SDK not available
       }
     }
     
-    dismissSplash()
+    // Call ready after interface is loaded to avoid jitter
+    const timer = setTimeout(dismissSplash, 500)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   const renderHomeTab = () => (
@@ -113,6 +123,21 @@ export default function UltimateBaseIntegration() {
       </div>
     </div>
   )
+
+  // Show loading state while dismissing splash screen
+  if (!isReady) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Heart className="h-8 w-8 text-white animate-pulse" />
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Loading Tip App...</h2>
+          <p className="text-slate-600">Preparing your x402 micropayment experience</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
