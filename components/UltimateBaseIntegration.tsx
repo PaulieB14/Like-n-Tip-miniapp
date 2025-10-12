@@ -220,7 +220,19 @@ export default function UltimateBaseIntegration() {
   }
 
   // Main Content - now just renders SimpleTipApp
-  const renderHomeTab = () => null
+  const renderHomeTab = () => (
+    <SimpleTipApp 
+      onTipSent={(tipData) => {
+        setRecentTips(prev => [{
+          postId: tipData.postId || 'unknown',
+          amount: tipData.amount,
+          timestamp: new Date(),
+          txHash: tipData.txHash,
+          recipient: tipData.recipient
+        }, ...prev.slice(0, 9)]) // Keep only last 10 tips
+      }}
+    />
+  )
 
   const renderHistoryTab = () => (
     <div className="space-y-6">

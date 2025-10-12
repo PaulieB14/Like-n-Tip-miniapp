@@ -3,8 +3,18 @@
 import { useState } from 'react'
 import { Heart, User, ExternalLink, Gift, CheckCircle, AlertCircle } from 'lucide-react'
 import { X402PaymentService, validateTipAmount } from '@/lib/x402PaymentService'
+import { FarcasterCommentService } from '@/lib/farcasterComment'
 
-export default function SimpleTipApp() {
+interface SimpleTipAppProps {
+  onTipSent?: (tipData: {
+    postId: string
+    amount: number
+    txHash?: string
+    recipient?: string
+  }) => void
+}
+
+export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const [postUrl, setPostUrl] = useState('')
   const [postAuthor, setPostAuthor] = useState('')
   const [postAuthorAddress, setPostAuthorAddress] = useState('')
@@ -126,6 +136,40 @@ export default function SimpleTipApp() {
       if (result.success) {
         setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} via x402 agent wallet`)
         console.log(`x402 tip sent: $${amount} to @${postAuthor}`, result.txHash)
+        
+        // Post automatic comment
+        try {
+          const commentService = new FarcasterCommentService(
+            process.env.NEXT_PUBLIC_FARCASTER_API_KEY || 'mock-key'
+          )
+          
+          const commentMessage = FarcasterCommentService.generateTipMessage(amount, 'USDC')
+          const commentResult = await commentService.postComment({
+            postUrl: postUrl,
+            message: commentMessage
+          })
+          
+          if (commentResult.success) {
+            console.log('Comment posted successfully:', commentResult.commentHash)
+            setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} + comment posted 💬`)
+          } else {
+            console.log('Tip sent but comment failed:', commentResult.error)
+            setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} (comment failed)`)
+          }
+        } catch (commentError) {
+          console.log('Tip sent but comment failed:', commentError)
+          setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} (comment failed)`)
+        }
+        
+        // Add to history
+        if (onTipSent) {
+          onTipSent({
+            postId: postUrl.split('/').pop() || 'unknown',
+            amount: amount,
+            txHash: result.txHash,
+            recipient: postAuthor
+          })
+        }
       } else {
         setTipError(result.error || 'Failed to send tip')
       }
