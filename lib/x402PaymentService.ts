@@ -1,5 +1,6 @@
 // x402 Payment Service Implementation
 // Based on https://docs.base.org/base-app/agents/x402-agents
+// This implements the real x402 protocol flow
 
 export interface PaymentDetails {
   amount: string
@@ -12,14 +13,15 @@ export interface PaymentResult {
   success: boolean
   payload?: string
   error?: string
+  txHash?: string
 }
 
 export class X402PaymentService {
-  private privateKey: string
+  private agentPrivateKey: string
   private network: string
 
-  constructor(privateKey: string, network: string = 'base') {
-    this.privateKey = privateKey
+  constructor(agentPrivateKey: string, network: string = 'base') {
+    this.agentPrivateKey = agentPrivateKey
     this.network = network
   }
 
@@ -30,44 +32,52 @@ export class X402PaymentService {
    * 3. Create payment payload
    * 4. Retry request with payment header
    */
-  async executePaymentFlow(endpoint: string): Promise<PaymentResult> {
+  async executePaymentFlow(endpoint: string, tipDetails: { recipient: string, amount: number, message: string }): Promise<PaymentResult> {
     try {
-      // Step 1: Initial request
+      console.log('Starting x402 payment flow for tip:', tipDetails)
+      
+      // Step 1: Initial request to tip endpoint
       const initialResponse = await fetch(endpoint, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify(tipDetails)
       })
 
-      // Step 2: Check if payment is required
+      // Step 2: Check if payment is required (402 response)
       if (initialResponse.status === 402) {
         const paymentDetails: PaymentDetails = await initialResponse.json()
+        console.log('Payment required:', paymentDetails)
         
-        // Step 3: Create payment payload
+        // Step 3: Create payment payload using agent's wallet
         const paymentPayload = await this.createPayment(paymentDetails)
         
-        // Step 4: Retry request with payment
+        // Step 4: Retry request with payment header
         const retryResponse = await fetch(endpoint, {
+          method: 'POST',
           headers: {
             'X-PAYMENT': paymentPayload,
             'Content-Type': 'application/json'
-          }
+          },
+          body: JSON.stringify(tipDetails)
         })
 
         if (retryResponse.ok) {
+          const data = await retryResponse.json()
           return {
             success: true,
-            payload: paymentPayload
+            payload: paymentPayload,
+            txHash: data.txHash
           }
         } else {
           return {
             success: false,
-            error: 'Payment processed but service unavailable'
+            error: `Payment processed but service error: ${retryResponse.status}`
           }
         }
       } else if (initialResponse.ok) {
-        // Free tier response
+        // Free tier response (shouldn't happen for tips)
         return {
           success: true,
           payload: 'free'

@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@coinbase/x402": "^0.6.6",
     "@farcaster/miniapp-sdk": "^0.2.0",
     "@farcaster/quick-auth": "^0.0.8",
     "@tanstack/react-query": "^5.90.2",

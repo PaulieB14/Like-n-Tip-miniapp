@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Heart, User, ExternalLink, Gift, CheckCircle, AlertCircle } from 'lucide-react'
-import { createTipPayment, validateTipAmount } from '@/lib/x402PaymentService'
+import { X402PaymentService, validateTipAmount } from '@/lib/x402PaymentService'
 
 export default function SimpleTipApp() {
   const [postUrl, setPostUrl] = useState('')
@@ -103,16 +103,21 @@ export default function SimpleTipApp() {
     setTipSuccess(null)
     
     try {
-      // Use x402 payment service
-      const result = await createTipPayment(
-        postAuthorAddress,
-        amount,
-        `Tip for @${postAuthor}`
+      // Use x402 payment service with agent wallet
+      const paymentService = new X402PaymentService(
+        process.env.NEXT_PUBLIC_AGENT_PRIVATE_KEY || 'mock-key', // Agent's private key
+        'base'
       )
+      
+      const result = await paymentService.executePaymentFlow('/api/tip', {
+        recipient: postAuthorAddress,
+        amount: amount,
+        message: `Tip for @${postAuthor}`
+      })
 
       if (result.success) {
-        setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} via x402`)
-        console.log(`x402 tip sent: $${amount} to @${postAuthor}`)
+        setTipSuccess(`Tip sent! $${amount.toFixed(2)} USDC to @${postAuthor} via x402 agent wallet`)
+        console.log(`x402 tip sent: $${amount} to @${postAuthor}`, result.txHash)
       } else {
         setTipError(result.error || 'Failed to send tip')
       }
@@ -135,7 +140,7 @@ export default function SimpleTipApp() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Simple Tip App</h1>
         <p className="text-slate-600">Paste any post URL and send real USDC tips to creators</p>
-        <p className="text-sm text-blue-600 mt-2">💡 No wallet connection needed - x402 handles payments automatically</p>
+        <p className="text-sm text-blue-600 mt-2">💡 Agent wallet handles payments - no user wallet needed</p>
       </div>
 
       {/* Post URL Input */}
