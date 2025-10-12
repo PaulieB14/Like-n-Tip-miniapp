@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Tip Images</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        canvas { border: 1px solid #ccc; margin: 10px; }
+        button { padding: 10px 20px; margin: 5px; background: #0052ff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Generate Images for LIke n Tip</h2>
+    
+    <!-- OG Image (1200x630) -->
+    <canvas id="ogCanvas" width="1200" height="630"></canvas>
+    <button onclick="downloadImage('ogCanvas', 'og-image.png')">Download OG Image</button>
+    
+    <!-- Hero Image (1200x630) -->
+    <canvas id="heroCanvas" width="1200" height="630"></canvas>
+    <button onclick="downloadImage('heroCanvas', 'hero-image.png')">Download Hero Image</button>
+    
+    <!-- Icon (1024x1024) -->
+    <canvas id="iconCanvas" width="1024" height="1024"></canvas>
+    <button onclick="downloadImage('iconCanvas', 'icon.png')">Download Icon</button>
+    
+    <script>
+        function createTipImage(canvasId, width, height, isIcon = false) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#0052ff');
+            gradient.addColorStop(1, '#7c3aed');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            if (isIcon) {
+                // For icon, create a simple coin with $ symbol
+                const centerX = width / 2;
+                const centerY = height / 2;
+                const radius = Math.min(width, height) * 0.3;
+                
+                // Draw coin
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Draw $ symbol
+                ctx.fillStyle = '#000';
+                ctx.font = `bold ${radius}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', centerX, centerY);
+            } else {
+                // For larger images, add text and coin
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 72px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('LEAVE A TIP', width / 2, height / 2 - 50);
+                
+                ctx.font = '36px Arial';
+                ctx.fillText('LIke n Tip - Base Mini App', width / 2, height / 2 + 20);
+                
+                // Draw coin icon
+                const coinX = width / 2;
+                const coinY = height / 2 + 80;
+                const coinRadius = 40;
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(coinX, coinY, coinRadius, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 48px Arial';
+                ctx.fillText('$', coinX, coinY + 15);
+            }
+        }
+        
+        function downloadImage(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Generate all images
+        createTipImage('ogCanvas', 1200, 630);
+        createTipImage('heroCanvas', 1200, 630);
+        createTipImage('iconCanvas', 1024, 1024, true);
+    </script>
+</body>
+</html>
