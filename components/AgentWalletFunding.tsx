@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAccount, useWriteContract } from 'wagmi'
-import { Wallet, DollarSign, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
+import { Wallet, DollarSign, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
 import { parseUnits } from 'viem'
 import { base } from 'wagmi/chains'
 
@@ -117,7 +117,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
         account: userAddress,
       })
 
-      setFundingSuccess(`Successfully sent $${amount.toFixed(3)} USDC to agent wallet!`)
+      setFundingSuccess(`Successfully sent $${amount.toFixed(3)} USDC to agent wallet! Click refresh to update balance.`)
       
       // Update local balance
       if (agentInfo) {
@@ -194,6 +194,13 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
               <span className="font-medium text-slate-900">
                 ${agentInfo.balance.toFixed(2)}
               </span>
+              <button
+                onClick={loadAgentInfo}
+                className="p-1 hover:bg-slate-100 rounded"
+                title="Refresh balance"
+              >
+                <RefreshCw className="h-4 w-4 text-slate-500" />
+              </button>
               {agentInfo.hasEnoughFunds ? (
                 <CheckCircle className="h-4 w-4 text-green-500" />
               ) : (

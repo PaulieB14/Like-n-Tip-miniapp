@@ -53,9 +53,32 @@ export async function GET(request: NextRequest) {
     // Get USDC balance
     let balance = 0
     try {
-      // For now, return a mock balance to avoid viem type issues
-      // In production, you'd implement proper balance checking
-      balance = 0 // Mock balance - implement real balance checking later
+      // Use a simple fetch to get balance from Base RPC
+      const response = await fetch(process.env.BASE_RPC_URL || 'https://mainnet.base.org', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_call',
+          params: [
+            {
+              to: USDC_CONTRACT,
+              data: `0x70a08231000000000000000000000000${agentWallet.address.slice(2)}`
+            },
+            'latest'
+          ],
+          id: 1
+        })
+      })
+      
+      const data = await response.json()
+      if (data.result) {
+        // Convert hex to decimal and then to USDC units (6 decimals)
+        const balanceWei = parseInt(data.result, 16)
+        balance = balanceWei / 1e6
+      }
     } catch (error) {
       console.error('Error getting balance:', error)
     }
