@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Heart, User, ExternalLink, Gift, CheckCircle, AlertCircle } from 'lucide-react'
-import { X402PaymentService, validateTipAmount } from '@/lib/x402PaymentService'
+import { simpleTipService } from '@/lib/simpleTipService'
 import { FarcasterCommentService } from '@/lib/farcasterComment'
 
 interface SimpleTipAppProps {
@@ -119,13 +119,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     setTipSuccess(null)
     
     try {
-      // Use x402 payment service with agent wallet
-      const paymentService = new X402PaymentService(
-        process.env.NEXT_PUBLIC_AGENT_PRIVATE_KEY || 'mock-key', // Agent's private key
-        'base'
-      )
-      
-      const result = await paymentService.executePaymentFlow('/api/tip', {
+      // Use simple tip service
+      const result = await simpleTipService.sendTip({
         recipient: postAuthorAddress,
         amount: amount,
         message: `Tip for @${postAuthor}`
