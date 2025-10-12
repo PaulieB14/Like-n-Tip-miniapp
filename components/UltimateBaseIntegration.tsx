@@ -19,26 +19,49 @@ export default function UltimateBaseIntegration() {
   useEffect(() => {
     const dismissSplash = async () => {
       try {
-        // Check if we're in a Base app environment
-        if (typeof window !== 'undefined' && (window as any).sdk) {
-          // Wait for DOM to be ready and interface to be rendered
-          await new Promise(resolve => setTimeout(resolve, 300))
+        // Check if we're in a Base app environment with multiple SDK detection methods
+        const sdk = (window as any).sdk || (window as any).farcaster || (window as any).miniapp
+        
+        if (typeof window !== 'undefined' && sdk && sdk.actions && sdk.actions.ready) {
+          console.log('SDK found, calling ready...')
           
-          // Call ready to hide the splash screen
-          await (window as any).sdk.actions.ready()
+          // Call ready immediately when SDK is available
+          await sdk.actions.ready()
           setIsReady(true)
           console.log('Splash screen dismissed - interface ready')
+        } else {
+          console.log('SDK not found, checking for alternative methods...')
+          
+          // Try alternative SDK detection
+          if ((window as any).farcaster && (window as any).farcaster.ready) {
+            await (window as any).farcaster.ready()
+            setIsReady(true)
+            console.log('Farcaster SDK ready called')
+          } else {
+            // Set ready even if no SDK found (for web preview)
+            setIsReady(true)
+            console.log('No SDK found, setting ready anyway')
+          }
         }
       } catch (error) {
-        console.log('Not in Base app environment or SDK not available:', error)
-        setIsReady(true) // Set ready even if SDK not available
+        console.log('Error calling ready:', error)
+        setIsReady(true) // Set ready even if error occurs
       }
     }
     
-    // Call ready after interface is loaded to avoid jitter
-    const timer = setTimeout(dismissSplash, 500)
+    // Try to call ready immediately, then retry multiple times
+    dismissSplash()
     
-    return () => clearTimeout(timer)
+    // Retry after delays in case SDK loads later
+    const timer1 = setTimeout(dismissSplash, 500)
+    const timer2 = setTimeout(dismissSplash, 1000)
+    const timer3 = setTimeout(dismissSplash, 2000)
+    
+    return () => {
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
+    }
   }, [])
 
   const renderHomeTab = () => (
