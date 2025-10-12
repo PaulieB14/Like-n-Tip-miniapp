@@ -19,14 +19,22 @@ export default function SimpleTipApp() {
   const quickAmounts = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00]
 
   const loadPost = async () => {
-    if (!postUrl.trim()) return
+    console.log('Load Post clicked, URL:', postUrl)
+    if (!postUrl.trim()) {
+      console.log('No URL provided')
+      return
+    }
 
     setIsLoadingPost(true)
     setTipSuccess(null)
+    setTipError(null)
 
     try {
       // Parse URL to determine platform and extract info
+      console.log('Parsing URL:', postUrl)
       const url = new URL(postUrl)
+      console.log('Parsed URL:', { hostname: url.hostname, pathname: url.pathname })
+      
       let platform = 'unknown'
       let username = 'unknown'
       let postId = 'unknown'
@@ -37,13 +45,16 @@ export default function SimpleTipApp() {
         const pathParts = url.pathname.split('/').filter(Boolean)
         username = pathParts[0] || 'unknown'
         postId = pathParts[1] || 'unknown'
+        console.log('Farcaster detected:', { username, postId })
       } else if (url.hostname.includes('base.org')) {
         // Base app URL format: https://base.org/username/0x...
         platform = 'Base App'
         const pathParts = url.pathname.split('/').filter(Boolean)
         username = pathParts[0] || 'unknown'
         postId = pathParts[1] || 'unknown'
+        console.log('Base app detected:', { username, postId })
       } else {
+        console.log('Unsupported platform:', url.hostname)
         throw new Error('Unsupported platform. Please use Farcaster (warpcast.com) or Base app (base.org) URLs.')
       }
       
@@ -58,9 +69,11 @@ export default function SimpleTipApp() {
         content: `This is a real ${platform} post from @${username}. The content would be fetched from the ${platform} API using post ID: ${postId}`
       }
       
+      console.log('Setting post data:', postData)
       setPostAuthor(postData.author)
       setPostAuthorAddress(postData.authorAddress)
       setPostContent(postData.content)
+      console.log('Post data set successfully')
       
     } catch (error) {
       console.error('Failed to load post:', error)
