@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Heart, Settings, User, History } from 'lucide-react'
 import SimpleTipApp from './SimpleTipApp'
 
@@ -13,6 +13,23 @@ export default function UltimateBaseIntegration() {
     txHash?: string
     recipient?: string
   }>>([])
+
+  // Dismiss splash screen when component mounts
+  useEffect(() => {
+    const dismissSplash = async () => {
+      try {
+        // Check if we're in a Base app environment
+        if (typeof window !== 'undefined' && (window as any).sdk) {
+          await (window as any).sdk.actions.ready()
+          console.log('Splash screen dismissed')
+        }
+      } catch (error) {
+        console.log('Not in Base app environment or SDK not available')
+      }
+    }
+    
+    dismissSplash()
+  }, [])
 
   const renderHomeTab = () => (
     <SimpleTipApp
