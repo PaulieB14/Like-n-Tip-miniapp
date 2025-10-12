@@ -129,12 +129,27 @@ export default function SimpleTipApp() {
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-6">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Heart className="h-8 w-8 text-white" />
+      <div className="relative mb-8">
+        {/* Settings Button */}
+        <button
+          onClick={() => {
+            // This would open settings - for now just show an alert
+            alert('Settings coming soon! This will let you customize default tip amounts.')
+          }}
+          className="absolute top-0 right-0 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors flex items-center space-x-2"
+        >
+          <span>⚙️</span>
+          <span>Settings</span>
+        </button>
+        
+        {/* Main Header Content */}
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Heart className="h-8 w-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Simple Tip App</h1>
+          <p className="text-slate-600">Paste any post URL and send real USDC tips to creators</p>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Simple Tip App</h1>
-        <p className="text-slate-600">Paste any post URL and send real USDC tips to creators</p>
       </div>
 
       {/* Post URL Input */}
