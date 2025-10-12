@@ -1,69 +1,107 @@
-# LIke n Tip - Base App Auto-Tip Integration
+# Tip in Comments - Universal Comment Tipping Mini App
 
-A revolutionary Base mini app that automatically sends tips when you like posts in Base app. Set your default tip amount once, then every time you like a post, a tip is automatically sent to the author!
+A revolutionary Base mini app that lets you tip creators by including tip amounts in your comments. Simply write comments with tip amounts like "$0.10 tip" or "💖 $0.25" and the system automatically sends real USDC to the author!
 
 ## 🚀 Revolutionary Features
 
-- **Auto-Tip on Like**: Set your default tip amount and automatically tip when you like posts
-- **Seamless Integration**: Works directly with Base app's existing like system
-- **No Extra Steps**: Just like posts normally - tips are sent automatically
-- **x402 Protocol**: Powered by Coinbase's x402 for instant, fee-free payments
-- **USDC on Base**: All tips sent in USDC on Base network
-- **Super Low Friction**: Set amount once, tip forever
-- **Platform Commission**: 2% platform fee (transparent and fair)
+- **Tip in Comments**: Include tip amounts directly in your comments
+- **Universal Compatibility**: Works with any Farcaster post URL
+- **Real USDC Transactions**: Sends actual USDC on Base network
+- **Smart Parsing**: Detects multiple tip formats automatically
+- **Clean Comments**: Tip parts are removed from visible comments
+- **Mobile Optimized**: Perfect for mobile-first Base app experience
+- **Zero Friction**: Just comment normally with tip amounts
 
 ## 🎯 Core Value Proposition
 
-**The one thing this app does really well: Makes tipping automatic and effortless**
+**The one thing this app does really well: Makes tipping as easy as commenting**
 
-- **Why someone would use it every day**: Set your tip amount once, then every like automatically rewards creators
-- **Why someone would share it**: Creates a culture of automatic appreciation in Base app
+- **Why someone would use it every day**: Tip creators naturally while engaging with their content
+- **Why someone would share it**: Creates a culture of appreciation through comments
 - **Perfect for**: Creator communities, social interactions, and building a tipping culture
 
 ## 🛠 How It Works
 
-### **1. Set Your Default Tip Amount**
-- Choose from preset amounts: $0.01, $0.05, $0.10, $0.25, $0.50, $1.00
-- Or set a custom amount
-- Enable/disable auto-tipping anytime
+### **1. Paste Any Post URL**
+- Copy any Farcaster post URL
+- Paste it into the app to load the post and author info
+- Works with any post from any user
 
-### **2. Like Posts in Base App**
-- Use Base app normally
-- Like posts as you always do
-- No extra steps or UI changes
+### **2. Write Comment with Tip**
+- Write your comment normally
+- Include tip amounts in various formats:
+  - `"Great post! $0.10 tip"`
+  - `"Amazing work! 💖 $0.25"`
+  - `"Here's 0.50 USDC for this"`
+  - `"Love this! +$1.00"`
 
-### **3. Auto-Tip Sent**
-- Your preset tip amount is automatically sent
-- Uses x402 protocol for instant payments
-- Author receives tip with "Liked your post! 💖" message
+### **3. Auto-Send Tip**
+- System detects tip amounts automatically
+- Sends real USDC to the author
+- Posts clean comment without tip parts
+- Author receives tip instantly
+
+## 💡 Supported Tip Formats
+
+The app intelligently detects tips in multiple formats:
+
+### **Dollar Amounts**
+- `"Great post! $0.10 tip"`
+- `"tip $0.25"`
+- `"+$0.50"`
+
+### **USDC Amounts**
+- `"0.10 USDC"`
+- `"0.25 USDC tip"`
+- `"tip 0.50 USDC"`
+
+### **Cents**
+- `"10 cents"`
+- `"25 cents tip"`
+- `"tip 50 cents"`
+
+### **With Emojis**
+- `"💖 $0.10"`
+- `"💰 0.25"`
+- `"💸 tip $0.50"`
+
+### **Natural Language**
+- `"Here's 0.10 USDC for this"`
+- `"Sending 25 cents your way"`
+- `"Love this! +$1.00"`
 
 ## 🏗 Base App Integration
 
-This mini app integrates directly with Base app's like system:
+This mini app integrates seamlessly with Base app:
 
 ```typescript
-// Base app integration example
-window.baseAppAutoTipHandler = (postId, authorAddress, authorUsername) => {
-  if (autoTipEnabled && defaultAmount > 0) {
-    sendTip(authorAddress, defaultAmount, "Liked your post! 💖")
-  }
+// Comment tip parsing example
+const parseCommentForTip = (comment: string) => {
+  // Detects tip patterns like "$0.10 tip", "💖 $0.25", etc.
+  // Returns parsed tip amount and cleaned comment
+}
+
+// Real USDC payment
+const sendTip = async (recipientAddress: string, amount: number) => {
+  // Sends real USDC via Base network
+  // Uses wagmi for wallet integration
 }
 ```
 
 ### **Integration Points:**
-- **Like Detection**: Hooks into Base app's like system
-- **Auto-Tip Trigger**: Automatically sends tips when likes are detected
-- **x402 Payments**: Uses Coinbase's facilitator for seamless payments
-- **USDC on Base**: All transactions on Base network
+- **Post URL Parsing**: Loads any Farcaster post
+- **Comment Processing**: Real-time tip detection
+- **USDC Payments**: Real transactions on Base network
+- **Wallet Integration**: Uses Base app's wallet system
 
 ## 🛠 Tech Stack
 
 - **Frontend**: Next.js 15, React 18, TypeScript
 - **Styling**: Tailwind CSS
-- **Payments**: x402 protocol with Coinbase facilitator
-- **Blockchain**: Base network, USDC
+- **Payments**: Real USDC transactions via wagmi
+- **Blockchain**: Base network, USDC contract
 - **Mini App**: Base Mini App structure
-- **Integration**: Base app like system hooks
+- **Parsing**: Smart regex patterns for tip detection
 
 ## 🚀 Getting Started
 
@@ -100,19 +138,19 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 💰 Auto-Tip Flow
+## 💰 Comment Tipping Flow
 
-1. **User sets default tip amount** (e.g., $0.10)
-2. **User likes a post in Base app**
-3. **Auto-tip handler detects the like**
-4. **Tip is automatically sent via x402**
-5. **Author receives tip instantly**
+1. **User pastes any Farcaster post URL**
+2. **User writes comment with tip amount** (e.g., "Great post! $0.10 tip")
+3. **System detects tip automatically**
+4. **Real USDC is sent to author**
+5. **Clean comment is posted** (without tip part)
 
 ## 🏗 Base Mini App Setup
 
 To deploy as a Base mini app:
 
-1. **Update Manifest**: Edit `app/.well-known/farcaster.json` with your domain
+1. **Update Manifest**: Edit `minikit.config.ts` with your domain
 2. **Account Association**: Generate credentials via Base Build
 3. **Deploy**: Push to Vercel or your hosting platform
 4. **Preview**: Use Base Build preview tool
@@ -121,20 +159,15 @@ To deploy as a Base mini app:
 ## 🔧 Environment Variables
 
 ```bash
-# Platform Fee Recipient (your commission address)
-PLATFORM_FEE_RECIPIENT=0xCfd58ff6B92C856b03F4143e38Bc5835cB70b4D2
+# WalletConnect Project ID
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-project-id
 
-# x402 Facilitator URL
-X402_FACILITATOR_URL=https://facilitator.x402.org
+# App URLs
+NEXTAUTH_URL=https://your-domain.vercel.app
+NEXT_PUBLIC_ROOT_URL=https://your-domain.vercel.app
 
 # USDC Contract Address on Base
 USDC_CONTRACT_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
-
-# Base Network RPC URL
-BASE_RPC_URL=https://mainnet.base.org
-
-# Next.js Configuration
-NEXT_PUBLIC_ROOT_URL=https://your-domain.vercel.app
 ```
 
 ## 📁 Project Structure
@@ -142,23 +175,24 @@ NEXT_PUBLIC_ROOT_URL=https://your-domain.vercel.app
 ```
 like-n-tip/
 ├── app/
-│   ├── .well-known/
-│   │   └── farcaster.json          # Base mini app manifest
 │   ├── api/
-│   │   └── tip/
-│   │       └── route.ts            # x402 payment endpoint
+│   │   └── webhook/
+│   │       └── route.ts            # Base app webhook handler
 │   ├── globals.css                 # Global styles
-│   ├── layout.tsx                  # Root layout
+│   ├── layout.tsx                  # Root layout with Base app meta
 │   └── page.tsx                    # Main app page
 ├── components/
-│   ├── BaseAppIntegration.tsx      # Main auto-tip integration
-│   ├── AutoTipSettings.tsx         # Settings component
-│   ├── StreamlinedLikeButton.tsx   # Like button component
-│   ├── TipForm.tsx                 # Traditional tip form
-│   └── TipHistory.tsx              # Tip history display
+│   ├── UltimateBaseIntegration.tsx # Main app component
+│   ├── UniversalCommentTip.tsx     # Universal comment tipping
+│   ├── CommentWithTip.tsx          # Comment input with tip parsing
+│   ├── PostTipButton.tsx           # Direct tip buttons
+│   └── CommentTipDemo.tsx          # Demo page
+├── lib/
+│   ├── commentTipParser.ts         # Tip parsing logic
+│   ├── paymentService.ts           # USDC payment service
+│   └── wagmi.ts                    # Wallet configuration
 ├── minikit.config.ts               # Base mini app configuration
 ├── package.json                    # Dependencies
-├── next.config.js                  # Next.js configuration
 └── tailwind.config.js              # Tailwind configuration
 ```
 
@@ -166,11 +200,11 @@ like-n-tip/
 
 This app follows Base app best practices:
 
-- **Simple & Focused**: One core function - automatic tipping on likes
-- **Zero Friction**: Set once, tip forever
-- **Seamless Integration**: Works with existing Base app UI
-- **Onchain Native**: Built for Base's crypto-native users
-- **Creator Economy**: Automatically rewards content creators
+- **Simple & Focused**: One core function - tip in comments
+- **Mobile First**: Optimized for mobile Base app experience
+- **Real Transactions**: Actual USDC payments, not mock
+- **Universal**: Works with any Farcaster post
+- **Creator Economy**: Rewards content creators naturally
 
 ## 🚀 Deployment
 
@@ -192,19 +226,30 @@ This app follows Base app best practices:
 ## 🎯 Use Cases
 
 ### **For Users:**
-- Set a small default tip (e.g., $0.10) and automatically reward creators
-- Build a culture of appreciation in Base app
-- Support creators without thinking about it
+- Tip creators naturally while commenting
+- Support creators without extra steps
+- Build appreciation culture in Base app
 
 ### **For Creators:**
-- Get automatically rewarded when people like your posts
+- Get rewarded through normal engagement
 - Build sustainable creator economy
 - Focus on content, not monetization
 
 ### **For Base App:**
-- Creates automatic value flow
+- Creates natural value flow
 - Builds stronger creator economy
 - Increases engagement and retention
+
+## 🔧 Features
+
+- ✅ **Universal Post Support**: Works with any Farcaster post URL
+- ✅ **Smart Tip Detection**: Multiple tip formats supported
+- ✅ **Real USDC Payments**: Actual transactions on Base network
+- ✅ **Clean Comments**: Tip parts removed from visible comments
+- ✅ **Mobile Optimized**: Perfect for Base app mobile experience
+- ✅ **Wallet Integration**: Uses Base app's wallet system
+- ✅ **Error Handling**: Clear feedback for users
+- ✅ **Settings Toggle**: Users can enable/disable the feature
 
 ## 🤝 Contributing
 
@@ -220,10 +265,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Resources
 
-- [Base Mini Apps Documentation](https://docs.base.org/mini-apps/)
-- [x402 Protocol Documentation](https://docs.cdp.coinbase.com/x402/welcome)
-- [x402 GitHub Repository](https://github.com/coinbase/x402)
+- [Base Mini Apps Documentation](https://miniapps.farcaster.xyz/)
+- [Farcaster Mini Apps Guide](https://miniapps.farcaster.xyz/)
 - [Base Network Documentation](https://docs.base.org/)
+- [Wagmi Documentation](https://wagmi.sh/)
 
 ## 💬 Support
 
@@ -233,5 +278,4 @@ For support, join the Base Discord community or open an issue on GitHub.
 
 Built with ❤️ for the Base app community
 
-**Revolutionary auto-tipping that makes every like count!** 🚀
-# Ultimate Base Mini App Integration - Sat Oct 11 20:19:19 EDT 2025
+**Revolutionary comment tipping that makes every comment count!** 🚀

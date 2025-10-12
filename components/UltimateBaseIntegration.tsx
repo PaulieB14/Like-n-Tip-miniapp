@@ -144,7 +144,7 @@ export default function UltimateBaseIntegration() {
           recipient: authorUsername
         }, ...prev.slice(0, 9)])
 
-        console.log(`Auto-tipped ${authorUsername} $${settings.defaultAmount} - TX: ${txHash}`)
+        console.log('Auto-tipped ' + authorUsername + ' $' + settings.defaultAmount + ' - TX: ' + txHash)
       } catch (error) {
         console.error('Auto-tip failed:', error)
       }
@@ -479,7 +479,7 @@ export default function UltimateBaseIntegration() {
                   disabled={isLoading}
                   className="px-4 py-2 bg-green-500 text-white rounded-xl font-medium hover:bg-green-600 transition-colors disabled:opacity-50"
                 >
-                  {isLoading ? 'Sending...' : `Send $${settings.defaultAmount.toFixed(2)} Tip`}
+                  {isLoading ? 'Sending...' : 'Send $' + settings.defaultAmount.toFixed(2) + ' Tip'}
                 </button>
               </div>
             </div>
