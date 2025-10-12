@@ -60,7 +60,7 @@ export class PaymentService {
       console.log('Sending real tip:', { recipientAddress, amount, message })
 
       // Convert amount to wei (USDC has 6 decimals)
-      const amountInWei = parseEther(amount.toString(), 'wei', 6)
+      const amountInWei = parseUnits(amount.toString(), 6)
 
       // Call the USDC transfer function
       const txHash = await this.writeContract({
