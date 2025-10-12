@@ -569,39 +569,39 @@ export default function UltimateBaseIntegration() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
+      {/* Mobile-Optimized Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="px-4 py-4">
+        <div className="px-4 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <Heart className="h-5 w-5 text-white" />
+            <div className="flex items-center space-x-2">
+              <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <Heart className="h-4 w-4 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-slate-900">LIke n Tip</h1>
-                <p className="text-xs text-slate-600">Auto-tip when you like</p>
+                <h1 className="text-base font-bold text-slate-900">Tip in Comments</h1>
+                <p className="text-xs text-slate-600">Tip creators via comments</p>
               </div>
             </div>
             
-            {/* User Profile Display */}
+            {/* User Profile Display - Mobile Optimized */}
             {user && (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
                 {user.pfpUrl && (
                   <img 
                     src={user.pfpUrl} 
                     alt="Profile" 
-                    className="w-6 h-6 rounded-full border border-white shadow-sm" 
+                    className="w-5 h-5 rounded-full border border-white shadow-sm" 
                   />
                 )}
-                <span className="text-sm font-medium text-slate-900">@{user.username}</span>
+                <span className="text-xs font-medium text-slate-900 hidden sm:block">@{user.username}</span>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="px-4 py-6 pb-24">
+      {/* Main Content - Mobile Optimized */}
+      <div className="px-3 py-4 pb-20">
         {activeTab === 'home' && renderHomeTab()}
         {activeTab === 'demo' && <TipDemo />}
         {activeTab === 'comments' && <CommentTipDemo />}
@@ -609,56 +609,46 @@ export default function UltimateBaseIntegration() {
         {activeTab === 'profile' && renderProfileTab()}
       </div>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-4 py-2">
+      {/* Mobile-Optimized Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-1">
         <div className="flex justify-around">
           <button
-            onClick={() => setActiveTab('home')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-              activeTab === 'home' ? 'text-blue-500' : 'text-slate-500'
-            }`}
-          >
-            <Home className="h-5 w-5 mb-1" />
-            <span className="text-xs font-medium">Home</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('demo')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-              activeTab === 'demo' ? 'text-blue-500' : 'text-slate-500'
-            }`}
-          >
-            <Gift className="h-5 w-5 mb-1" />
-            <span className="text-xs font-medium">Demo</span>
-          </button>
-          
-          <button
             onClick={() => setActiveTab('comments')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-              activeTab === 'comments' ? 'text-blue-500' : 'text-slate-500'
+            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
+              activeTab === 'comments' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
             }`}
           >
-            <MessageCircle className="h-5 w-5 mb-1" />
+            <MessageCircle className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">Comments</span>
           </button>
           
           <button
-            onClick={() => setActiveTab('history')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-              activeTab === 'history' ? 'text-blue-500' : 'text-slate-500'
+            onClick={() => setActiveTab('demo')}
+            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
+              activeTab === 'demo' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
             }`}
           >
-            <History className="h-5 w-5 mb-1" />
+            <Gift className="h-4 w-4 mb-1" />
+            <span className="text-xs font-medium">Demo</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
+              activeTab === 'history' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
+            }`}
+          >
+            <History className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">History</span>
           </button>
           
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-              activeTab === 'profile' ? 'text-blue-500' : 'text-slate-500'
+            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
+              activeTab === 'profile' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
             }`}
           >
-            <User className="h-5 w-5 mb-1" />
+            <User className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">Profile</span>
           </button>
         </div>

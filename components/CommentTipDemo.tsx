@@ -48,46 +48,46 @@ export default function CommentTipDemo() {
   ]
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">Comment Tipping Demo</h1>
-        <p className="text-slate-600">Tip creators by including tip amounts in your comments</p>
+    <div className="max-w-2xl mx-auto p-3 space-y-4">
+      <div className="text-center mb-6">
+        <h1 className="text-xl font-bold text-slate-900 mb-1">Comment Tipping</h1>
+        <p className="text-sm text-slate-600">Tip creators by including tip amounts in your comments</p>
       </div>
 
-      {/* Demo Posts */}
-      <div className="space-y-6">
+      {/* Demo Posts - Mobile Optimized */}
+      <div className="space-y-4">
         {demoPosts.map((post) => (
-          <div key={post.id} className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-            {/* Post Header */}
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
+          <div key={post.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            {/* Post Header - Mobile Optimized */}
+            <div className="flex items-center space-x-2 mb-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <User className="h-4 w-4 text-white" />
               </div>
               <div>
-                <p className="font-semibold text-slate-900">@{post.author}</p>
-                <p className="text-sm text-slate-500">{post.time}</p>
+                <p className="font-semibold text-slate-900 text-sm">@{post.author}</p>
+                <p className="text-xs text-slate-500">{post.time}</p>
               </div>
             </div>
 
-            {/* Post Content */}
-            <div className="mb-4">
-              <p className="text-slate-800 leading-relaxed">{post.content}</p>
+            {/* Post Content - Mobile Optimized */}
+            <div className="mb-3">
+              <p className="text-slate-800 leading-relaxed text-sm">{post.content}</p>
             </div>
 
-            {/* Post Actions */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-6">
-                <button className="flex items-center space-x-2 text-slate-600 hover:text-red-500 transition-colors">
-                  <Heart className="h-5 w-5" />
-                  <span>{post.likes}</span>
+            {/* Post Actions - Mobile Optimized */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-4">
+                <button className="flex items-center space-x-1 text-slate-600 hover:text-red-500 transition-colors">
+                  <Heart className="h-4 w-4" />
+                  <span className="text-sm">{post.likes}</span>
                 </button>
-                <button className="flex items-center space-x-2 text-slate-600 hover:text-blue-500 transition-colors">
-                  <MessageCircle className="h-5 w-5" />
-                  <span>{post.comments}</span>
+                <button className="flex items-center space-x-1 text-slate-600 hover:text-blue-500 transition-colors">
+                  <MessageCircle className="h-4 w-4" />
+                  <span className="text-sm">{post.comments}</span>
                 </button>
-                <button className="flex items-center space-x-2 text-slate-600 hover:text-green-500 transition-colors">
-                  <Share className="h-5 w-5" />
-                  <span>Share</span>
+                <button className="flex items-center space-x-1 text-slate-600 hover:text-green-500 transition-colors">
+                  <Share className="h-4 w-4" />
+                  <span className="text-sm">Share</span>
                 </button>
               </div>
             </div>

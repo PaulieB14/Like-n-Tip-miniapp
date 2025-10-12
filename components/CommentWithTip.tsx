@@ -72,59 +72,59 @@ export default function CommentWithTip({
 
   return (
     <div className="space-y-4">
-      {/* Comment Input */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4">
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <MessageCircle className="h-4 w-4 text-white" />
+      {/* Comment Input - Mobile Optimized */}
+      <div className="bg-white rounded-xl border border-slate-200 p-3">
+        <div className="flex items-start space-x-2">
+          <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <MessageCircle className="h-3 w-3 text-white" />
           </div>
           
           <div className="flex-1">
             <textarea
               value={comment}
               onChange={(e) => handleCommentChange(e.target.value)}
-              placeholder={`Comment on @${postAuthor}'s post... (include tip amounts like "$0.10 tip" or "💖 $0.25")`}
-              className="w-full p-3 border border-slate-200 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-              rows={3}
+              placeholder={`Comment on @${postAuthor}... (try "$0.10 tip" or "💖 $0.25")`}
+              className="w-full p-2 border border-slate-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm"
+              rows={2}
               disabled={isSubmitting}
             />
             
-            {/* Tip Preview */}
+            {/* Tip Preview - Mobile Optimized */}
             {showTipPreview && tipResult?.tip && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl">
-                <div className="flex items-center space-x-2">
-                  <Gift className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-900">
-                    Tip detected: {formatTipAmount(tipResult.tip.amount)} to @{postAuthor}
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center space-x-1">
+                  <Gift className="h-3 w-3 text-green-600" />
+                  <span className="text-xs font-medium text-green-900">
+                    Tip: {formatTipAmount(tipResult.tip.amount)} to @{postAuthor}
                   </span>
                 </div>
                 {tipResult.cleanedComment && (
-                  <p className="text-sm text-green-700 mt-1">
-                    Comment: "{tipResult.cleanedComment}"
+                  <p className="text-xs text-green-700 mt-1">
+                    "{tipResult.cleanedComment}"
                   </p>
                 )}
               </div>
             )}
             
-            {/* Submit Button */}
-            <div className="flex items-center justify-between mt-3">
-              <div className="text-xs text-slate-500">
-                Tip examples: "$0.10 tip", "💖 $0.25", "0.50 USDC", "+$1.00"
+            {/* Submit Button - Mobile Optimized */}
+            <div className="flex items-center justify-between mt-2">
+              <div className="text-xs text-slate-500 hidden sm:block">
+                Examples: "$0.10 tip", "💖 $0.25"
               </div>
               
               <button
                 onClick={handleSubmit}
                 disabled={!comment.trim() || isSubmitting}
-                className="px-4 py-2 bg-blue-500 text-white rounded-xl font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                className="px-3 py-1.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 text-sm"
               >
                 {isSubmitting ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
                     <span>Submitting...</span>
                   </>
                 ) : (
                   <>
-                    <Send className="h-4 w-4" />
+                    <Send className="h-3 w-3" />
                     <span>Comment</span>
                   </>
                 )}
