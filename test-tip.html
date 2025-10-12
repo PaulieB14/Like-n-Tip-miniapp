@@ -103,3 +103,108 @@
     </script>
 </body>
 </html>
+
+<html>
+<head>
+    <title>Test Tip Functionality</title>
+</head>
+<body>
+    <h1>Test Tip Functionality</h1>
+    
+    <div>
+        <h2>Test 1: Basic API Call</h2>
+        <button onclick="testBasicAPI()">Test Basic API</button>
+        <div id="result1"></div>
+    </div>
+    
+    <div>
+        <h2>Test 2: x402 Flow</h2>
+        <button onclick="testX402Flow()">Test x402 Flow</button>
+        <div id="result2"></div>
+    </div>
+
+    <script>
+        async function testBasicAPI() {
+            const resultDiv = document.getElementById('result1');
+            resultDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('/api/tip', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipient: '0x1234567890123456789012345678901234567890',
+                        amount: 0.01,
+                        message: 'Test tip'
+                    })
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = `
+                    <p>Status: ${response.status}</p>
+                    <p>Response: ${JSON.stringify(data, null, 2)}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function testX402Flow() {
+            const resultDiv = document.getElementById('result2');
+            resultDiv.innerHTML = 'Testing x402 flow...';
+            
+            try {
+                // Step 1: Initial request (should get 402)
+                const initialResponse = await fetch('/api/tip', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipient: '0x1234567890123456789012345678901234567890',
+                        amount: 0.01,
+                        message: 'Test tip'
+                    })
+                });
+                
+                let result = `Initial Response: ${initialResponse.status}<br>`;
+                
+                if (initialResponse.status === 402) {
+                    const paymentDetails = await initialResponse.json();
+                    result += `Payment Required: ${JSON.stringify(paymentDetails, null, 2)}<br>`;
+                    
+                    // Step 2: Retry with payment header
+                    const retryResponse = await fetch('/api/tip', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-PAYMENT': JSON.stringify({
+                                amount: '0.01',
+                                recipient: '0x1234567890123456789012345678901234567890',
+                                reference: 'test_tip'
+                            })
+                        },
+                        body: JSON.stringify({
+                            recipient: '0x1234567890123456789012345678901234567890',
+                            amount: 0.01,
+                            message: 'Test tip'
+                        })
+                    });
+                    
+                    const retryData = await retryResponse.json();
+                    result += `Retry Response: ${retryResponse.status}<br>`;
+                    result += `Retry Data: ${JSON.stringify(retryData, null, 2)}`;
+                } else {
+                    result += `Unexpected status: ${initialResponse.status}`;
+                }
+                
+                resultDiv.innerHTML = result;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

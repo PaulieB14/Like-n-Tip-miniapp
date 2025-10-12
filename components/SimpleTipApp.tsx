@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Heart, User, ExternalLink, Gift, CheckCircle, AlertCircle } from 'lucide-react'
 import { simpleTipService } from '@/lib/simpleTipService'
 import { FarcasterCommentService } from '@/lib/farcasterComment'
+import AgentWalletFunding from './AgentWalletFunding'
 
 interface SimpleTipAppProps {
   onTipSent?: (tipData: {
@@ -25,6 +26,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const [customAmount, setCustomAmount] = useState<string>('')
   const [tipSuccess, setTipSuccess] = useState<string | null>(null)
   const [tipError, setTipError] = useState<string | null>(null)
+  const [showFunding, setShowFunding] = useState(false)
 
   const quickAmounts = [0.01, 0.05, 0.10, 0.25, 0.50, 1.00]
 
@@ -185,8 +187,13 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-2">Simple Tip App</h1>
         <p className="text-slate-600">Paste any post URL and send real USDC tips to creators</p>
-        <p className="text-sm text-blue-600 mt-2">💡 Agent wallet handles payments - no user wallet needed</p>
+        <p className="text-sm text-blue-600 mt-2">💡 Agent wallet handles payments - fund once, tip freely</p>
       </div>
+
+      {/* Agent Wallet Funding */}
+      <AgentWalletFunding 
+        onFundingComplete={() => setShowFunding(false)}
+      />
 
       {/* Post URL Input */}
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
@@ -300,6 +307,49 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
               >
                 Send
               </button>
+            </div>
+          </div>
+
+          {/* Error Display */}
+          {tipError && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+              <div className="flex items-center space-x-2">
+                <AlertCircle className="h-5 w-5 text-red-600" />
+                <span className="text-sm font-medium text-red-900">
+                  {tipError}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Success Display */}
+          {tipSuccess && (
+            <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="text-sm font-medium text-green-900">
+                  {tipSuccess}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* How It Works */}
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+        <h3 className="font-semibold text-blue-900 mb-3">How x402 Tipping Works</h3>
+        <div className="space-y-2 text-sm text-blue-800">
+          <p>• <strong>Paste any Farcaster or Base app post URL</strong> to load the post and author</p>
+          <p>• <strong>Choose tip amount</strong> from quick buttons</p>
+          <p>• <strong>Click send</strong> to trigger x402 autonomous payment</p>
+          <p>• <strong>x402 protocol</strong> handles instant USDC settlement</p>
+          <p>• <strong>No wallet connection needed</strong> - fully autonomous</p>
+        </div>
+      </div>
+    </div>
+  )
+}
             </div>
           </div>
 
