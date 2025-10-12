@@ -74,7 +74,7 @@ export default function UltimateBaseIntegration() {
 
     setIsLoading(true)
     try {
-      console.log('Sending tip with Base Account capabilities:', {
+      console.log('Simulating tip transaction with Base Account capabilities:', {
         recipient: recipientAddress,
         amount: amount,
         message: message,
@@ -83,8 +83,8 @@ export default function UltimateBaseIntegration() {
         useAtomicBatch: settings.useAtomicBatch,
       })
 
-      // Calculate amounts for real transaction
-      // Real transaction implementation would go here
+      // Simulate transaction delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
       
       const mockTxHash = `0x${Math.random().toString(16).substr(2, 40)}`
       return mockTxHash

@@ -1,78 +1,78 @@
 import { useState, useEffect } from 'react'
-import { useAccount, usePublicClient } from 'wagmi'
+import { usePublicClient, useAccount } from 'wagmi'
+import { base } from 'wagmi/chains'
+import { getBaseAccountCapabilities, createSponsoredTransactionConfig, createBatchTransactionConfig } from './basePaymaster'
 
 interface BaseAccountCapabilities {
   atomicBatch: boolean
   paymasterService: boolean
   auxiliaryFunds: boolean
-  isBaseAccount: boolean
 }
 
-export function useBaseAccountCapabilities() {
-  const { address } = useAccount()
+export function useBaseAccountCapabilities(): {
+  capabilities: BaseAccountCapabilities
+  loading: boolean
+  isBaseAccount: boolean
+  sponsorConfig: any
+  batchConfig: any
+} {
+  const { address, chainId } = useAccount()
   const publicClient = usePublicClient()
   const [capabilities, setCapabilities] = useState<BaseAccountCapabilities>({
     atomicBatch: false,
     paymasterService: false,
     auxiliaryFunds: false,
-    isBaseAccount: false,
   })
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setIsLoading] = useState(true)
+  const [isBaseAccount, setIsBaseAccount] = useState(false)
 
   useEffect(() => {
-    async function detectCapabilities() {
-      if (!address || !publicClient) {
+    async function detect() {
+      if (!address || !publicClient || chainId !== base.id) {
         setCapabilities({
           atomicBatch: false,
           paymasterService: false,
           auxiliaryFunds: false,
-          isBaseAccount: false,
         })
+        setIsBaseAccount(false)
+        setIsLoading(false)
         return
       }
 
-      setLoading(true)
-      setError(null)
-
       try {
-        // Check for Base Account capabilities
-        const caps = await publicClient.request({
-          method: 'wallet_getCapabilities',
-          params: [address]
-        })
-
-        const baseAccountCaps = caps['0x2105'] // Base Account namespace
+        const caps = await getBaseAccountCapabilities(address)
         
-        const newCapabilities: BaseAccountCapabilities = {
-          atomicBatch: baseAccountCaps?.atomicBatch?.supported || false,
-          paymasterService: baseAccountCaps?.paymasterService?.supported || false,
-          auxiliaryFunds: baseAccountCaps?.auxiliaryFunds?.supported || false,
-          isBaseAccount: !!(baseAccountCaps?.atomicBatch || baseAccountCaps?.paymasterService),
+        const newCapabilities = {
+          atomicBatch: caps.atomicBatch?.supported || false,
+          paymasterService: caps.paymasterService?.supported || false,
+          auxiliaryFunds: caps.auxiliaryFunds?.supported || false,
         }
-
+        
         setCapabilities(newCapabilities)
-      } catch (err) {
-        console.log('Capability detection failed (likely not a Base Account):', err)
+        setIsBaseAccount(newCapabilities.atomicBatch || newCapabilities.paymasterService)
+      } catch (error) {
+        console.error('Error detecting Base Account capabilities:', error)
         setCapabilities({
           atomicBatch: false,
           paymasterService: false,
           auxiliaryFunds: false,
-          isBaseAccount: false,
         })
-        setError('Not a Base Account or capabilities not available')
+        setIsBaseAccount(false)
       } finally {
-        setLoading(false)
+        setIsLoading(false)
       }
     }
 
-    detectCapabilities()
-  }, [address, publicClient])
+    detect()
+  }, [address, publicClient, chainId])
 
-  return {
-    capabilities,
-    loading,
-    error,
-    isBaseAccount: capabilities.isBaseAccount,
-  }
+  const sponsorConfig = createSponsoredTransactionConfig({
+    paymasterService: { supported: capabilities.paymasterService }
+  })
+
+  const batchConfig = createBatchTransactionConfig({
+    atomicBatch: { supported: capabilities.atomicBatch }
+  })
+
+  return { capabilities, loading, isBaseAccount, sponsorConfig, batchConfig }
 }
