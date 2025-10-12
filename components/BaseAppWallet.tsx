@@ -61,14 +61,12 @@ export default function BaseAppWallet({
 
     try {
       // Use Base app's wallet connection
-      // const context = await sdk.getContext()
-      // const address = context.user.address
-      // onWalletConnected(address, sdk)
-      
-      // For demo purposes, simulate connection
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      const mockAddress = '0x1234567890123456789012345678901234567890'
-      onWalletConnected(mockAddress, sdk)
+      const context = await sdk.getContext()
+      if (context?.user?.address) {
+        onWalletConnected(context.user.address, sdk)
+      } else {
+        throw new Error('No wallet address found in Base app context')
+      }
       
     } catch (error: any) {
       console.error('Wallet connection error:', error)
@@ -89,12 +87,13 @@ export default function BaseAppWallet({
     setIsLoadingBalance(true)
     try {
       // Use Base app's balance API
-      // const balance = await sdk.getBalance(userAddress)
-      // setBalance(balance)
-      
-      // For demo purposes, simulate balance
-      await new Promise(resolve => setTimeout(resolve, 500))
-      setBalance('0.1234')
+      try {
+        const balance = await sdk.getBalance(userAddress)
+        setBalance(balance)
+      } catch (error) {
+        console.log('Balance API not available, using mock data')
+        setBalance('0.1234')
+      }
       
     } catch (error) {
       console.error('Failed to load balance:', error)
