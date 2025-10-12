@@ -6,27 +6,8 @@ import SimpleTipApp from './SimpleTipApp'
 
 export default function UltimateBaseIntegration() {
   const [activeTab, setActiveTab] = useState('home')
-  const [recentTips, setRecentTips] = useState<Array<{
-    postId: string
-    amount: number
-    timestamp: Date
-    txHash?: string
-    recipient?: string
-  }>>([])
 
-  const renderHomeTab = () => (
-    <SimpleTipApp
-      onTipSent={(tipData) => {
-        setRecentTips(prev => [{
-          postId: tipData.postId || 'unknown',
-          amount: tipData.amount,
-          timestamp: new Date(),
-          txHash: tipData.txHash,
-          recipient: tipData.recipient
-        }, ...prev.slice(0, 9)]) // Keep only last 10 tips
-      }}
-    />
-  )
+  const renderHomeTab = () => <SimpleTipApp />
 
   const renderHistoryTab = () => (
     <div className="max-w-2xl mx-auto p-4">
@@ -34,49 +15,17 @@ export default function UltimateBaseIntegration() {
         <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <History className="h-8 w-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Recent Tips</h1>
-        <p className="text-slate-600">Your tipping history</p>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">Tip History</h1>
+        <p className="text-slate-600">Your tipping history will appear here</p>
       </div>
 
-      {recentTips.length === 0 ? (
-        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
-          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Heart className="h-8 w-8 text-slate-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">No Tips Yet</h3>
-          <p className="text-slate-600">Start tipping creators to see your history here</p>
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 text-center">
+        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Heart className="h-8 w-8 text-slate-400" />
         </div>
-      ) : (
-        <div className="space-y-4">
-          {recentTips.map((tip, index) => (
-            <div key={index} className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <Heart className="h-5 w-5 text-yellow-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900">
-                      {tip.recipient ? '@' + tip.recipient : 'Post ' + tip.postId.slice(-6)}
-                      </p>
-                      <p className="text-sm text-slate-600">
-                        {tip.timestamp.toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-slate-900">${tip.amount.toFixed(2)}</p>
-                    {tip.txHash && (
-                      <p className="text-xs text-slate-500 font-mono">
-                        {tip.txHash.slice(0, 8)}...
-                      </p>
-                    )}
-                  </div>
-                </div>
-            </div>
-          ))}
-        </div>
-      )}
+        <h3 className="text-lg font-semibold text-slate-900 mb-2">No Tips Yet</h3>
+        <p className="text-slate-600">Start tipping creators to see your history here</p>
+      </div>
     </div>
   )
 
@@ -100,18 +49,8 @@ export default function UltimateBaseIntegration() {
             </div>
             <div className="text-right">
               <p className="font-semibold text-slate-900">$0.10</p>
-        </div>
-      </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="font-medium text-slate-900">Total Tips Sent</h4>
-              <p className="text-sm text-slate-600">All time</p>
             </div>
-            <div className="text-right">
-              <p className="font-semibold text-slate-900">${recentTips.reduce((sum, tip) => sum + tip.amount, 0).toFixed(2)}</p>
-            </div>
-            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -122,7 +61,7 @@ export default function UltimateBaseIntegration() {
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
-              <div>
+          <div>
             <h1 className="text-xl font-bold text-slate-900">Simple Tip App</h1>
             <p className="text-sm text-slate-600">Send real USDC tips to creators</p>
           </div>
@@ -144,9 +83,9 @@ export default function UltimateBaseIntegration() {
         <div className="flex justify-around">
           <button
             onClick={() => setActiveTab('home')}
-            className={'flex flex-col items-center py-2 px-2 rounded-lg transition-colors ' + (
+            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
               activeTab === 'home' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
-            )}
+            }`}
           >
             <Heart className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">Tip</span>
@@ -154,9 +93,9 @@ export default function UltimateBaseIntegration() {
           
           <button
             onClick={() => setActiveTab('history')}
-            className={'flex flex-col items-center py-2 px-2 rounded-lg transition-colors ' + (
+            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
               activeTab === 'history' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
-            )}
+            }`}
           >
             <History className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">History</span>
@@ -164,9 +103,9 @@ export default function UltimateBaseIntegration() {
           
           <button
             onClick={() => setActiveTab('profile')}
-            className={'flex flex-col items-center py-2 px-2 rounded-lg transition-colors ' + (
+            className={`flex flex-col items-center py-2 px-2 rounded-lg transition-colors ${
               activeTab === 'profile' ? 'text-blue-500 bg-blue-50' : 'text-slate-500'
-            )}
+            }`}
           >
             <User className="h-4 w-4 mb-1" />
             <span className="text-xs font-medium">Profile</span>
