@@ -443,7 +443,10 @@ export default function UltimateBaseIntegration() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Auto-Tip Settings</h3>
                 <button
-                  onClick={() => setShowSettings(false)}
+                  onClick={() => {
+                  localStorage.setItem("ultimateBaseAutoTipSettings", JSON.stringify(settings));
+                  setShowSettings(false);
+                }}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   ✕
@@ -550,7 +553,10 @@ export default function UltimateBaseIntegration() {
               )}
 
               <button
-                onClick={() => setShowSettings(false)}
+                onClick={() => {
+                  localStorage.setItem("ultimateBaseAutoTipSettings", JSON.stringify(settings));
+                  setShowSettings(false);
+                }}
                 className="w-full bg-gradient-to-r from-base-500 to-base-600 text-white font-bold py-3 px-4 rounded-lg hover:from-base-600 hover:to-base-700 transition-all duration-200"
               >
                 Save Settings
