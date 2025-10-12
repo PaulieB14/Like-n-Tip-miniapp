@@ -1,0 +1,46 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0052ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="card" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#f8fafc;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Floating hearts -->
+  <text x="100" y="150" font-family="Arial" font-size="60" fill="rgba(255,255,255,0.3)">💖</text>
+  <text x="1000" y="200" font-family="Arial" font-size="40" fill="rgba(255,255,255,0.2)">💖</text>
+  <text x="200" y="500" font-family="Arial" font-size="50" fill="rgba(255,255,255,0.25)">💖</text>
+  <text x="900" y="450" font-family="Arial" font-size="45" fill="rgba(255,255,255,0.2)">💖</text>
+  
+  <!-- Main card -->
+  <rect x="100" y="100" width="1000" height="430" rx="20" fill="url(#card)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  
+  <!-- App icon -->
+  <rect x="150" y="150" width="80" height="80" rx="20" fill="#0052ff"/>
+  <text x="190" y="200" font-family="Arial" font-size="50" text-anchor="middle" fill="white">💖</text>
+  
+  <!-- Title -->
+  <text x="280" y="200" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="#1f2937">LIke n Tip</text>
+  <text x="280" y="240" font-family="Arial, sans-serif" font-size="24" fill="#6b7280">Ultimate Base Mini App</text>
+  
+  <!-- Features -->
+  <text x="150" y="300" font-family="Arial, sans-serif" font-size="20" fill="#374151">✨ Mini App Context - Instant user data</text>
+  <text x="150" y="330" font-family="Arial, sans-serif" font-size="20" fill="#374151">🔐 Quick Auth - Secure authentication</text>
+  <text x="150" y="360" font-family="Arial, sans-serif" font-size="20" fill="#374151">⚡ Base Account - Sponsored gas & atomic batch</text>
+  <text x="150" y="390" font-family="Arial, sans-serif" font-size="20" fill="#374151">📱 Mobile-optimized for Base app</text>
+  
+  <!-- Call to action -->
+  <rect x="150" y="420" width="200" height="50" rx="25" fill="#0052ff"/>
+  <text x="250" y="450" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="white">Open in Base App</text>
+  
+  <!-- Base logo area -->
+  <text x="900" y="200" font-family="Arial, sans-serif" font-size="16" fill="#6b7280">Powered by</text>
+  <text x="900" y="230" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#0052ff">Base</text>
+</svg>
