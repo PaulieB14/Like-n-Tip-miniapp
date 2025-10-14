@@ -44,34 +44,79 @@ export async function GET(request: NextRequest) {
     // Generate user-specific agent wallet
     const agentWallet = generateUserAgentWallet(userAddress)
     
-    // Create public client to check balance
+    // Create public client to check balance with fallback RPC URLs
+    const rpcUrl = process.env.BASE_RPC_URL || 'https://mainnet.base.org'
     const client = createPublicClient({
       chain: base,
-      transport: http(process.env.BASE_RPC_URL),
+      transport: http(rpcUrl),
     })
 
-    // Get USDC balance using viem client
+    // Get USDC balance using viem client with fallback RPC endpoints
     let balance = 0
-    try {
-      console.log('Checking balance for agent wallet:', agentWallet.address)
-      
-      const balanceResult = await client.readContract({
-        address: USDC_CONTRACT,
-        abi: USDC_ABI,
-        functionName: 'balanceOf',
-        args: [agentWallet.address],
-        authorizationList: []
-      })
-      
-      console.log('Raw balance result:', balanceResult)
-      
-      // Convert from USDC units (6 decimals) to human readable
-      balance = Number(balanceResult) / 1e6
-      console.log('Converted balance:', balance)
-    } catch (error) {
-      console.error('Error getting balance:', error)
-      // If balance check fails, assume 0 balance
-      balance = 0
+    const rpcEndpoints = [
+      process.env.BASE_RPC_URL || 'https://mainnet.base.org',
+      'https://base-mainnet.g.alchemy.com/v2/demo',
+      'https://base.blockpi.network/v1/rpc/public',
+      'https://base.meowrpc.com'
+    ]
+    
+    for (const endpoint of rpcEndpoints) {
+      try {
+        console.log(`Trying RPC endpoint: ${endpoint}`)
+        
+        const fallbackClient = createPublicClient({
+          chain: base,
+          transport: http(endpoint),
+        })
+        
+        const balanceResult = await fallbackClient.readContract({
+          address: USDC_CONTRACT,
+          abi: USDC_ABI,
+          functionName: 'balanceOf',
+          args: [agentWallet.address],
+          authorizationList: []
+        })
+        
+        console.log('Raw balance result:', balanceResult)
+        
+        // Convert from USDC units (6 decimals) to human readable
+        balance = Number(balanceResult) / 1e6
+        console.log('Converted balance:', balance)
+        break // Success, exit the loop
+        
+      } catch (error) {
+        console.error(`Error with RPC endpoint ${endpoint}:`, error)
+        continue // Try next endpoint
+      }
+    }
+    
+    if (balance === 0) {
+      console.warn('All RPC endpoints failed, using fallback balance check')
+      // As a last resort, try a direct HTTP call
+      try {
+        const response = await fetch('https://base.blockpi.network/v1/rpc/public', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'eth_call',
+            params: [{
+              to: USDC_CONTRACT,
+              data: `0x70a08231000000000000000000000000${agentWallet.address.slice(2)}`
+            }, 'latest'],
+            id: 1
+          })
+        })
+        
+        const data = await response.json()
+        if (data.result) {
+          const balanceWei = parseInt(data.result, 16)
+          balance = balanceWei / 1e6
+          console.log('Fallback balance check successful:', balance)
+        }
+      } catch (fallbackError) {
+        console.error('Fallback balance check failed:', fallbackError)
+      }
     }
 
     return NextResponse.json({
