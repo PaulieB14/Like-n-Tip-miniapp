@@ -120,7 +120,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       }
 
       // Make the tip request using x402 payment protocol
-      const tipResponse = await fetch('/api/tip', {
+      const tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +129,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         body: JSON.stringify({
           postUrl: postUrl,
           amount: amount,
-          recipient: postAuthor
+          recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6', // Default demo recipient (you can change this)
+          recipientUsername: postAuthor // Keep the username for display
         })
       })
 
