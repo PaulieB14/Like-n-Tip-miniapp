@@ -76,8 +76,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           address: USDC_CONTRACT,
           abi: USDC_ABI,
           functionName: 'balanceOf',
-          args: [agentWallet.address],
-          authorizationList: []
+          args: [agentWallet.address]
         })
         
         agentBalance = Number(balanceResult) / 1e6
@@ -116,8 +115,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       address: USDC_CONTRACT,
       abi: USDC_ABI,
       functionName: 'balanceOf',
-      args: [agentWallet.address],
-      authorizationList: []
+      args: [agentWallet.address]
     })
     
     const agentBalance = Number(balanceResult) / 1e6

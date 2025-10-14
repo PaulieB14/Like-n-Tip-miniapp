@@ -146,7 +146,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-PAYMENT': `${amountInUnits}` // Send payment amount in USDC units
+          'X-PAYMENT': `${amount}` // Send payment amount in human-readable format
         },
         body: JSON.stringify({
           postUrl: postUrl,
