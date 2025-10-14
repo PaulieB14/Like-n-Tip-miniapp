@@ -33,13 +33,13 @@ function generateUserAgentWallet(userAddress: string): { privateKey: `0x${string
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<Response> {
   // Set a timeout for the entire function
-  const timeoutPromise = new Promise((_, reject) => {
+  const timeoutPromise = new Promise<Response>((_, reject) => {
     setTimeout(() => reject(new Error('API timeout')), 15000) // 15 second timeout
   })
 
-  const apiPromise = (async () => {
+  const apiPromise = (async (): Promise<Response> => {
     console.log('Agent wallet API called')
     const { searchParams } = new URL(request.url)
     const userAddress = searchParams.get('userAddress')
