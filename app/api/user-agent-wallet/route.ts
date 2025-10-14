@@ -62,35 +62,38 @@ export async function GET(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Failed to generate agent wallet' }, { status: 500 })
     }
     
-    // Get USDC balance with timeout and simplified approach
+    // Get USDC balance using Etherscan API (more reliable than RPC)
     let balance = 0
     try {
       console.log('Checking USDC balance for agent wallet:', agentWallet.address)
       
-      // Use a single reliable RPC endpoint with timeout
-      const client = createPublicClient({
-        chain: base,
-        transport: http('https://mainnet.base.org', {
+      // Use Etherscan API for Base chain (chainid=8453)
+      const etherscanResponse = await fetch(
+        `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT}&address=${agentWallet.address}&tag=latest&apikey=8X4YIZCEESWC88D8SNY16JH1SQ6FT2E2KK`,
+        { 
           timeout: 10000 // 10 second timeout
-        }),
-      })
+        }
+      )
       
-      const balanceResult = await client.readContract({
-        address: USDC_CONTRACT,
-        abi: USDC_ABI,
-        functionName: 'balanceOf',
-        args: [agentWallet.address],
-        authorizationList: []
-      })
-      
-      console.log('Raw balance result:', balanceResult)
-      
-      // Convert from USDC units (6 decimals) to human readable
-      balance = Number(balanceResult) / 1e6
-      console.log('Converted balance:', balance)
+      if (etherscanResponse.ok) {
+        const data = await etherscanResponse.json()
+        console.log('Etherscan API response:', data)
+        
+        if (data.status === '1' && data.result) {
+          // Convert from USDC units (6 decimals) to human readable
+          balance = Number(data.result) / 1e6
+          console.log('USDC balance from Etherscan:', balance)
+        } else {
+          console.log('Etherscan API error:', data.message)
+          balance = 0
+        }
+      } else {
+        console.error('Etherscan API request failed:', etherscanResponse.status)
+        balance = 0
+      }
       
     } catch (error) {
-      console.error('Failed to get balance:', error)
+      console.error('Failed to get balance from Etherscan:', error)
       // Set balance to 0 if we can't fetch it
       balance = 0
     }
