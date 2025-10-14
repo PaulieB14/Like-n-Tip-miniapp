@@ -143,7 +143,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
       const amountInUnits = parseUnits(amount.toString(), 6)
 
       // Check if user has enough USDC balance
-      const userBalanceInUnits = userBalance ? BigInt(userBalance.toString()) : 0n
+      const userBalanceInUnits = userBalance ? BigInt(userBalance.toString()) : BigInt(0)
       if (userBalanceInUnits < amountInUnits) {
         const userBalanceFormatted = Number(userBalanceInUnits) / 1e6
         setFundingError(`Insufficient USDC balance. You have $${userBalanceFormatted.toFixed(2)} USDC, but need $${amount.toFixed(2)} USDC to fund the agent wallet.`)
