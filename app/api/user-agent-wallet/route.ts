@@ -53,6 +53,8 @@ export async function GET(request: NextRequest) {
     // Get USDC balance using viem client
     let balance = 0
     try {
+      console.log('Checking balance for agent wallet:', agentWallet.address)
+      
       const balanceResult = await client.readContract({
         address: USDC_CONTRACT,
         abi: USDC_ABI,
@@ -61,8 +63,11 @@ export async function GET(request: NextRequest) {
         authorizationList: []
       })
       
+      console.log('Raw balance result:', balanceResult)
+      
       // Convert from USDC units (6 decimals) to human readable
       balance = Number(balanceResult) / 1e6
+      console.log('Converted balance:', balance)
     } catch (error) {
       console.error('Error getting balance:', error)
       // If balance check fails, assume 0 balance

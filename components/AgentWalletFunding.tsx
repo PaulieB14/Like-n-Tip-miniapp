@@ -98,12 +98,16 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
         return
       }
       
-      // Get user-specific agent wallet info from API
-      const response = await fetch(`/api/user-agent-wallet?userAddress=${userAddress}`)
+      console.log('Loading agent info for user:', userAddress)
+      
+      // Get user-specific agent wallet info from API with cache busting
+      const response = await fetch(`/api/user-agent-wallet?userAddress=${userAddress}&t=${Date.now()}`)
       if (response.ok) {
         const data = await response.json()
+        console.log('Agent info response:', data)
         setAgentInfo(data)
       } else {
+        console.error('Failed to load agent info:', response.status, response.statusText)
         // Fallback if API not available
         setAgentInfo({
           address: '0x1234...5678',
@@ -303,6 +307,23 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
               </div>
             </div>
           )}
+
+          {/* Force Refresh Button */}
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <button
+              onClick={async () => {
+                console.log('Force refreshing agent wallet balance...')
+                setIsLoading(true)
+                await loadAgentInfo()
+                await refetchUserBalance()
+                setIsLoading(false)
+              }}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Refreshing...' : '🔄 Refresh Agent Wallet Balance'}
+            </button>
+          </div>
         </div>
       </div>
 
