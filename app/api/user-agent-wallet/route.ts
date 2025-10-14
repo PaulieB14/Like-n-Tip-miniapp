@@ -68,12 +68,17 @@ export async function GET(request: NextRequest): Promise<Response> {
       console.log('Checking USDC balance for agent wallet:', agentWallet.address)
       
       // Use Etherscan API for Base chain (chainid=8453)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
       const etherscanResponse = await fetch(
         `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT}&address=${agentWallet.address}&tag=latest&apikey=8X4YIZCEESWC88D8SNY16JH1SQ6FT2E2KK`,
         { 
-          timeout: 10000 // 10 second timeout
+          signal: controller.signal
         }
       )
+      
+      clearTimeout(timeoutId)
       
       if (etherscanResponse.ok) {
         const data = await etherscanResponse.json()
