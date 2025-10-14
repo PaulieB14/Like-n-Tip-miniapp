@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAccount, useWriteContract } from 'wagmi'
+import { useAccount, useWriteContract, useConnect } from 'wagmi'
 import { Wallet, DollarSign, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
 import { parseUnits } from 'viem'
 import { base } from 'wagmi/chains'
@@ -34,6 +34,7 @@ const USDC_ABI = [
 export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFundingProps) {
   const { address: userAddress, isConnected } = useAccount()
   const { writeContract } = useWriteContract()
+  const { connect, connectors } = useConnect()
   
   const [agentInfo, setAgentInfo] = useState<AgentWalletInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -48,6 +49,11 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
   useEffect(() => {
     loadAgentInfo()
   }, [userAddress])
+
+  // Debug wallet connection status
+  useEffect(() => {
+    console.log('Wallet connection status:', { isConnected, userAddress, connectors: connectors.length })
+  }, [isConnected, userAddress, connectors])
 
   const loadAgentInfo = async () => {
     try {
@@ -90,7 +96,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
 
   const handleFundWallet = async (amount: number) => {
     if (!isConnected || !userAddress) {
-      setFundingError('Please connect your Base wallet first')
+      setFundingError('Please connect your wallet first')
       return
     }
 
@@ -273,9 +279,15 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
 
           {!isConnected && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-sm text-red-800">
-                <strong>Connect Wallet Required:</strong> Please connect your Base wallet to fund the agent.
+              <p className="text-sm text-red-800 mb-3">
+                <strong>Connect Wallet Required:</strong> Please connect your wallet to fund the agent.
               </p>
+              <button
+                onClick={() => connect({ connector: connectors[0] })}
+                className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+              >
+                Connect Wallet
+              </button>
             </div>
           )}
 
