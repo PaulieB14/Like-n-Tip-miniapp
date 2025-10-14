@@ -119,7 +119,16 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
       } else {
         console.error('Failed to load agent info:', response.status, response.statusText)
         const errorText = await response.text()
-        console.error('Error response:', errorText)
+        console.error('Error response body:', errorText)
+        
+        // Try to parse error message from response body
+        try {
+          const errorData = JSON.parse(errorText)
+          console.error('Parsed error message:', errorData.message || errorData.error)
+        } catch (parseError) {
+          console.error('Could not parse error response as JSON')
+        }
+        
         // Fallback if API not available
         setAgentInfo({
           address: '0x1234...5678',

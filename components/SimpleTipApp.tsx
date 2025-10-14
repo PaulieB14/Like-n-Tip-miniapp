@@ -106,7 +106,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       const agentData = await agentResponse.json()
       
       if (!agentData.success) {
-        setTipError('Failed to get agent wallet info')
+        console.error('Agent wallet API error:', agentData.error || agentData.message)
+        setTipError(`Failed to get agent wallet info: ${agentData.error || agentData.message || 'Unknown error'}`)
         return
       }
 
