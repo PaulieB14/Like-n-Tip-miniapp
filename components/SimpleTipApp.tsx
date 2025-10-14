@@ -29,22 +29,51 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const [tipSuccess, setTipSuccess] = useState('')
   const [tipError, setTipError] = useState('')
 
-  // Function to resolve Farcaster username to wallet address
+  // Function to resolve Farcaster username to wallet address using real Farcaster API
   const resolveFarcasterAddress = async (username: string): Promise<string | null> => {
     try {
-      // For demo purposes, we'll use a mapping of known usernames to addresses
-      // In production, you'd use the Farcaster API to look up FID and then get primary address
-      const knownAddresses: { [key: string]: string } = {
-        'pdiomede': '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6', // Demo address
-        'alice': '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-        'bob': '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
-        // Add more known addresses as needed
+      console.log('Resolving Farcaster username:', username)
+      
+      // Step 1: Get FID from username using Farcaster API
+      const userResponse = await fetch(`https://api.farcaster.xyz/v1/user-by-username?username=${username}`)
+      
+      if (!userResponse.ok) {
+        console.error('Failed to get FID for username:', username, userResponse.status)
+        return null
       }
       
-      return knownAddresses[username] || '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6' // Default demo address
+      const userData = await userResponse.json()
+      const fid = userData.result?.user?.fid
+      
+      if (!fid) {
+        console.error('No FID found for username:', username)
+        return null
+      }
+      
+      console.log('Found FID for', username, ':', fid)
+      
+      // Step 2: Get primary Ethereum address using FID
+      const addressResponse = await fetch(`https://api.farcaster.xyz/fc/primary-address?fid=${fid}&protocol=ethereum`)
+      
+      if (!addressResponse.ok) {
+        console.error('Failed to get primary address for FID:', fid, addressResponse.status)
+        return null
+      }
+      
+      const addressData = await addressResponse.json()
+      const primaryAddress = addressData.result?.address
+      
+      if (!primaryAddress) {
+        console.error('No primary address found for FID:', fid)
+        return null
+      }
+      
+      console.log('Resolved address for', username, ':', primaryAddress)
+      return primaryAddress
+      
     } catch (error) {
       console.error('Error resolving Farcaster address:', error)
-      return '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6' // Fallback to demo address
+      return null
     }
   }
 
@@ -141,6 +170,11 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       // Resolve the recipient address from the username
       const recipientAddress = await resolveFarcasterAddress(postAuthor)
       
+      if (!recipientAddress) {
+        setTipError(`Could not resolve wallet address for @${postAuthor}. Please check the username or try a different post.`)
+        return
+      }
+      
       // Make the tip request using x402 payment protocol
       const tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
         method: 'POST',
@@ -160,8 +194,16 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         if (tipResponse.status === 402) {
           setTipError('Payment required - please fund your agent wallet')
         } else {
-          const errorData = await tipResponse.json()
-          setTipError(errorData.error || 'Failed to send tip')
+          let errorMessage = 'Failed to send tip'
+          try {
+            const errorData = await tipResponse.json()
+            errorMessage = errorData.error || errorData.message || errorMessage
+            console.error('Tip API error:', errorData)
+          } catch (parseError) {
+            console.error('Could not parse error response:', parseError)
+            errorMessage = `Server error (${tipResponse.status}): ${tipResponse.statusText}`
+          }
+          setTipError(errorMessage)
         }
         return
       }
