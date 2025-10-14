@@ -144,7 +144,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       address: USDC_CONTRACT,
       abi: USDC_ABI,
       functionName: 'transfer',
-      args: [recipient as `0x${string}`, amountInUnits]
+      args: [recipient as `0x${string}`, amountInUnits],
+      chain: base
     })
 
     console.log('x402: Tip sent successfully:', txHash)
