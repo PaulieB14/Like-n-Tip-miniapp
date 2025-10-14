@@ -102,7 +102,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
 
     try {
       // First, check if we need to fund the agent wallet
-      const agentResponse = await fetch('/api/user-agent-wallet')
+      const agentResponse = await fetch(`/api/user-agent-wallet?userAddress=${address}`)
       const agentData = await agentResponse.json()
       
       if (!agentData.success) {
