@@ -11,6 +11,9 @@ interface SimpleTipAppProps {
     amount: number
     txHash?: string
     recipient?: string
+    postUrl?: string
+    postContent?: string
+    platform?: string
   }) => void
 }
 
@@ -19,6 +22,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const [postUrl, setPostUrl] = useState('')
   const [postAuthor, setPostAuthor] = useState('')
   const [postContent, setPostContent] = useState('')
+  const [postPlatform, setPostPlatform] = useState('')
   const [isLoadingPost, setIsLoadingPost] = useState(false)
   const [isSendingTip, setIsSendingTip] = useState(false)
   const [tipSuccess, setTipSuccess] = useState('')
@@ -61,6 +65,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         postId = pathParts[1] || 'unknown'
       }
 
+      setPostPlatform(platform)
+
       // Generate realistic post content
       const postContent = `This is a real ${platform} post from @${username}. The content would be fetched from the ${platform} API using post ID: ${postId}`
 
@@ -100,15 +106,18 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       
       setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor}`)
       
-      // Add to history
-      if (onTipSent) {
-        onTipSent({
-          postId: postUrl.split('/').pop() || 'unknown',
-          amount: amount,
-          txHash: '0x' + Math.random().toString(16).substr(2, 64), // Mock tx hash
-          recipient: postAuthor
-        })
-      }
+        // Add to history
+        if (onTipSent) {
+          onTipSent({
+            postId: postUrl.split('/').pop() || 'unknown',
+            amount: amount,
+            txHash: '0x' + Math.random().toString(16).substr(2, 64), // Mock tx hash
+            recipient: postAuthor,
+            postUrl: postUrl,
+            postContent: postContent,
+            platform: postPlatform
+          })
+        }
     } catch (error: any) {
       setTipError(error.message || 'Failed to send tip')
     } finally {

@@ -22,7 +22,32 @@ export default function UltimateBaseIntegration() {
     timestamp: Date
     txHash?: string
     recipient?: string
-  }>>([])
+    postUrl?: string
+    postContent?: string
+    platform?: string
+  }>>([
+    // Sample tips for demonstration
+    {
+      postId: '0xbfc71bf9',
+      amount: 0.005,
+      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+      txHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
+      recipient: 'pdiomede',
+      postUrl: 'https://warpcast.com/pdiomede/0xbfc71bf9',
+      postContent: 'This is a real Farcaster post from @pdiomede. The content would be fetched from the Farcaster API using post ID: 0xbfc71bf9',
+      platform: 'Farcaster'
+    },
+    {
+      postId: '0xabc123',
+      amount: 0.002,
+      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
+      txHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
+      recipient: 'alice',
+      postUrl: 'https://warpcast.com/alice/0xabc123',
+      postContent: 'Just shipped a new feature for our dApp! 🚀 The community feedback has been incredible. Thanks to everyone who tested the beta version.',
+      platform: 'Farcaster'
+    }
+  ])
 
   // Dismiss splash screen when interface is ready
   useEffect(() => {
@@ -57,7 +82,10 @@ export default function UltimateBaseIntegration() {
           amount: tipData.amount,
           timestamp: new Date(),
           txHash: tipData.txHash,
-          recipient: tipData.recipient
+          recipient: tipData.recipient,
+          postUrl: tipData.postUrl,
+          postContent: tipData.postContent,
+          platform: tipData.platform
         }, ...prev.slice(0, 9)]) // Keep only last 10 tips
       }}
     />
@@ -85,18 +113,78 @@ export default function UltimateBaseIntegration() {
         <div className="space-y-4">
           {recentTips.map((tip, index) => (
             <div key={index} className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-slate-900">Tip to @{tip.recipient}</h3>
-                  <p className="text-sm text-slate-600">Post: {tip.postId}</p>
-                  <p className="text-xs text-slate-500">{tip.timestamp.toLocaleString()}</p>
+              <div className="space-y-4">
+                {/* Tip Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Heart className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-900">Tip to @{tip.recipient}</h3>
+                      <p className="text-sm text-slate-600">
+                        {tip.platform && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                            {tip.platform}
+                          </span>
+                        )}
+                        {tip.timestamp.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-green-600">${tip.amount.toFixed(3)}</p>
+                    {tip.txHash && (
+                      <a
+                        href={`https://basescan.org/tx/${tip.txHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800"
+                      >
+                        View TX
+                      </a>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-green-600">${tip.amount.toFixed(2)}</p>
-                  {tip.txHash && (
-                    <p className="text-xs text-slate-500">TX: {tip.txHash.slice(0, 8)}...</p>
-                  )}
-                </div>
+
+                {/* Post Preview */}
+                {tip.postContent && (
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0">
+                        <User className="h-4 w-4 text-slate-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <p className="font-medium text-slate-900">@{tip.recipient}</p>
+                          {tip.postUrl && (
+                            <a
+                              href={tip.postUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          )}
+                        </div>
+                        <p className="text-slate-700 text-sm leading-relaxed line-clamp-3">
+                          {tip.postContent}
+                        </p>
+                        {tip.postUrl && (
+                          <a
+                            href={tip.postUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center mt-2 text-xs text-blue-600 hover:text-blue-800"
+                          >
+                            View original post →
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
