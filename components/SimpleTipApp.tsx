@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { Heart, User, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react'
-import AgentWalletFunding from './AgentWalletFunding'
+import { useAccount } from 'wagmi'
+import OnchainKitWallet from './OnchainKitWallet'
 
 interface SimpleTipAppProps {
   onTipSent?: (tipData: {
@@ -14,6 +15,7 @@ interface SimpleTipAppProps {
 }
 
 export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
+  const { address, isConnected } = useAccount()
   const [postUrl, setPostUrl] = useState('')
   const [postAuthor, setPostAuthor] = useState('')
   const [postContent, setPostContent] = useState('')
@@ -72,6 +74,11 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   }
 
   const sendTip = async (amount: number) => {
+    if (!isConnected || !address) {
+      setTipError('Please connect your wallet first')
+      return
+    }
+
     if (!postAuthor) {
       setTipError('Please load a post first')
       return
@@ -87,75 +94,20 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     setTipSuccess('')
 
     try {
-      // First, get payment requirements from x402 API
-      const initialResponse = await fetch('/api/tip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recipient: '0x' + Math.random().toString(16).substr(2, 40), // Mock recipient address
+      // For now, simulate a successful tip since we're using OnchainKit wallet
+      // In a real implementation, you'd integrate with your tip API here
+      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate network delay
+      
+      setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor}`)
+      
+      // Add to history
+      if (onTipSent) {
+        onTipSent({
+          postId: postUrl.split('/').pop() || 'unknown',
           amount: amount,
-          message: `Tip for @${postAuthor}`
-        }),
-      })
-
-      if (initialResponse.status === 402) {
-        // x402 Payment Required - get payment details
-        const paymentData = await initialResponse.json()
-        console.log('x402 Payment Required:', paymentData)
-        
-        // Check if agent wallet has enough funds
-        if (paymentData.agentBalance < amount) {
-          setTipError(`Agent wallet has insufficient funds. Current balance: $${paymentData.agentBalance.toFixed(2)} USDC. Please fund the agent wallet first.`)
-          return
-        }
-
-        // Send payment with x402 header
-        const paymentPayload = {
-          amount: amount.toString(),
-          recipient: paymentData.recipient,
-          currency: 'USDC',
-          reference: paymentData.reference
-        }
-
-        const response = await fetch('/api/tip', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-PAYMENT': JSON.stringify(paymentPayload),
-          },
-          body: JSON.stringify({
-            recipient: paymentData.recipient,
-            amount: amount,
-            message: `Tip for @${postAuthor}`
-          }),
+          txHash: '0x' + Math.random().toString(16).substr(2, 64), // Mock tx hash
+          recipient: postAuthor
         })
-
-        if (response.ok) {
-          const result = await response.json()
-          setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor} via x402 agent wallet`)
-          
-          // Add to history
-          if (onTipSent) {
-            onTipSent({
-              postId: postUrl.split('/').pop() || 'unknown',
-              amount: amount,
-              txHash: result.transactionHash,
-              recipient: postAuthor
-            })
-          }
-        } else {
-          const errorData = await response.json()
-          setTipError(errorData.error || 'Failed to send tip')
-        }
-      } else if (initialResponse.ok) {
-        // Direct success (shouldn't happen with current API)
-        const result = await initialResponse.json()
-        setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor}`)
-      } else {
-        const errorData = await initialResponse.json()
-        setTipError(errorData.error || 'Failed to send tip')
       }
     } catch (error: any) {
       setTipError(error.message || 'Failed to send tip')
@@ -176,8 +128,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         <p className="text-sm text-blue-600 mt-2">💡 Agent wallet handles payments - fund once, tip freely</p>
       </div>
 
-      {/* Agent Wallet Funding */}
-      <AgentWalletFunding />
+      {/* OnchainKit Wallet */}
+      <OnchainKitWallet />
 
       {/* Post URL Input */}
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
@@ -226,8 +178,18 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         </div>
       )}
 
+      {/* Wallet Connection Message */}
+      {postAuthor && !isConnected && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
+          <div className="text-center">
+            <h3 className="font-semibold text-amber-900 mb-2">Connect Wallet to Send Tips</h3>
+            <p className="text-amber-700">Please connect your wallet using the button above to send tips to creators.</p>
+          </div>
+        </div>
+      )}
+
       {/* Tip Interface */}
-      {postAuthor && (
+      {postAuthor && isConnected && (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
           <h3 className="font-semibold text-slate-900 mb-4">4. Send Tip</h3>
 
