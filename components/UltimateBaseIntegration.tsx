@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Heart, Settings, User, History } from 'lucide-react'
+import { Heart, Settings, User, History, ExternalLink } from 'lucide-react'
 import SimpleTipApp from './SimpleTipApp'
 
 // Import the Farcaster SDK with error handling
