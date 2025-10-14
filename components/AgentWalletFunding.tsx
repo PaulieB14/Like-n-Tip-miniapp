@@ -169,16 +169,14 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
       })
 
       console.log('Funding transaction submitted:', txHash)
-      setFundingSuccess(`Successfully sent $${amount.toFixed(3)} USDC to agent wallet! Transaction: ${txHash}`)
+      setFundingSuccess(`Transaction submitted! Hash: ${txHash}. Please wait for confirmation and refresh to see updated balance.`)
       
-      // Update local balance
-      if (agentInfo) {
-        setAgentInfo({
-          ...agentInfo,
-          balance: agentInfo.balance + amount,
-          hasEnoughFunds: (agentInfo.balance + amount) >= 0.01 // Much lower threshold for micropayments
-        })
-      }
+      // Don't update local balance immediately - wait for actual on-chain confirmation
+      // Refresh both user and agent balances after a delay
+      setTimeout(async () => {
+        await refetchUserBalance()
+        await loadAgentInfo()
+      }, 3000)
       
       if (onFundingComplete) {
         onFundingComplete()
@@ -258,11 +256,17 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
                 ${agentInfo.balance.toFixed(2)}
               </span>
               <button
-                onClick={loadAgentInfo}
+                onClick={async () => {
+                  setIsLoading(true)
+                  await loadAgentInfo()
+                  await refetchUserBalance()
+                  setIsLoading(false)
+                }}
                 className="p-1 hover:bg-slate-100 rounded"
                 title="Refresh balance"
+                disabled={isLoading}
               >
-                <RefreshCw className="h-4 w-4 text-slate-500" />
+                <RefreshCw className={`h-4 w-4 text-slate-500 ${isLoading ? 'animate-spin' : ''}`} />
               </button>
               {agentInfo.hasEnoughFunds ? (
                 <CheckCircle className="h-4 w-4 text-green-500" />
@@ -388,9 +392,21 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
 
           {fundingSuccess && (
             <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl">
-              <p className="text-sm text-green-800">
+              <p className="text-sm text-green-800 mb-3">
                 <strong>Success:</strong> {fundingSuccess}
               </p>
+              <button
+                onClick={async () => {
+                  setIsLoading(true)
+                  await loadAgentInfo()
+                  await refetchUserBalance()
+                  setIsLoading(false)
+                }}
+                className="px-3 py-1 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Refreshing...' : 'Refresh Balance'}
+              </button>
             </div>
           )}
 

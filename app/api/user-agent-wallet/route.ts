@@ -57,7 +57,8 @@ export async function GET(request: NextRequest) {
         address: USDC_CONTRACT,
         abi: USDC_ABI,
         functionName: 'balanceOf',
-        args: [agentWallet.address]
+        args: [agentWallet.address],
+        authorizationList: []
       })
       
       // Convert from USDC units (6 decimals) to human readable
