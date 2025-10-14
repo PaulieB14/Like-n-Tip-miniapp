@@ -37,6 +37,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     console.log('Found FID for', username, ':', fid)
     
     // Step 2: Get primary Ethereum address using FID
+    // Using the correct endpoint structure from the documentation
     const addressResponse = await fetch(`https://api.farcaster.xyz/fc/primary-address?fid=${fid}&protocol=ethereum`, {
       headers: {
         'User-Agent': 'Like-n-Tip-MiniApp/1.0'
@@ -49,10 +50,43 @@ export async function GET(request: NextRequest): Promise<Response> {
     }
     
     const addressData = await addressResponse.json()
-    const primaryAddress = addressData.result?.address
+    // The response structure is: { "result": { "address": { "fid": 12152, "protocol": "ethereum", "address": "0x..." } } }
+    const primaryAddress = addressData.result?.address?.address
     
     if (!primaryAddress) {
-      console.error('No primary address found for FID:', fid)
+      console.log('No primary address found, checking creator rewards history for FID:', fid)
+      
+      // Fallback: Check creator rewards history for wallet address
+      try {
+        const rewardsResponse = await fetch(`https://api.farcaster.xyz/v1/creator-rewards-winner-history`, {
+          headers: {
+            'User-Agent': 'Like-n-Tip-MiniApp/1.0'
+          }
+        })
+        
+        if (rewardsResponse.ok) {
+          const rewardsData = await rewardsResponse.json()
+          const winners = rewardsData.result?.history?.winners || []
+          
+          // Look for the user in recent winners
+          const userWinner = winners.find((winner: any) => winner.fid === fid && winner.walletAddress)
+          
+          if (userWinner && userWinner.walletAddress) {
+            console.log('Found wallet address in creator rewards for', username, ':', userWinner.walletAddress)
+            return NextResponse.json({
+              success: true,
+              username: username,
+              fid: fid,
+              address: userWinner.walletAddress,
+              source: 'creator_rewards'
+            })
+          }
+        }
+      } catch (rewardsError) {
+        console.error('Error checking creator rewards:', rewardsError)
+      }
+      
+      console.error('No wallet address found for FID:', fid)
       return NextResponse.json({ error: `@${username} has no verified Ethereum wallet` }, { status: 404 })
     }
     
@@ -62,7 +96,8 @@ export async function GET(request: NextRequest): Promise<Response> {
       success: true,
       username: username,
       fid: fid,
-      address: primaryAddress
+      address: primaryAddress,
+      source: 'primary_address'
     })
     
   } catch (error: any) {
