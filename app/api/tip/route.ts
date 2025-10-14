@@ -64,24 +64,29 @@ export async function POST(request: NextRequest): Promise<Response> {
       // No payment provided - return 402 Payment Required (x402 protocol)
       console.log('x402: No payment header, returning 402 Payment Required')
       
-      // Get agent wallet balance
+      // Get agent wallet balance using Etherscan API (more reliable)
       let agentBalance = 0
       try {
-        const client = createPublicClient({
-          chain: base,
-          transport: http('https://mainnet.base.org')
-        })
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
         
-        const balanceResult = await client.readContract({
-          address: USDC_CONTRACT,
-          abi: USDC_ABI,
-          functionName: 'balanceOf',
-          args: [agentWallet.address]
-        })
+        const etherscanResponse = await fetch(
+          `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT}&address=${agentWallet.address}&tag=latest&apikey=8X4YIZCEESWC88D8SNY16JH1SQ6FT2E2KK`,
+          { 
+            signal: controller.signal
+          }
+        )
         
-        agentBalance = Number(balanceResult) / 1e6
+        clearTimeout(timeoutId)
+        
+        if (etherscanResponse.ok) {
+          const data = await etherscanResponse.json()
+          if (data.status === '1' && data.result) {
+            agentBalance = Number(data.result) / 1e6
+          }
+        }
       } catch (error) {
-        console.error('Error getting agent balance:', error)
+        console.error('Error getting agent balance from Etherscan:', error)
       }
 
       return NextResponse.json(
@@ -105,20 +110,30 @@ export async function POST(request: NextRequest): Promise<Response> {
     const tipAmount = parseFloat(paymentHeader)
     const amountInUnits = parseUnits(tipAmount.toString(), 6) // USDC has 6 decimals
 
-    // Check agent wallet balance
-    const client = createPublicClient({
-      chain: base,
-      transport: http('https://mainnet.base.org')
-    })
-    
-    const balanceResult = await client.readContract({
-      address: USDC_CONTRACT,
-      abi: USDC_ABI,
-      functionName: 'balanceOf',
-      args: [agentWallet.address]
-    })
-    
-    const agentBalance = Number(balanceResult) / 1e6
+    // Check agent wallet balance using Etherscan API (more reliable)
+    let agentBalance = 0
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
+      const etherscanResponse = await fetch(
+        `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT}&address=${agentWallet.address}&tag=latest&apikey=8X4YIZCEESWC88D8SNY16JH1SQ6FT2E2KK`,
+        { 
+          signal: controller.signal
+        }
+      )
+      
+      clearTimeout(timeoutId)
+      
+      if (etherscanResponse.ok) {
+        const data = await etherscanResponse.json()
+        if (data.status === '1' && data.result) {
+          agentBalance = Number(data.result) / 1e6
+        }
+      }
+    } catch (error) {
+      console.error('Error getting agent balance from Etherscan:', error)
+    }
     
     if (agentBalance < tipAmount) {
       return NextResponse.json(
