@@ -1,16 +1,90 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { agentWallet } from '@/lib/agentWallet'
+import { createPublicClient, createWalletClient, http, parseUnits } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import { base } from 'viem/chains'
+import { createHash } from 'crypto'
 
-export async function POST(request: NextRequest) {
+// USDC contract on Base
+const USDC_CONTRACT = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const
+const USDC_ABI = [
+  {
+    "inputs": [
+      { "internalType": "address", "name": "account", "type": "address" }
+    ],
+    "name": "balanceOf",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "transfer",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const
+
+// Generate user-specific agent wallet (same logic as user-agent-wallet API)
+function generateUserAgentWallet(userAddress: string): { privateKey: `0x${string}`, address: `0x${string}` } {
+  const seed = `agent-wallet-${userAddress}-${process.env.AGENT_WALLET_SEED || 'default-seed'}`
+  const hash = createHash('sha256').update(seed).digest('hex')
+  const privateKey = `0x${hash}` as `0x${string}`
+  
+  const account = privateKeyToAccount(privateKey)
+  return {
+    privateKey,
+    address: account.address
+  }
+}
+
+export async function POST(request: NextRequest): Promise<Response> {
   try {
     const body = await request.json()
-    const { recipient, amount, message } = body
+    const { postUrl, amount, recipient } = body
 
-    // Check for payment header
+    // Get user address from query params or body
+    const { searchParams } = new URL(request.url)
+    const userAddress = searchParams.get('userAddress') || body.userAddress
+
+    if (!userAddress) {
+      return NextResponse.json({ error: 'User address required' }, { status: 400 })
+    }
+
+    // Generate user-specific agent wallet
+    const agentWallet = generateUserAgentWallet(userAddress)
+    
+    // Check for payment header (x402 protocol)
     const paymentHeader = request.headers.get('X-PAYMENT')
 
     if (!paymentHeader) {
-      // No payment provided - return 402 Payment Required with agent wallet info
+      // No payment provided - return 402 Payment Required (x402 protocol)
+      console.log('x402: No payment header, returning 402 Payment Required')
+      
+      // Get agent wallet balance
+      let agentBalance = 0
+      try {
+        const client = createPublicClient({
+          chain: base,
+          transport: http('https://mainnet.base.org')
+        })
+        
+        const balanceResult = await client.readContract({
+          address: USDC_CONTRACT,
+          abi: USDC_ABI,
+          functionName: 'balanceOf',
+          args: [agentWallet.address],
+          authorizationList: []
+        })
+        
+        agentBalance = Number(balanceResult) / 1e6
+      } catch (error) {
+        console.error('Error getting agent balance:', error)
+      }
+
       return NextResponse.json(
         {
           amount: amount?.toString() || '0.10',
@@ -18,52 +92,82 @@ export async function POST(request: NextRequest) {
           reference: `tip_${Date.now()}`,
           currency: 'USDC',
           message: 'Payment required to send tip',
-          agentWallet: agentWallet.getAddress(),
-          agentBalance: await agentWallet.getUSDCBalance()
+          agentWallet: agentWallet.address,
+          agentBalance: agentBalance,
+          postUrl: postUrl
         },
         { status: 402 }
       )
     }
 
-    // Parse payment payload
-    const paymentPayload = JSON.parse(paymentHeader)
+    // Payment provided - process the tip (x402 protocol)
+    console.log('x402: Processing payment:', paymentHeader)
     
-    // Validate payment
-    if (!paymentPayload.amount || !paymentPayload.recipient) {
+    const tipAmount = parseFloat(paymentHeader)
+    const amountInUnits = parseUnits(tipAmount.toString(), 6) // USDC has 6 decimals
+
+    // Check agent wallet balance
+    const client = createPublicClient({
+      chain: base,
+      transport: http('https://mainnet.base.org')
+    })
+    
+    const balanceResult = await client.readContract({
+      address: USDC_CONTRACT,
+      abi: USDC_ABI,
+      functionName: 'balanceOf',
+      args: [agentWallet.address],
+      authorizationList: []
+    })
+    
+    const agentBalance = Number(balanceResult) / 1e6
+    
+    if (agentBalance < tipAmount) {
       return NextResponse.json(
-        { error: 'Invalid payment payload' },
-        { status: 400 }
+        { 
+          error: `Insufficient agent wallet balance. Current: $${agentBalance.toFixed(2)}, Required: $${tipAmount.toFixed(2)}`,
+          agentBalance: agentBalance,
+          requiredAmount: tipAmount
+        },
+        { status: 402 }
       )
     }
 
-    // Send real USDC using agent wallet
-    const tipAmount = parseFloat(paymentPayload.amount)
-    const result = await agentWallet.sendUSDC(paymentPayload.recipient, tipAmount)
+    // Send USDC transfer using agent wallet
+    const walletClient = createWalletClient({
+      account: privateKeyToAccount(agentWallet.privateKey),
+      chain: base,
+      transport: http('https://mainnet.base.org')
+    })
 
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error || 'Payment processing failed' },
-        { status: 500 }
-      )
-    }
+    const txHash = await walletClient.writeContract({
+      address: USDC_CONTRACT,
+      abi: USDC_ABI,
+      functionName: 'transfer',
+      args: [recipient as `0x${string}`, amountInUnits]
+    })
+
+    console.log('x402: Tip sent successfully:', txHash)
 
     const tipResult = {
       success: true,
-      transactionHash: result.txHash,
-      amount: paymentPayload.amount,
-      recipient: paymentPayload.recipient,
-      message: message || 'Tip sent via x402',
+      txHash: txHash,
+      amount: tipAmount,
+      recipient: recipient,
+      postUrl: postUrl,
+      message: 'Tip sent via x402 protocol',
       timestamp: new Date().toISOString(),
-      agentWallet: agentWallet.getAddress()
+      agentWallet: agentWallet.address
     }
 
-    // Return success with payment confirmation header
+    // Return success with x402 payment confirmation headers
     return NextResponse.json(tipResult, {
       status: 200,
       headers: {
         'X-PAYMENT-RESPONSE': 'confirmed',
-        'X-PAYMENT-AMOUNT': paymentPayload.amount,
-        'X-PAYMENT-RECIPIENT': paymentPayload.recipient
+        'X-PAYMENT-AMOUNT': tipAmount.toString(),
+        'X-PAYMENT-RECIPIENT': recipient,
+        'X-PAYMENT-TX-HASH': txHash
       }
     })
 
