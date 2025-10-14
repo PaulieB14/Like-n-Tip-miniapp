@@ -1,7 +1,7 @@
 {
   "name": "like-n-tip",
   "version": "1.0.0",
-  "description": "A catchy tipping mini app for Base app - send tips with style!",
+  "description": "A professional mini app for Farcaster and Base that enables micropayments for social media posts using the x402 payment protocol.",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,6 +12,7 @@
   "dependencies": {
     "@coinbase/x402": "^0.6.6",
     "@farcaster/miniapp-sdk": "^0.2.0",
+    "@farcaster/miniapp-wagmi-connector": "^1.1.0",
     "@farcaster/quick-auth": "^0.0.8",
     "@tanstack/react-query": "^5.90.2",
     "axios": "^1.6.0",
@@ -35,13 +36,16 @@
     "typescript": "^5.0.0"
   },
   "keywords": [
+    "farcaster",
     "base",
     "miniapp",
     "tipping",
+    "micropayments",
+    "x402",
+    "usdc",
     "social",
     "crypto",
-    "x402",
-    "fun"
+    "creator-economy"
   ],
   "author": "Paul Barba",
   "license": "MIT"

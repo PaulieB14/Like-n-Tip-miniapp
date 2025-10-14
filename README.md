@@ -1,116 +1,49 @@
-# Tip in Comments - Universal Comment Tipping Mini App
+# Simple Tip App
 
-A revolutionary Base mini app that lets you tip creators by including tip amounts in your comments. Simply write comments with tip amounts like "$0.10 tip" or "💖 $0.25" and the system automatically sends real USDC to the author!
+A professional mini app for Farcaster and Base that enables micropayments for social media posts. Fund an agent wallet once, then send autonomous tips to any post using the x402 payment protocol.
 
-## 🚀 Revolutionary Features
+## 🚀 Features
 
-- **Tip in Comments**: Include tip amounts directly in your comments
-- **Universal Compatibility**: Works with any Farcaster post URL
-- **Real USDC Transactions**: Sends actual USDC on Base network
-- **Smart Parsing**: Detects multiple tip formats automatically
-- **Clean Comments**: Tip parts are removed from visible comments
-- **Mobile Optimized**: Perfect for mobile-first Base app experience
-- **Zero Friction**: Just comment normally with tip amounts
+- **Universal Post Support**: Works with Farcaster and Base app post URLs
+- **Agent Wallet System**: Fund once, tip autonomously forever
+- **Micropayments**: Send tips as small as $0.001 USDC
+- **x402 Protocol**: Uses Coinbase's x402 for autonomous payments
+- **Cross-Platform**: Works on both Farcaster and Base app
+- **Real USDC**: Actual transactions on Base network
 
-## 🎯 Core Value Proposition
+## 🎯 How It Works
 
-**The one thing this app does really well: Makes tipping as easy as commenting**
+### 1. **Fund Your Agent Wallet**
+- Connect your Base wallet
+- Send USDC to your personal agent wallet
+- Agent wallet handles all future tips autonomously
 
-- **Why someone would use it every day**: Tip creators naturally while engaging with their content
-- **Why someone would share it**: Creates a culture of appreciation through comments
-- **Perfect for**: Creator communities, social interactions, and building a tipping culture
+### 2. **Paste Any Post URL**
+- Copy any Farcaster or Base app post URL
+- App loads the post and author information
+- Ready to send tips
 
-## 🛠 How It Works
-
-### **1. Paste Any Post URL**
-- Copy any Farcaster post URL
-- Paste it into the app to load the post and author info
-- Works with any post from any user
-
-### **2. Write Comment with Tip**
-- Write your comment normally
-- Include tip amounts in various formats:
-  - `"Great post! $0.10 tip"`
-  - `"Amazing work! 💖 $0.25"`
-  - `"Here's 0.50 USDC for this"`
-  - `"Love this! +$1.00"`
-
-### **3. Auto-Send Tip**
-- System detects tip amounts automatically
-- Sends real USDC to the author
-- Posts clean comment without tip parts
-- Author receives tip instantly
-
-## 💡 Supported Tip Formats
-
-The app intelligently detects tips in multiple formats:
-
-### **Dollar Amounts**
-- `"Great post! $0.10 tip"`
-- `"tip $0.25"`
-- `"+$0.50"`
-
-### **USDC Amounts**
-- `"0.10 USDC"`
-- `"0.25 USDC tip"`
-- `"tip 0.50 USDC"`
-
-### **Cents**
-- `"10 cents"`
-- `"25 cents tip"`
-- `"tip 50 cents"`
-
-### **With Emojis**
-- `"💖 $0.10"`
-- `"💰 0.25"`
-- `"💸 tip $0.50"`
-
-### **Natural Language**
-- `"Here's 0.10 USDC for this"`
-- `"Sending 25 cents your way"`
-- `"Love this! +$1.00"`
-
-## 🏗 Base App Integration
-
-This mini app integrates seamlessly with Base app:
-
-```typescript
-// Comment tip parsing example
-const parseCommentForTip = (comment: string) => {
-  // Detects tip patterns like "$0.10 tip", "💖 $0.25", etc.
-  // Returns parsed tip amount and cleaned comment
-}
-
-// Real USDC payment
-const sendTip = async (recipientAddress: string, amount: number) => {
-  // Sends real USDC via Base network
-  // Uses wagmi for wallet integration
-}
-```
-
-### **Integration Points:**
-- **Post URL Parsing**: Loads any Farcaster post
-- **Comment Processing**: Real-time tip detection
-- **USDC Payments**: Real transactions on Base network
-- **Wallet Integration**: Uses Base app's wallet system
+### 3. **Send Micropayments**
+- Choose from preset amounts ($0.001 - $0.05)
+- Agent wallet automatically sends USDC to the author
+- No additional wallet confirmations needed
 
 ## 🛠 Tech Stack
 
 - **Frontend**: Next.js 15, React 18, TypeScript
 - **Styling**: Tailwind CSS
-- **Payments**: Real USDC transactions via wagmi
-- **Blockchain**: Base network, USDC contract
-- **Mini App**: Base Mini App structure
-- **Parsing**: Smart regex patterns for tip detection
+- **Payments**: x402 protocol, USDC on Base
+- **Wallet**: Wagmi with Farcaster Mini App connector
+- **Blockchain**: Base network
+- **Protocol**: Coinbase x402 for autonomous payments
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ 
-- Base app account
-- MetaMask or compatible wallet
-- USDC on Base network for tipping
+- Node.js 18+
+- Base wallet with USDC
+- Farcaster or Base app account
 
 ### Installation
 
@@ -138,24 +71,6 @@ npm run dev
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 💰 Comment Tipping Flow
-
-1. **User pastes any Farcaster post URL**
-2. **User writes comment with tip amount** (e.g., "Great post! $0.10 tip")
-3. **System detects tip automatically**
-4. **Real USDC is sent to author**
-5. **Clean comment is posted** (without tip part)
-
-## 🏗 Base Mini App Setup
-
-To deploy as a Base mini app:
-
-1. **Update Manifest**: Edit `minikit.config.ts` with your domain
-2. **Account Association**: Generate credentials via Base Build
-3. **Deploy**: Push to Vercel or your hosting platform
-4. **Preview**: Use Base Build preview tool
-5. **Publish**: Post your app URL in Base app
-
 ## 🔧 Environment Variables
 
 ```bash
@@ -176,35 +91,66 @@ USDC_CONTRACT_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
 like-n-tip/
 ├── app/
 │   ├── api/
-│   │   └── webhook/
-│   │       └── route.ts            # Base app webhook handler
+│   │   ├── tip/                    # x402 payment endpoint
+│   │   ├── agent-wallet/           # Agent wallet management
+│   │   └── user-agent-wallet/      # User-specific agent info
 │   ├── globals.css                 # Global styles
-│   ├── layout.tsx                  # Root layout with Base app meta
+│   ├── layout.tsx                  # Root layout
 │   └── page.tsx                    # Main app page
 ├── components/
-│   ├── UltimateBaseIntegration.tsx # Main app component
-│   ├── UniversalCommentTip.tsx     # Universal comment tipping
-│   ├── CommentWithTip.tsx          # Comment input with tip parsing
-│   ├── PostTipButton.tsx           # Direct tip buttons
-│   └── CommentTipDemo.tsx          # Demo page
+│   ├── UltimateBaseIntegration.tsx # Main app wrapper
+│   ├── SimpleTipApp.tsx           # Core tipping interface
+│   ├── AgentWalletFunding.tsx     # Agent wallet funding
+│   └── WagmiProvider.tsx          # Wallet provider
 ├── lib/
-│   ├── commentTipParser.ts         # Tip parsing logic
-│   ├── paymentService.ts           # USDC payment service
-│   └── wagmi.ts                    # Wallet configuration
-├── minikit.config.ts               # Base mini app configuration
-├── package.json                    # Dependencies
-└── tailwind.config.js              # Tailwind configuration
+│   ├── agentWallet.ts             # Agent wallet management
+│   ├── fundingService.ts          # Wallet funding service
+│   ├── simpleTipService.ts        # x402 tip service
+│   └── wagmi.ts                   # Wallet configuration
+├── minikit.config.ts              # Mini app configuration
+└── package.json                   # Dependencies
 ```
 
-## 💡 Base App Guidelines
+## 🏗 Mini App Setup
 
-This app follows Base app best practices:
+### For Farcaster
 
-- **Simple & Focused**: One core function - tip in comments
-- **Mobile First**: Optimized for mobile Base app experience
-- **Real Transactions**: Actual USDC payments, not mock
-- **Universal**: Works with any Farcaster post
-- **Creator Economy**: Rewards content creators naturally
+1. Update `minikit.config.ts` with your domain
+2. Deploy to Vercel or your hosting platform
+3. Test with Farcaster's mini app preview
+4. Share your app URL in Farcaster
+
+### For Base App
+
+1. Update `minikit.config.ts` with your domain
+2. Generate credentials via Base Build
+3. Deploy to Vercel
+4. Test with Base Build preview tool
+5. Post your app URL in Base app
+
+## 💡 Supported URLs
+
+The app works with these URL formats:
+
+### Farcaster
+- `https://warpcast.com/username/post-id`
+- `https://farcaster.xyz/username/post-id`
+
+### Base App
+- `https://base.org/username/post-id`
+- `https://base.xyz/username/post-id`
+
+### Generic Social Platforms
+- Any URL with username/post-id structure
+
+## 🔧 x402 Protocol
+
+This app implements the x402 payment protocol for autonomous micropayments:
+
+1. **Initial Request**: App requests tip with payment details
+2. **402 Response**: Server responds with payment requirements
+3. **Payment Creation**: Agent wallet creates payment payload
+4. **Autonomous Payment**: Agent sends USDC without user interaction
 
 ## 🚀 Deployment
 
@@ -215,41 +161,38 @@ This app follows Base app best practices:
 3. Set environment variables in Vercel dashboard
 4. Deploy!
 
-### Configure Base Mini App
+### Configure Mini App
 
 1. Update `minikit.config.ts` with your domain
-2. Generate account association credentials via Base Build
-3. Update manifest with credentials
-4. Test with Base Build preview tool
-5. Post your app URL in Base app to publish
+2. Test with platform preview tools
+3. Share your app URL to publish
 
 ## 🎯 Use Cases
 
 ### **For Users:**
-- Tip creators naturally while commenting
-- Support creators without extra steps
-- Build appreciation culture in Base app
+- Support creators with micropayments
+- Fund once, tip forever
+- Seamless tipping experience
 
 ### **For Creators:**
-- Get rewarded through normal engagement
+- Receive tips from engaged users
 - Build sustainable creator economy
-- Focus on content, not monetization
+- Focus on content creation
 
-### **For Base App:**
-- Creates natural value flow
-- Builds stronger creator economy
-- Increases engagement and retention
+### **For Platforms:**
+- Enable value flow between users
+- Build stronger creator economy
+- Increase engagement and retention
 
 ## 🔧 Features
 
-- ✅ **Universal Post Support**: Works with any Farcaster post URL
-- ✅ **Smart Tip Detection**: Multiple tip formats supported
-- ✅ **Real USDC Payments**: Actual transactions on Base network
-- ✅ **Clean Comments**: Tip parts removed from visible comments
-- ✅ **Mobile Optimized**: Perfect for Base app mobile experience
-- ✅ **Wallet Integration**: Uses Base app's wallet system
-- ✅ **Error Handling**: Clear feedback for users
-- ✅ **Settings Toggle**: Users can enable/disable the feature
+- ✅ **Agent Wallet System**: Fund once, tip autonomously
+- ✅ **Micropayments**: Tips as small as $0.001
+- ✅ **x402 Protocol**: Autonomous payment system
+- ✅ **Cross-Platform**: Works on Farcaster and Base
+- ✅ **Real USDC**: Actual transactions on Base network
+- ✅ **Mobile Optimized**: Perfect for mobile experience
+- ✅ **Wallet Integration**: Seamless wallet connection
 
 ## 🤝 Contributing
 
@@ -265,17 +208,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Resources
 
-- [Base Mini Apps Documentation](https://miniapps.farcaster.xyz/)
-- [Farcaster Mini Apps Guide](https://miniapps.farcaster.xyz/)
+- [Farcaster Mini Apps Documentation](https://miniapps.farcaster.xyz/)
+- [Base Mini Apps Guide](https://miniapps.farcaster.xyz/)
+- [x402 Protocol Documentation](https://docs.base.org/base-app/agents/x402-agents)
 - [Base Network Documentation](https://docs.base.org/)
 - [Wagmi Documentation](https://wagmi.sh/)
 
 ## 💬 Support
 
-For support, join the Base Discord community or open an issue on GitHub.
+For support, join the Farcaster or Base Discord community or open an issue on GitHub.
 
 ---
 
-Built with ❤️ for the Base app community
+Built with ❤️ for the creator economy
 
-**Revolutionary comment tipping that makes every comment count!** 🚀
+**Simple tipping that makes every interaction valuable!** 🚀
