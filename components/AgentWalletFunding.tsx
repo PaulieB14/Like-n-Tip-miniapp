@@ -52,7 +52,12 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
 
   // Debug wallet connection status
   useEffect(() => {
-    console.log('Wallet connection status:', { isConnected, userAddress, connectors: connectors.length })
+    console.log('Wallet connection status:', { 
+      isConnected, 
+      userAddress, 
+      connectors: connectors.length,
+      connectorNames: connectors.map(c => c.name)
+    })
     if (connectors.length === 0) {
       console.warn('No wallet connectors available - this may cause connection issues')
     }
@@ -286,12 +291,17 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
                 <strong>Connect Wallet Required:</strong> Please connect your wallet to fund the agent.
               </p>
               {connectors.length > 0 ? (
-                <button
-                  onClick={() => connect({ connector: connectors[0] })}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Connect Wallet
-                </button>
+                <div className="space-y-2">
+                  {connectors.map((connector, index) => (
+                    <button
+                      key={connector.uid}
+                      onClick={() => connect({ connector })}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                    >
+                      Connect {connector.name}
+                    </button>
+                  ))}
+                </div>
               ) : (
                 <p className="text-sm text-red-600">
                   Wallet connection not available in this environment
@@ -318,7 +328,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
 
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
             <p className="text-sm text-blue-800">
-              <strong>How it works:</strong> Send USDC from your Base wallet to the agent wallet. 
+              <strong>How it works:</strong> Send USDC from your wallet to the agent wallet. 
               The agent will use these funds for micropayments ($0.001-$0.005 per tip).
             </p>
           </div>
