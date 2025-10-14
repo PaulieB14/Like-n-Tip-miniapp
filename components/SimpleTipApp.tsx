@@ -100,25 +100,69 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     setTipSuccess('')
 
     try {
-      // For now, simulate a successful tip since we're using OnchainKit wallet
-      // In a real implementation, you'd integrate with your tip API here
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate network delay
+      // First, check if we need to fund the agent wallet
+      const agentResponse = await fetch('/api/user-agent-wallet')
+      const agentData = await agentResponse.json()
       
-      setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor}`)
+      if (!agentData.success) {
+        setTipError('Failed to get agent wallet info')
+        return
+      }
+
+      const agentBalance = parseFloat(agentData.balance)
+      const amountInUnits = amount * 1e6 // Convert to USDC units (6 decimals)
+
+      if (agentBalance < amount) {
+        setTipError(`Insufficient agent wallet balance. Current: $${agentBalance.toFixed(2)}, Required: $${amount.toFixed(2)}. Please fund your agent wallet first.`)
+        return
+      }
+
+      // Make the tip request using x402 payment protocol
+      const tipResponse = await fetch('/api/tip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-PAYMENT': `${amountInUnits}` // Send payment amount in USDC units
+        },
+        body: JSON.stringify({
+          postUrl: postUrl,
+          amount: amount,
+          recipient: postAuthor
+        })
+      })
+
+      if (!tipResponse.ok) {
+        if (tipResponse.status === 402) {
+          setTipError('Payment required - please fund your agent wallet')
+        } else {
+          const errorData = await tipResponse.json()
+          setTipError(errorData.error || 'Failed to send tip')
+        }
+        return
+      }
+
+      const tipData = await tipResponse.json()
       
-        // Add to history
+      if (tipData.success && tipData.txHash) {
+        setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor}`)
+        
+        // Add to history with real transaction hash
         if (onTipSent) {
           onTipSent({
             postId: postUrl.split('/').pop() || 'unknown',
             amount: amount,
-            txHash: '0x' + Math.random().toString(16).substr(2, 64), // Mock tx hash
+            txHash: tipData.txHash,
             recipient: postAuthor,
             postUrl: postUrl,
             postContent: postContent,
             platform: postPlatform
           })
         }
+      } else {
+        setTipError(tipData.error || 'Failed to send tip')
+      }
     } catch (error: any) {
+      console.error('Tip error:', error)
       setTipError(error.message || 'Failed to send tip')
     } finally {
       setIsSendingTip(false)

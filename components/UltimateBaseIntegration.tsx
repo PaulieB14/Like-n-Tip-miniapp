@@ -25,29 +25,7 @@ export default function UltimateBaseIntegration() {
     postUrl?: string
     postContent?: string
     platform?: string
-  }>>([
-    // Sample tips for demonstration
-    {
-      postId: '0xbfc71bf9',
-      amount: 0.005,
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      txHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-      recipient: 'pdiomede',
-      postUrl: 'https://warpcast.com/pdiomede/0xbfc71bf9',
-      postContent: 'This is a real Farcaster post from @pdiomede. The content would be fetched from the Farcaster API using post ID: 0xbfc71bf9',
-      platform: 'Farcaster'
-    },
-    {
-      postId: '0xabc123',
-      amount: 0.002,
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-      txHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-      recipient: 'alice',
-      postUrl: 'https://warpcast.com/alice/0xabc123',
-      postContent: 'Just shipped a new feature for our dApp! 🚀 The community feedback has been incredible. Thanks to everyone who tested the beta version.',
-      platform: 'Farcaster'
-    }
-  ])
+  }>>([])
 
   // Dismiss splash screen when interface is ready
   useEffect(() => {
