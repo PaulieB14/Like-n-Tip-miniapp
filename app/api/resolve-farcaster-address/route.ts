@@ -11,28 +11,44 @@ export async function GET(request: NextRequest): Promise<Response> {
 
     console.log('Resolving Farcaster username:', username)
     
-    // Step 1: Get FID from username
-    // Note: The /v1/user-by-username endpoint doesn't exist in the Farcaster API
-    // For now, we'll use a known mapping of usernames to FIDs
-    // In production, you'd need to use a different service or maintain a database
+    // Step 1: Get FID from username using Fname Registry API
+    // Based on Farcaster docs: https://docs.farcaster.xyz/developers/guides/accounts/find-by-name
+    console.log('Looking up FID for username:', username)
     
-    const knownFids: { [key: string]: number } = {
-      'pdiomede': 12152, // Using example FID for now - need to find actual FID
-      'alice': 2,
-      'bob': 3,
-      // Add more known FIDs as needed
+    let fid: number | null = null
+    
+    try {
+      // Use Fname Registry API to get FID from username
+      const fnameResponse = await fetch(`https://fnames.farcaster.xyz/transfers/current?name=${username}`, {
+        headers: {
+          'User-Agent': 'Like-n-Tip-MiniApp/1.0'
+        }
+      })
+      
+      if (fnameResponse.ok) {
+        const fnameData = await fnameResponse.json()
+        console.log('Fname Registry response:', fnameData)
+        
+        // The response structure is: { "transfer": { "to": FID, ... } }
+        if (fnameData && fnameData.transfer && fnameData.transfer.to) {
+          fid = parseInt(fnameData.transfer.to)
+          console.log('Found FID from Fname Registry for', username, ':', fid)
+        }
+      } else {
+        console.log('Fname Registry lookup failed:', fnameResponse.status)
+      }
+    } catch (error) {
+      console.error('Error looking up FID from Fname Registry:', error)
     }
-    
-    const fid = knownFids[username]
     
     if (!fid) {
       console.error('No FID found for username:', username)
       return NextResponse.json({ 
-        error: `Username @${username} not found in our database. The Farcaster API doesn't provide a username-to-FID lookup endpoint. Please provide the FID directly or contact support to add this user.` 
+        error: `Username @${username} not found or not registered on Farcaster. Please check the username or try a different user.` 
       }, { status: 404 })
     }
     
-    console.log('Found FID for', username, ':', fid)
+    console.log('Using FID for', username, ':', fid)
     
     // Step 2: Get primary Ethereum address using FID
     // Using the correct endpoint structure from the documentation
