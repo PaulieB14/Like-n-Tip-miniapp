@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Heart, User, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAccount } from 'wagmi'
-import OnchainKitWallet from './OnchainKitWallet'
+import SimpleWallet from './OnchainKitWallet'
 
 interface SimpleTipAppProps {
   onTipSent?: (tipData: {
@@ -128,8 +128,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         <p className="text-sm text-blue-600 mt-2">💡 Agent wallet handles payments - fund once, tip freely</p>
       </div>
 
-      {/* OnchainKit Wallet */}
-      <OnchainKitWallet />
+      {/* Simple Wallet */}
+      <SimpleWallet />
 
       {/* Post URL Input */}
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
