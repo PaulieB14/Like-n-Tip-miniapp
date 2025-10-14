@@ -29,6 +29,25 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const [tipSuccess, setTipSuccess] = useState('')
   const [tipError, setTipError] = useState('')
 
+  // Function to resolve Farcaster username to wallet address
+  const resolveFarcasterAddress = async (username: string): Promise<string | null> => {
+    try {
+      // For demo purposes, we'll use a mapping of known usernames to addresses
+      // In production, you'd use the Farcaster API to look up FID and then get primary address
+      const knownAddresses: { [key: string]: string } = {
+        'pdiomede': '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6', // Demo address
+        'alice': '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+        'bob': '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+        // Add more known addresses as needed
+      }
+      
+      return knownAddresses[username] || '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6' // Default demo address
+    } catch (error) {
+      console.error('Error resolving Farcaster address:', error)
+      return '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6' // Fallback to demo address
+    }
+  }
+
   const quickAmounts = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05]
 
   const loadPost = async () => {
@@ -119,6 +138,9 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         return
       }
 
+      // Resolve the recipient address from the username
+      const recipientAddress = await resolveFarcasterAddress(postAuthor)
+      
       // Make the tip request using x402 payment protocol
       const tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
         method: 'POST',
@@ -129,7 +151,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         body: JSON.stringify({
           postUrl: postUrl,
           amount: amount,
-          recipient: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6', // Default demo recipient (you can change this)
+          recipient: recipientAddress, // Resolved wallet address
           recipientUsername: postAuthor // Keep the username for display
         })
       })
