@@ -47,6 +47,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
   
   const [agentInfo, setAgentInfo] = useState<AgentWalletInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingAgentInfo, setIsLoadingAgentInfo] = useState(false)
   const [fundingAmount, setFundingAmount] = useState(1.0)
   const [isFunding, setIsFunding] = useState(false)
   const [fundingError, setFundingError] = useState<string | null>(null)
@@ -87,7 +88,14 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
   }, [isConnected, userAddress, connectors])
 
   const loadAgentInfo = async () => {
+    // Prevent multiple simultaneous calls
+    if (isLoadingAgentInfo) {
+      console.log('Agent info already loading, skipping...')
+      return
+    }
+    
     try {
+      setIsLoadingAgentInfo(true)
       setIsLoading(true)
       
       if (!userAddress) {
@@ -128,6 +136,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
       })
     } finally {
       setIsLoading(false)
+      setIsLoadingAgentInfo(false)
     }
   }
 
