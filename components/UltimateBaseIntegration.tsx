@@ -4,8 +4,14 @@ import { useState, useEffect } from 'react'
 import { Heart, Settings, User, History } from 'lucide-react'
 import SimpleTipApp from './SimpleTipApp'
 
-// Import the Farcaster SDK
-import { sdk } from '@farcaster/miniapp-sdk'
+// Import the Farcaster SDK with error handling
+let sdk: any = null
+try {
+  const farcasterSdk = require('@farcaster/miniapp-sdk')
+  sdk = farcasterSdk.sdk
+} catch (error) {
+  console.log('Farcaster SDK not available in this environment:', error)
+}
 
 export default function UltimateBaseIntegration() {
   const [activeTab, setActiveTab] = useState('home')
@@ -22,12 +28,14 @@ export default function UltimateBaseIntegration() {
   useEffect(() => {
     const dismissSplash = async () => {
       try {
-        console.log('Calling sdk.actions.ready()...')
-        
-        // Call ready using the imported SDK
-        await sdk.actions.ready()
+        if (sdk && sdk.actions && sdk.actions.ready) {
+          console.log('Calling sdk.actions.ready()...')
+          await sdk.actions.ready()
+          console.log('Splash screen dismissed - interface ready')
+        } else {
+          console.log('Farcaster SDK not available, skipping ready call')
+        }
         setIsReady(true)
-        console.log('Splash screen dismissed - interface ready')
       } catch (error) {
         console.log('Error calling ready:', error)
         // Set ready even if error occurs (for web preview)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAccount, useWriteContract, useConnect } from 'wagmi'
+import { useAccount, useWriteContract, useConnect, useReadContract } from 'wagmi'
 import { Wallet, DollarSign, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
 import { parseUnits } from 'viem'
 import { base } from 'wagmi/chains'
@@ -28,6 +28,15 @@ const USDC_ABI = [
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "account", "type": "address" }
+    ],
+    "name": "balanceOf",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
   }
 ] as const
 
@@ -42,6 +51,18 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
   const [isFunding, setIsFunding] = useState(false)
   const [fundingError, setFundingError] = useState<string | null>(null)
   const [fundingSuccess, setFundingSuccess] = useState<string | null>(null)
+
+  // Check user's USDC balance
+  const { data: userBalance, refetch: refetchUserBalance } = useReadContract({
+    address: USDC_CONTRACT,
+    abi: USDC_ABI,
+    functionName: 'balanceOf',
+    args: userAddress ? [userAddress] : undefined,
+    chain: base,
+    query: {
+      enabled: !!userAddress && isConnected,
+    }
+  })
 
   // Quick funding amounts (micropayments need small funding)
   const quickAmounts = [0.1, 0.5, 1.0, 2.0, 5.0]
@@ -121,7 +142,23 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
       // Convert amount to USDC units (6 decimals)
       const amountInUnits = parseUnits(amount.toString(), 6)
 
-      // Send USDC to agent wallet
+      // Check if user has enough USDC balance
+      const userBalanceInUnits = userBalance ? BigInt(userBalance.toString()) : 0n
+      if (userBalanceInUnits < amountInUnits) {
+        const userBalanceFormatted = Number(userBalanceInUnits) / 1e6
+        setFundingError(`Insufficient USDC balance. You have $${userBalanceFormatted.toFixed(2)} USDC, but need $${amount.toFixed(2)} USDC to fund the agent wallet.`)
+        return
+      }
+
+      console.log('Funding agent wallet:', {
+        from: userAddress,
+        to: agentInfo.address,
+        amount: amount,
+        amountInUnits: amountInUnits.toString(),
+        userBalance: userBalanceInUnits.toString()
+      })
+
+      // Send USDC from user's wallet to agent wallet
       const txHash = await writeContract({
         address: USDC_CONTRACT,
         abi: USDC_ABI,
@@ -131,7 +168,8 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
         account: userAddress,
       })
 
-      setFundingSuccess(`Successfully sent $${amount.toFixed(3)} USDC to agent wallet! Click refresh to update balance.`)
+      console.log('Funding transaction submitted:', txHash)
+      setFundingSuccess(`Successfully sent $${amount.toFixed(3)} USDC to agent wallet! Transaction: ${txHash}`)
       
       // Update local balance
       if (agentInfo) {
@@ -147,7 +185,18 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
       }
     } catch (error: any) {
       console.error('Funding failed:', error)
-      setFundingError(error.message || 'Funding transaction failed')
+      
+      // Provide more specific error messages
+      let errorMessage = 'Funding transaction failed'
+      if (error.message?.includes('transfer amount exceeds balance')) {
+        errorMessage = 'Insufficient USDC balance in your wallet. Please ensure you have enough USDC to fund the agent wallet.'
+      } else if (error.message?.includes('user rejected')) {
+        errorMessage = 'Transaction was rejected by user'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      setFundingError(errorMessage)
     } finally {
       setIsFunding(false)
     }
@@ -231,6 +280,25 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
               {agentInfo.hasEnoughFunds ? 'Ready to tip' : 'Needs funding'}
             </span>
           </div>
+
+          {/* User's USDC Balance */}
+          {isConnected && userAddress && (
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-600">Your USDC Balance:</span>
+              <div className="flex items-center space-x-2">
+                <span className="font-medium text-slate-900">
+                  ${userBalance ? (Number(userBalance) / 1e6).toFixed(2) : '0.00'}
+                </span>
+                <button
+                  onClick={() => refetchUserBalance()}
+                  className="p-1 hover:bg-slate-100 rounded"
+                  title="Refresh balance"
+                >
+                  <RefreshCw className="h-4 w-4 text-slate-500" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
