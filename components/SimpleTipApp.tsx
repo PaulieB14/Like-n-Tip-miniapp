@@ -87,8 +87,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     setTipSuccess('')
 
     try {
-      // Send real x402 tip
-      const response = await fetch('/api/tip', {
+      // First, get payment requirements from x402 API
+      const initialResponse = await fetch('/api/tip', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -100,21 +100,61 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         }),
       })
 
-      if (response.ok) {
-        const result = await response.json()
-        setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor} via x402 agent wallet`)
+      if (initialResponse.status === 402) {
+        // x402 Payment Required - get payment details
+        const paymentData = await initialResponse.json()
+        console.log('x402 Payment Required:', paymentData)
         
-        // Add to history
-        if (onTipSent) {
-          onTipSent({
-            postId: postUrl.split('/').pop() || 'unknown',
-            amount: amount,
-            txHash: result.txHash,
-            recipient: postAuthor
-          })
+        // Check if agent wallet has enough funds
+        if (paymentData.agentBalance < amount) {
+          setTipError(`Agent wallet has insufficient funds. Current balance: $${paymentData.agentBalance.toFixed(2)} USDC. Please fund the agent wallet first.`)
+          return
         }
+
+        // Send payment with x402 header
+        const paymentPayload = {
+          amount: amount.toString(),
+          recipient: paymentData.recipient,
+          currency: 'USDC',
+          reference: paymentData.reference
+        }
+
+        const response = await fetch('/api/tip', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-PAYMENT': JSON.stringify(paymentPayload),
+          },
+          body: JSON.stringify({
+            recipient: paymentData.recipient,
+            amount: amount,
+            message: `Tip for @${postAuthor}`
+          }),
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor} via x402 agent wallet`)
+          
+          // Add to history
+          if (onTipSent) {
+            onTipSent({
+              postId: postUrl.split('/').pop() || 'unknown',
+              amount: amount,
+              txHash: result.transactionHash,
+              recipient: postAuthor
+            })
+          }
+        } else {
+          const errorData = await response.json()
+          setTipError(errorData.error || 'Failed to send tip')
+        }
+      } else if (initialResponse.ok) {
+        // Direct success (shouldn't happen with current API)
+        const result = await initialResponse.json()
+        setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor}`)
       } else {
-        const errorData = await response.json()
+        const errorData = await initialResponse.json()
         setTipError(errorData.error || 'Failed to send tip')
       }
     } catch (error: any) {
