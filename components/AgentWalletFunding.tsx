@@ -68,7 +68,9 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
   const quickAmounts = [0.1, 0.5, 1.0, 2.0, 5.0]
 
   useEffect(() => {
-    loadAgentInfo()
+    if (userAddress) {
+      loadAgentInfo()
+    }
   }, [userAddress])
 
   // Debug wallet connection status
@@ -108,6 +110,8 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
         setAgentInfo(data)
       } else {
         console.error('Failed to load agent info:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.error('Error response:', errorText)
         // Fallback if API not available
         setAgentInfo({
           address: '0x1234...5678',
