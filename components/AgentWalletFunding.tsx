@@ -58,7 +58,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
     abi: USDC_ABI,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
-    chain: base,
+    chainId: base.id,
     query: {
       enabled: !!userAddress && isConnected,
     }
