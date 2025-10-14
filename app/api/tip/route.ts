@@ -145,6 +145,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       abi: USDC_ABI,
       functionName: 'transfer',
       args: [recipient as `0x${string}`, amountInUnits],
+      account: privateKeyToAccount(agentWallet.privateKey),
       chain: base
     })
 
