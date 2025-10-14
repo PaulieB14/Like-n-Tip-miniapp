@@ -34,27 +34,18 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     try {
       console.log('Resolving Farcaster username:', username)
       
-      // Try server-side API first (avoids CORS issues)
-      try {
-        const response = await fetch(`/api/resolve-farcaster-address?username=${username}`)
-        
-        if (response.ok) {
-          const data = await response.json()
-          console.log('Resolved address via server API for', username, ':', data.address)
-          return data.address
-        } else {
-          console.log('Server API failed, falling back to default wallet')
-        }
-      } catch (apiError) {
-        console.log('Server API error, falling back to default wallet:', apiError)
+      // Use server-side API to avoid CORS issues
+      const response = await fetch(`/api/resolve-farcaster-address?username=${username}`)
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Resolved address for', username, ':', data.address)
+        return data.address
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Failed to resolve address for', username, ':', response.status, errorData.error)
+        return null
       }
-      
-      // Fallback: Use default wallet for Farcaster users
-      // This ensures the app works even if Farcaster API is unavailable
-      const defaultWallet = '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6' // Default wallet for Farcaster users
-      
-      console.log('Using default wallet for', username, ':', defaultWallet)
-      return defaultWallet
       
     } catch (error) {
       console.error('Error resolving Farcaster address:', error)
@@ -156,7 +147,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       const recipientAddress = await resolveFarcasterAddress(postAuthor)
       
       if (!recipientAddress) {
-        setTipError(`Could not resolve wallet address for @${postAuthor}. Please check the username or try a different post.`)
+        setTipError(`Could not resolve wallet address for @${postAuthor}. This user may not have a verified Ethereum wallet on Farcaster, or the username may be incorrect.`)
         return
       }
       
