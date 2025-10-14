@@ -53,6 +53,9 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
   // Debug wallet connection status
   useEffect(() => {
     console.log('Wallet connection status:', { isConnected, userAddress, connectors: connectors.length })
+    if (connectors.length === 0) {
+      console.warn('No wallet connectors available - this may cause connection issues')
+    }
   }, [isConnected, userAddress, connectors])
 
   const loadAgentInfo = async () => {
@@ -282,12 +285,18 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
               <p className="text-sm text-red-800 mb-3">
                 <strong>Connect Wallet Required:</strong> Please connect your wallet to fund the agent.
               </p>
-              <button
-                onClick={() => connect({ connector: connectors[0] })}
-                className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-              >
-                Connect Wallet
-              </button>
+              {connectors.length > 0 ? (
+                <button
+                  onClick={() => connect({ connector: connectors[0] })}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Connect Wallet
+                </button>
+              ) : (
+                <p className="text-sm text-red-600">
+                  Wallet connection not available in this environment
+                </p>
+              )}
             </div>
           )}
 
