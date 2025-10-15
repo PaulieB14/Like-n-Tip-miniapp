@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createPublicClient, createWalletClient, http, parseUnits } from 'viem'
+import { createPublicClient, createWalletClient, http, parseUnits, encodeFunctionData } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { base } from 'viem/chains'
 import { createHash } from 'crypto'
 
 // USDC contract on Base
 const USDC_CONTRACT = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const
+
+// Note: Gasless transactions via Base Paymaster will be implemented in a future update
 const USDC_ABI = [
   {
     "inputs": [
@@ -146,7 +148,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       )
     }
 
-    // Send USDC transfer using agent wallet
+    // Send USDC transfer using regular wallet (for now, until we can implement proper gasless)
     const walletClient = createWalletClient({
       account: privateKeyToAccount(agentWallet.privateKey),
       chain: base,

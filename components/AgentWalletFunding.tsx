@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAccount, useWriteContract, useConnect, useReadContract, useSendTransaction } from 'wagmi'
+import { useAccount, useWriteContract, useConnect, useReadContract } from 'wagmi'
 import { Wallet, DollarSign, CheckCircle, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react'
 import { parseUnits } from 'viem'
 import { base } from 'wagmi/chains'
@@ -43,7 +43,6 @@ const USDC_ABI = [
 export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFundingProps) {
   const { address: userAddress, isConnected } = useAccount()
   const { writeContract } = useWriteContract()
-  const { sendTransaction } = useSendTransaction()
   const { connect, connectors } = useConnect()
   
   const [agentInfo, setAgentInfo] = useState<AgentWalletInfo | null>(null)
@@ -185,7 +184,7 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
       })
 
       // Send USDC from user's wallet to agent wallet
-      const usdcTxHash = await writeContract({
+      const txHash = await writeContract({
         address: USDC_CONTRACT,
         abi: USDC_ABI,
         functionName: 'transfer',
@@ -194,19 +193,8 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
         account: userAddress,
       })
 
-      console.log('USDC funding transaction submitted:', usdcTxHash)
-      
-      // Also send a small amount of ETH for gas fees (0.0001 ETH should be enough for many transactions on Base)
-      const ethAmount = parseUnits('0.0001', 18) // 0.0001 ETH (~$0.30)
-      
-      // Send ETH for gas fees
-      const ethTxHash = await sendTransaction({
-        to: agentInfo.address as `0x${string}`,
-        value: ethAmount,
-      })
-
-      console.log('ETH funding transaction submitted:', ethTxHash)
-      setFundingSuccess(`Funding submitted! USDC: ${usdcTxHash}, ETH: ${ethTxHash}. Please wait for confirmation and refresh to see updated balance.`)
+      console.log('Funding transaction submitted:', txHash)
+      setFundingSuccess(`Transaction submitted! Hash: ${txHash}. Please wait for confirmation and refresh to see updated balance.`)
       
       // Don't update local balance immediately - wait for actual on-chain confirmation
       // Refresh both user and agent balances after a delay
@@ -470,8 +458,8 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
               The agent will use these funds for micropayments ($0.001-$0.005 per tip).
             </p>
             <p className="text-sm text-blue-800 mt-2">
-              <strong>Gas fees:</strong> We'll also send 0.0001 ETH (~$0.30) to cover gas fees for multiple tips. 
-              Base has very low gas fees, so this small amount will last for many transactions.
+              <strong>Gasless tips:</strong> Tips are sent using Base Paymaster for gasless transactions. 
+              No ETH needed for gas fees - Base sponsors the transaction costs!
             </p>
           </div>
         </div>
