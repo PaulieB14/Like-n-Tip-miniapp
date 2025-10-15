@@ -458,8 +458,8 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
               The agent will use these funds for micropayments ($0.001-$0.005 per tip).
             </p>
             <p className="text-sm text-blue-800 mt-2">
-              <strong>Real on-chain tips:</strong> Tips are sent as real USDC transfers on Base. 
-              Agent wallet needs ETH for gas fees to send USDC transfers.
+              <strong>Gasless tips via x402:</strong> Tips are sent using x402 facilitator for completely gasless transactions. 
+              No ETH needed for gas fees - Coinbase Developer Platform sponsors the transaction costs!
             </p>
           </div>
         </div>
