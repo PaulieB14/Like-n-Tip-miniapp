@@ -53,19 +53,23 @@ export async function POST(request: NextRequest): Promise<Response> {
         })
         agentWalletAddress = agentAccount.address
         
-        // Get token balances using the correct CDP SDK method
-        const balances = await cdp.evm.listTokenBalances({
-          address: agentAccount.address,
-          network: "base"
-        })
-        
-        // Find USDC balance (USDC contract on Base: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
-        const usdcBalance = balances.balances.find(
-          balance => balance.token.contractAddress === '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
-        )
-        
-        if (usdcBalance) {
-          agentBalance = Number(usdcBalance.amount.amount) / Math.pow(10, usdcBalance.amount.decimals)
+        // Get USDC balance using Etherscan API (more reliable than CDP SDK)
+        const etherscanApiKey = process.env.ETHERSCAN_API_KEY
+        if (etherscanApiKey) {
+          const balanceResponse = await fetch(
+            `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${agentAccount.address}&tag=latest&apikey=${etherscanApiKey}`,
+            { 
+              method: 'GET',
+              headers: { 'User-Agent': 'Like-n-Tip-Miniapp/1.0' }
+            }
+          )
+          
+          if (balanceResponse.ok) {
+            const balanceData = await balanceResponse.json()
+            if (balanceData.status === '1' && balanceData.result) {
+              agentBalance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
+            }
+          }
         }
       } catch (error) {
         console.error('Error getting agent balance from CDP:', error)
@@ -147,19 +151,23 @@ export async function POST(request: NextRequest): Promise<Response> {
       })
       agentAccountAddress = agentAccount.address
       
-      // Get token balances using the correct CDP SDK method
-      const balances = await cdp.evm.listTokenBalances({
-        address: agentAccount.address,
-        network: "base"
-      })
-      
-      // Find USDC balance (USDC contract on Base: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
-      const usdcBalance = balances.balances.find(
-        balance => balance.token.contractAddress === '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
-      )
-      
-      if (usdcBalance) {
-        agentBalance = Number(usdcBalance.amount.amount) / Math.pow(10, usdcBalance.amount.decimals)
+      // Get USDC balance using Etherscan API (more reliable than CDP SDK)
+      const etherscanApiKey = process.env.ETHERSCAN_API_KEY
+      if (etherscanApiKey) {
+        const balanceResponse = await fetch(
+          `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${agentAccount.address}&tag=latest&apikey=${etherscanApiKey}`,
+          { 
+            method: 'GET',
+            headers: { 'User-Agent': 'Like-n-Tip-Miniapp/1.0' }
+          }
+        )
+        
+        if (balanceResponse.ok) {
+          const balanceData = await balanceResponse.json()
+          if (balanceData.status === '1' && balanceData.result) {
+            agentBalance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
+          }
+        }
       }
     } catch (error) {
       console.error('Error getting agent balance from CDP:', error)
