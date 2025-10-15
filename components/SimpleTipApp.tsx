@@ -151,12 +151,27 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         return
       }
       
+      // Create x402 payment payload
+      const paymentPayload = {
+        x402Version: 1,
+        scheme: "exact",
+        network: "base",
+        payload: {
+          amount: Math.floor(amount * 1e6).toString(), // Convert to USDC units (6 decimals)
+          recipient: recipientAddress,
+          asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" // USDC on Base
+        }
+      }
+      
+      // Encode payment payload as base64
+      const paymentHeader = btoa(JSON.stringify(paymentPayload))
+      
       // Make the tip request using x402 payment protocol
       const tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-PAYMENT': `${amount}` // Send payment amount in human-readable format
+          'X-PAYMENT': paymentHeader // Send base64-encoded payment payload
         },
         body: JSON.stringify({
           postUrl: postUrl,

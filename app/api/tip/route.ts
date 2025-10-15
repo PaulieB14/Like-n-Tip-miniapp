@@ -157,6 +157,16 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
       paymentPayload = JSON.parse(Buffer.from(paymentHeader, 'base64').toString())
       console.log('x402: Payment payload:', paymentPayload)
+      
+      // Validate payment payload structure
+      if (!paymentPayload.x402Version || !paymentPayload.scheme || !paymentPayload.network || !paymentPayload.payload) {
+        throw new Error('Invalid payment payload structure')
+      }
+      
+      // Extract payment details
+      const { amount: payloadAmount, recipient: payloadRecipient } = paymentPayload.payload
+      console.log('x402: Payment details - Amount:', payloadAmount, 'Recipient:', payloadRecipient)
+      
     } catch (error) {
       console.error('x402: Failed to parse payment header:', error)
       return NextResponse.json(
