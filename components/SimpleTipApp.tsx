@@ -139,7 +139,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       const amountInUnits = amount * 1e6 // Convert to USDC units (6 decimals)
 
       if (agentBalance < amount) {
-        setTipError(`Insufficient agent wallet balance. Current: $${agentBalance.toFixed(2)}, Required: $${amount.toFixed(2)}. Please fund your agent wallet first.`)
+        setTipError(`Insufficient agent wallet balance. Current: $${agentBalance.toFixed(2)}, Required: $${amount.toFixed(3)}. Please fund your agent wallet first.`)
         return
       }
 
@@ -303,7 +303,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
                   disabled={isSendingTip}
                   className="p-3 rounded-xl font-medium transition-all duration-200 bg-slate-100 text-slate-700 hover:bg-blue-100 hover:text-blue-700 disabled:opacity-50"
                 >
-                  {isSendingTip ? 'Sending...' : `$${amount.toFixed(2)}`}
+                  {isSendingTip ? 'Sending...' : `$${amount.toFixed(3)}`}
                 </button>
               ))}
             </div>
