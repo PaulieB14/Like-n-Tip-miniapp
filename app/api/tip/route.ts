@@ -149,11 +149,23 @@ export async function POST(request: NextRequest): Promise<Response> {
       )
     }
 
-    // For now, simulate successful tip sending
-    // TODO: Implement proper x402 facilitator integration
-    const txHash = `0x${Math.random().toString(16).substr(2, 64)}`
+    // Send real USDC transfer on-chain
+    const walletClient = createWalletClient({
+      account: privateKeyToAccount(agentWallet.privateKey),
+      chain: base,
+      transport: http('https://mainnet.base.org')
+    })
+
+    const txHash = await walletClient.writeContract({
+      address: USDC_CONTRACT,
+      abi: USDC_ABI,
+      functionName: 'transfer',
+      args: [recipient as `0x${string}`, amountInUnits],
+      account: privateKeyToAccount(agentWallet.privateKey),
+      chain: base
+    })
     
-    console.log('x402: Simulated tip sent successfully:', txHash)
+    console.log('x402: Real tip sent on-chain:', txHash)
 
     console.log('x402: Tip sent successfully:', txHash)
 
@@ -163,7 +175,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       amount: tipAmount,
       recipient: recipient,
       postUrl: postUrl,
-      message: 'Tip sent via CDP x402 facilitator (gasless)',
+      message: 'Tip sent on-chain via agent wallet',
       timestamp: new Date().toISOString(),
       agentWallet: agentWallet.address
     }
