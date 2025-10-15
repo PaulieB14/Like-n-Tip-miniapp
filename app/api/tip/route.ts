@@ -149,15 +149,25 @@ export async function POST(request: NextRequest): Promise<Response> {
       )
     }
 
-    // Use x402 facilitator for gasless transaction
-    // The facilitator handles the gasless settlement automatically
-    console.log('x402: Processing gasless tip via facilitator')
+    // Send real USDC transfer on-chain using ETH API
+    console.log('x402: Sending real USDC transfer on-chain')
     
-    // For now, simulate the facilitator response
-    // TODO: Integrate with actual x402 facilitator
-    const txHash = `0x${Math.random().toString(16).substr(2, 64)}`
+    const walletClient = createWalletClient({
+      account: privateKeyToAccount(agentWallet.privateKey),
+      chain: base,
+      transport: http('https://mainnet.base.org')
+    })
+
+    const txHash = await walletClient.writeContract({
+      address: USDC_CONTRACT,
+      abi: USDC_ABI,
+      functionName: 'transfer',
+      args: [recipient as `0x${string}`, amountInUnits],
+      account: privateKeyToAccount(agentWallet.privateKey),
+      chain: base
+    })
     
-    console.log('x402: Gasless tip processed via facilitator:', txHash)
+    console.log('x402: Real USDC transfer sent on-chain:', txHash)
 
     console.log('x402: Tip sent successfully:', txHash)
 
@@ -167,7 +177,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       amount: tipAmount,
       recipient: recipient,
       postUrl: postUrl,
-      message: 'Tip sent via x402 facilitator (gasless)',
+      message: 'Tip sent on-chain via agent wallet',
       timestamp: new Date().toISOString(),
       agentWallet: agentWallet.address
     }
