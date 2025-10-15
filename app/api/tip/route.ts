@@ -60,6 +60,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       
       // Get agent wallet balance using CDP SDK
       let agentBalance = 0
+      let agentWalletAddress = '0x0000000000000000000000000000000000000000'
       try {
         const cdp = new CdpClient({
           apiKeyId: process.env.CDP_API_KEY_NAME,
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         const agentAccount = await cdp.evm.getOrCreateAccount({ 
           name: agentWalletName 
         })
+        agentWalletAddress = agentAccount.address
         
         // Get token balances using the correct CDP SDK method
         const balances = await cdp.evm.listTokenBalances({
@@ -88,16 +90,28 @@ export async function POST(request: NextRequest): Promise<Response> {
         console.error('Error getting agent balance from CDP:', error)
       }
 
+      // Return proper x402 Payment Required Response
       return NextResponse.json(
         {
-          amount: amount?.toString() || '0.10',
-          recipient: recipient || '0x0000000000000000000000000000000000000000',
-          reference: `tip_${Date.now()}`,
-          currency: 'USDC',
-          message: 'Payment required to send tip',
-          agentWallet: agentAccount.address,
-          agentBalance: agentBalance,
-          postUrl: postUrl
+          x402Version: 1,
+          accepts: [
+            {
+              scheme: "exact",
+              network: "base",
+              maxAmountRequired: Math.floor((amount || 0.10) * 1e6).toString(), // Convert to USDC units (6 decimals)
+              resource: postUrl || "",
+              description: "Send tip to content creator",
+              mimeType: "application/json",
+              payTo: agentWalletAddress,
+              maxTimeoutSeconds: 300,
+              asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+              extra: {
+                name: "USD Coin",
+                version: "2"
+              }
+            }
+          ],
+          error: agentBalance < (amount || 0.10) ? `Insufficient agent wallet balance. Current: $${agentBalance.toFixed(3)}, Required: $${(amount || 0.10).toFixed(3)}` : null
         },
         { status: 402 }
       )
