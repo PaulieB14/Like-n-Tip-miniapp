@@ -281,7 +281,8 @@ export async function POST(request: NextRequest): Promise<Response> {
           abi: USDC_ABI,
           functionName: 'transfer',
           args: [payloadRecipient as `0x${string}`, parseUnits(tipAmount.toString(), 6)],
-          account: privateKeyToAccount(process.env.AGENT_WALLET_PRIVATE_KEY as `0x${string}`)
+          account: privateKeyToAccount(process.env.AGENT_WALLET_PRIVATE_KEY as `0x${string}`),
+          chain: base
         })
         
         txHash = transferResult
