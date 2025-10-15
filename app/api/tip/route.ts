@@ -47,6 +47,21 @@ function generateUserAgentWallet(userAddress: string): { privateKey: `0x${string
   }
 }
 
+// Get the funded x402 wallet (following tip-md pattern)
+function getX402Wallet(): { privateKey: `0x${string}`, address: `0x${string}` } {
+  // Use the X402_WALLET_PRIVATE_KEY from environment (this is the funded wallet)
+  const privateKey = process.env.X402_WALLET_PRIVATE_KEY as `0x${string}`
+  if (!privateKey) {
+    throw new Error('X402_WALLET_PRIVATE_KEY not found in environment variables')
+  }
+  
+  const account = privateKeyToAccount(privateKey)
+  return {
+    privateKey,
+    address: account.address
+  }
+}
+
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const body = await request.json()
@@ -70,21 +85,21 @@ export async function POST(request: NextRequest): Promise<Response> {
       // No payment provided - return 402 Payment Required (x402 protocol)
       console.log('x402: No payment header, returning 402 Payment Required')
       
-      // Get agent wallet balance using deterministic wallet generation (same as client-side)
-      let agentBalance = 0
-      let agentWalletAddress = '0x0000000000000000000000000000000000000000'
+      // Get x402 wallet balance (the funded wallet that actually holds USDC)
+      let x402Balance = 0
+      let x402WalletAddress = '0x0000000000000000000000000000000000000000'
       try {
-        // Use the same deterministic wallet generation as client-side
-        const agentWallet = generateUserAgentWallet(userAddress)
-        agentWalletAddress = agentWallet.address
+        // Use the funded x402 wallet (following tip-md pattern)
+        const x402Wallet = getX402Wallet()
+        x402WalletAddress = x402Wallet.address
         
-        console.log('x402: Using deterministic agent wallet:', agentWalletAddress)
+        console.log('x402: Using funded x402 wallet:', x402WalletAddress)
         
-        // Get USDC balance using Etherscan API (same as client-side)
+        // Get USDC balance using Etherscan API
         const etherscanApiKey = process.env.ETHERSCAN_API_KEY
         if (etherscanApiKey) {
           const balanceResponse = await fetch(
-            `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${agentWalletAddress}&tag=latest&apikey=${etherscanApiKey}`,
+            `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${x402WalletAddress}&tag=latest&apikey=${etherscanApiKey}`,
             { 
               method: 'GET',
               headers: { 'User-Agent': 'Like-n-Tip-Miniapp/1.0' }
@@ -94,13 +109,13 @@ export async function POST(request: NextRequest): Promise<Response> {
           if (balanceResponse.ok) {
             const balanceData = await balanceResponse.json()
             if (balanceData.status === '1' && balanceData.result) {
-              agentBalance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
-              console.log('x402: Agent balance from Etherscan:', agentBalance, 'USDC')
+              x402Balance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
+              console.log('x402: Funded wallet balance from Etherscan:', x402Balance, 'USDC')
             }
           }
         }
       } catch (error) {
-        console.error('Error getting agent balance:', error)
+        console.error('Error getting x402 wallet balance:', error)
       }
 
       // Return proper x402 Payment Required Response
@@ -115,7 +130,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               resource: postUrl || "",
               description: "Send tip to content creator",
               mimeType: "application/json",
-              payTo: agentWalletAddress,
+              payTo: x402WalletAddress,
               maxTimeoutSeconds: 300,
               asset: USDC_CONTRACT_ADDRESS, // USDC on Base
               extra: {
@@ -124,7 +139,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               }
             }
           ],
-          error: agentBalance < (amount || 0.10) ? `Insufficient agent wallet balance. Current: $${agentBalance.toFixed(3)}, Required: $${(amount || 0.10).toFixed(3)}` : null
+          error: x402Balance < (amount || 0.10) ? `Insufficient x402 wallet balance. Current: $${x402Balance.toFixed(3)}, Required: $${(amount || 0.10).toFixed(3)}` : null
         },
         { status: 402 }
       )
@@ -165,21 +180,21 @@ export async function POST(request: NextRequest): Promise<Response> {
     const tipAmount = parseFloat(payloadAmount) / 1e6 // Convert from USDC units (6 decimals) to decimal
     const amountInUnits = parseUnits(tipAmount.toString(), 6) // USDC has 6 decimals
 
-    // Check agent wallet balance using deterministic wallet generation (same as client-side)
-    let agentBalance = 0
-    let agentAccountAddress = '0x0000000000000000000000000000000000000000'
+    // Check x402 wallet balance (the funded wallet that actually holds USDC)
+    let x402Balance = 0
+    let x402WalletAddress = '0x0000000000000000000000000000000000000000'
     try {
-      // Use the same deterministic wallet generation as client-side
-      const agentWallet = generateUserAgentWallet(userAddress)
-      agentAccountAddress = agentWallet.address
+      // Use the funded x402 wallet (following tip-md pattern)
+      const x402Wallet = getX402Wallet()
+      x402WalletAddress = x402Wallet.address
       
-      console.log('x402: Using deterministic agent wallet for payment:', agentAccountAddress)
+      console.log('x402: Using funded x402 wallet for payment:', x402WalletAddress)
       
-      // Get USDC balance using Etherscan API (same as client-side)
+      // Get USDC balance using Etherscan API
       const etherscanApiKey = process.env.ETHERSCAN_API_KEY
       if (etherscanApiKey) {
         const balanceResponse = await fetch(
-          `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${agentAccountAddress}&tag=latest&apikey=${etherscanApiKey}`,
+          `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${x402WalletAddress}&tag=latest&apikey=${etherscanApiKey}`,
           { 
             method: 'GET',
             headers: { 'User-Agent': 'Like-n-Tip-Miniapp/1.0' }
@@ -189,20 +204,20 @@ export async function POST(request: NextRequest): Promise<Response> {
         if (balanceResponse.ok) {
           const balanceData = await balanceResponse.json()
           if (balanceData.status === '1' && balanceData.result) {
-            agentBalance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
-            console.log('x402: Agent balance for payment:', agentBalance, 'USDC')
+            x402Balance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
+            console.log('x402: Funded wallet balance for payment:', x402Balance, 'USDC')
           }
         }
       }
     } catch (error) {
-      console.error('Error getting agent balance for payment:', error)
+      console.error('Error getting x402 wallet balance for payment:', error)
     }
     
-    if (agentBalance < tipAmount) {
+    if (x402Balance < tipAmount) {
       return NextResponse.json(
         { 
-          error: `Insufficient agent wallet balance. Current: $${agentBalance.toFixed(2)}, Required: $${tipAmount.toFixed(2)}`,
-          agentBalance: agentBalance,
+          error: `Insufficient x402 wallet balance. Current: $${x402Balance.toFixed(2)}, Required: $${tipAmount.toFixed(2)}`,
+          x402Balance: x402Balance,
           requiredAmount: tipAmount
         },
         { status: 402 }
@@ -225,11 +240,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('x402: Transferring USDC to recipient:', payloadRecipient)
       console.log('x402: Amount:', tipAmount, 'USDC')
       
-      // Use deterministic wallet for disbursement (same as client-side)
-      console.log('x402: Processing payment via deterministic wallet disbursement')
+      // Use x402 wallet for disbursement (following tip-md pattern)
+      console.log('x402: Processing payment via x402 wallet disbursement')
       
-      // Get the agent wallet for sending the transaction
-      const agentWallet = generateUserAgentWallet(userAddress)
+      // Get the funded x402 wallet for sending the transaction
+      const x402Wallet = getX402Wallet()
       
       // Calculate disbursement (96% to recipient, 4% to platform)
       const recipientAmount = Math.floor(tipAmount * 0.96 * 1e6) // 96% in USDC units
@@ -237,11 +252,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       
       console.log('x402: Disbursing to recipient:', recipientAmount, 'USDC units')
       console.log('x402: Platform fee:', platformAmount, 'USDC units')
-      console.log('x402: Agent wallet address:', agentWallet.address)
+      console.log('x402: x402 wallet address:', x402Wallet.address)
       console.log('x402: Recipient address:', payloadRecipient)
       
       // For now, simulate the disbursement since we need to implement proper transaction sending
-      // TODO: Implement proper USDC transfer using the agent wallet private key
+      // TODO: Implement proper USDC transfer using the x402 wallet private key
       console.log('x402: Simulating disbursement - 96% to recipient, 4% platform fee')
       console.log('x402: Recipient amount:', (tipAmount * 0.96).toFixed(3), 'USDC')
       console.log('x402: Platform fee:', (tipAmount * 0.04).toFixed(3), 'USDC')
@@ -254,19 +269,11 @@ export async function POST(request: NextRequest): Promise<Response> {
     } catch (error) {
       console.error('x402: Facilitator settlement failed:', error)
       
-      // Fallback: Use CDP SDK to send transaction directly
-      console.log('x402: Falling back to direct CDP SDK transaction')
+      // Fallback: Use viem directly to send transaction
+      console.log('x402: Falling back to direct viem transaction')
       try {
-        // Initialize CDP client for direct transaction
-        const cdp = new CdpClient({
-          apiKeyId: process.env.CDP_API_KEY_NAME,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET
-        })
-        
-        // Get or create agent account
-        const agentAccount = await cdp.evm.getOrCreateAccount({ 
-          name: agentWalletName 
-        })
+        // Get the funded x402 wallet for sending the transaction
+        const x402Wallet = getX402Wallet()
         
         // Use viem directly to send the USDC transfer
         const publicClient = createPublicClient({
@@ -277,7 +284,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         const walletClient = createWalletClient({
           chain: base,
           transport: http('https://mainnet.base.org'),
-          account: privateKeyToAccount(process.env.AGENT_WALLET_PRIVATE_KEY as `0x${string}`)
+          account: privateKeyToAccount(x402Wallet.privateKey)
         })
         
         // Send USDC transfer
@@ -286,7 +293,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           abi: USDC_ABI,
           functionName: 'transfer',
           args: [payloadRecipient as `0x${string}`, parseUnits(tipAmount.toString(), 6)],
-          account: privateKeyToAccount(process.env.AGENT_WALLET_PRIVATE_KEY as `0x${string}`),
+          account: privateKeyToAccount(x402Wallet.privateKey),
           chain: base
         })
         
@@ -311,7 +318,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       postUrl: postUrl,
       message: 'Tip sent via x402 + CDP disbursement (96% to recipient, 4% platform fee)',
       timestamp: new Date().toISOString(),
-      agentWallet: agentAccountAddress
+      agentWallet: x402WalletAddress
     }
 
     // Return success with x402 payment confirmation headers
