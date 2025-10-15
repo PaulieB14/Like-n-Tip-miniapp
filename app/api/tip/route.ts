@@ -154,6 +154,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Check agent wallet balance using CDP SDK
     let agentBalance = 0
+    let agentAccountAddress = '0x0000000000000000000000000000000000000000'
     try {
       const cdp = new CdpClient({
         apiKeyId: process.env.CDP_API_KEY_NAME,
