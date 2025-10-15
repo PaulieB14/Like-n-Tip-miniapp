@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CdpClient } from '@coinbase/cdp-sdk'
-import { parseUnits, createPublicClient, createWalletClient, http, privateKeyToAccount, encodeFunctionData } from 'viem'
+import { parseUnits, createPublicClient, createWalletClient, http, encodeFunctionData } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
 import { base } from 'viem/chains'
 import { createHash } from 'crypto'
 
