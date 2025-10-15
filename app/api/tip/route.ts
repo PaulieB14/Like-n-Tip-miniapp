@@ -112,6 +112,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     
     // Parse the payment header to get the payment payload
     let paymentPayload
+    let payloadAmount: string
+    let payloadRecipient: string
+    
     try {
       paymentPayload = JSON.parse(Buffer.from(paymentHeader, 'base64').toString())
       console.log('x402: Payment payload:', paymentPayload)
@@ -122,7 +125,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       }
       
       // Extract payment details
-      const { amount: payloadAmount, recipient: payloadRecipient } = paymentPayload.payload
+      const { amount, recipient } = paymentPayload.payload
+      payloadAmount = amount
+      payloadRecipient = recipient
       console.log('x402: Payment details - Amount:', payloadAmount, 'Recipient:', payloadRecipient)
       
     } catch (error) {
