@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CdpClient } from '@coinbase/cdp-sdk'
-import { parseUnits } from 'viem'
+import { parseUnits, encodeFunctionData } from 'viem'
 import { createHash } from 'crypto'
 
 // USDC contract on Base
@@ -63,20 +63,27 @@ export async function POST(request: NextRequest): Promise<Response> {
       try {
         const cdp = new CdpClient({
           apiKeyId: process.env.CDP_API_KEY_NAME,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET,
-          walletSecret: process.env.CDP_WALLET_SECRET
+          apiKeySecret: process.env.CDP_API_KEY_SECRET
         })
         
         const agentAccount = await cdp.evm.getOrCreateAccount({ 
           name: agentWalletName 
         })
         
-        const balance = await agentAccount.getBalance({
-          token: "usdc",
+        // Get token balances using the correct CDP SDK method
+        const balances = await cdp.evm.listTokenBalances({
+          address: agentAccount.address,
           network: "base"
         })
         
-        agentBalance = Number(balance) / 1e6 // Convert from USDC units to decimal
+        // Find USDC balance (USDC contract on Base: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+        const usdcBalance = balances.balances.find(
+          balance => balance.token.contractAddress === '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+        )
+        
+        if (usdcBalance) {
+          agentBalance = Number(usdcBalance.amount.amount) / Math.pow(10, usdcBalance.amount.decimals)
+        }
       } catch (error) {
         console.error('Error getting agent balance from CDP:', error)
       }
@@ -136,20 +143,28 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
       const cdp = new CdpClient({
         apiKeyId: process.env.CDP_API_KEY_NAME,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET,
-          walletSecret: process.env.CDP_WALLET_SECRET
+        apiKeySecret: process.env.CDP_API_KEY_SECRET
       })
       
       const agentAccount = await cdp.evm.getOrCreateAccount({ 
         name: agentWalletName 
       })
+      agentAccountAddress = agentAccount.address
       
-      const balance = await agentAccount.getBalance({
-        token: "usdc",
+      // Get token balances using the correct CDP SDK method
+      const balances = await cdp.evm.listTokenBalances({
+        address: agentAccount.address,
         network: "base"
       })
       
-      agentBalance = Number(balance) / 1e6 // Convert from USDC units to decimal
+      // Find USDC balance (USDC contract on Base: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+      const usdcBalance = balances.balances.find(
+        balance => balance.token.contractAddress === '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+      )
+      
+      if (usdcBalance) {
+        agentBalance = Number(usdcBalance.amount.amount) / Math.pow(10, usdcBalance.amount.decimals)
+      }
     } catch (error) {
       console.error('Error getting agent balance from CDP:', error)
     }
@@ -173,8 +188,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Initialize CDP client
       const cdp = new CdpClient({
         apiKeyId: process.env.CDP_API_KEY_NAME,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET,
-          walletSecret: process.env.CDP_WALLET_SECRET
+        apiKeySecret: process.env.CDP_API_KEY_SECRET
       })
       
       // Get or create agent account
@@ -186,15 +200,20 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('x402: Transferring USDC to recipient:', payloadRecipient)
       console.log('x402: Amount:', tipAmount, 'USDC')
       
-      // Transfer USDC using CDP SDK (gasless via paymaster)
-      const transferResult = await agentAccount.transfer({
+      // Transfer USDC using CDP SDK sendTransaction method
+      const transferResult = await cdp.evm.sendTransaction({
+        from: agentAccount.address,
         to: payloadRecipient as `0x${string}`,
-        amount: parseUnits(tipAmount.toString(), 6), // USDC has 6 decimals
-        token: "usdc",
+        value: "0", // No ETH value for ERC20 transfer
+        data: encodeFunctionData({
+          abi: USDC_ABI,
+          functionName: "transfer",
+          args: [payloadRecipient as `0x${string}`, parseUnits(tipAmount.toString(), 6)]
+        }),
         network: "base"
       })
       
-      txHash = transferResult.transactionHash || transferResult.userOpHash || 'unknown'
+      txHash = transferResult.transactionHash || 'unknown'
       console.log('x402: CDP transfer successful:', txHash)
       
     } catch (error) {
