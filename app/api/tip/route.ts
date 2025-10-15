@@ -63,7 +63,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       try {
         const cdp = new CdpClient({
           apiKeyId: process.env.CDP_API_KEY_NAME,
-          privateKey: process.env.CDP_PRIVATE_KEY
+          apiKeySecret: process.env.CDP_API_KEY_SECRET,
+          walletSecret: process.env.CDP_WALLET_SECRET
         })
         
         const agentAccount = await cdp.evm.getOrCreateAccount({ 
@@ -135,7 +136,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
       const cdp = new CdpClient({
         apiKeyId: process.env.CDP_API_KEY_NAME,
-        privateKey: process.env.CDP_PRIVATE_KEY
+          apiKeySecret: process.env.CDP_API_KEY_SECRET,
+          walletSecret: process.env.CDP_WALLET_SECRET
       })
       
       const agentAccount = await cdp.evm.getOrCreateAccount({ 
@@ -171,7 +173,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Initialize CDP client
       const cdp = new CdpClient({
         apiKeyId: process.env.CDP_API_KEY_NAME,
-        privateKey: process.env.CDP_PRIVATE_KEY
+          apiKeySecret: process.env.CDP_API_KEY_SECRET,
+          walletSecret: process.env.CDP_WALLET_SECRET
       })
       
       // Get or create agent account
