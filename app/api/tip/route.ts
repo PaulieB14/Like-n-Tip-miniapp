@@ -110,7 +110,31 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Payment provided - process the tip (x402 protocol)
     console.log('x402: Processing payment:', paymentHeader)
     
-    const tipAmount = parseFloat(paymentHeader)
+    // Parse the payment header to get the payment payload
+    let paymentPayload
+    try {
+      paymentPayload = JSON.parse(Buffer.from(paymentHeader, 'base64').toString())
+      console.log('x402: Payment payload:', paymentPayload)
+      
+      // Validate payment payload structure
+      if (!paymentPayload.x402Version || !paymentPayload.scheme || !paymentPayload.network || !paymentPayload.payload) {
+        throw new Error('Invalid payment payload structure')
+      }
+      
+      // Extract payment details
+      const { amount: payloadAmount, recipient: payloadRecipient } = paymentPayload.payload
+      console.log('x402: Payment details - Amount:', payloadAmount, 'Recipient:', payloadRecipient)
+      
+    } catch (error) {
+      console.error('x402: Failed to parse payment header:', error)
+      return NextResponse.json(
+        { error: 'Invalid payment header format' },
+        { status: 400 }
+      )
+    }
+    
+    // Convert payload amount from USDC units back to decimal
+    const tipAmount = parseFloat(payloadAmount) / 1e6 // Convert from USDC units (6 decimals) to decimal
     const amountInUnits = parseUnits(tipAmount.toString(), 6) // USDC has 6 decimals
 
     // Check agent wallet balance using Etherscan API (more reliable)
@@ -151,29 +175,6 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // x402 gasless transaction - facilitator handles settlement
     console.log('x402: Processing gasless tip via facilitator')
-    
-    // Parse the payment header to get the payment payload
-    let paymentPayload
-    try {
-      paymentPayload = JSON.parse(Buffer.from(paymentHeader, 'base64').toString())
-      console.log('x402: Payment payload:', paymentPayload)
-      
-      // Validate payment payload structure
-      if (!paymentPayload.x402Version || !paymentPayload.scheme || !paymentPayload.network || !paymentPayload.payload) {
-        throw new Error('Invalid payment payload structure')
-      }
-      
-      // Extract payment details
-      const { amount: payloadAmount, recipient: payloadRecipient } = paymentPayload.payload
-      console.log('x402: Payment details - Amount:', payloadAmount, 'Recipient:', payloadRecipient)
-      
-    } catch (error) {
-      console.error('x402: Failed to parse payment header:', error)
-      return NextResponse.json(
-        { error: 'Invalid payment header format' },
-        { status: 400 }
-      )
-    }
     
     // The facilitator automatically handles gasless settlement
     // For now, simulate successful settlement
