@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CdpClient } from '@coinbase/cdp-sdk'
-import { parseUnits, encodeFunctionData } from 'viem'
+import { parseUnits } from 'viem'
 import { createHash } from 'crypto'
 
 // USDC contract on Base
@@ -8,27 +8,8 @@ const USDC_CONTRACT = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const
 
 // x402 Facilitator for gasless transactions
 const network = process.env.NETWORK || 'base'
-const USDC_ABI = [
-  {
-    "inputs": [
-      { "internalType": "address", "name": "account", "type": "address" }
-    ],
-    "name": "balanceOf",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" }
-    ],
-    "name": "transfer",
-    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  }
-] as const
+// USDC contract address on Base
+const USDC_CONTRACT_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
 
 // Generate user-specific agent wallet name for CDP SDK
 function generateUserAgentWalletName(userAddress: string): string {
@@ -104,7 +85,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               mimeType: "application/json",
               payTo: agentWalletAddress,
               maxTimeoutSeconds: 300,
-              asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
+              asset: USDC_CONTRACT_ADDRESS, // USDC on Base
               extra: {
                 name: "USD Coin",
                 version: "2"
@@ -215,20 +196,45 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('x402: Transferring USDC to recipient:', payloadRecipient)
       console.log('x402: Amount:', tipAmount, 'USDC')
       
-      // Transfer USDC using CDP SDK sendTransaction method
-      const transferResult = await cdp.evm.sendTransaction({
-        from: agentAccount.address,
-        to: payloadRecipient as `0x${string}`,
-        value: "0", // No ETH value for ERC20 transfer
-        data: encodeFunctionData({
-          abi: USDC_ABI,
-          functionName: "transfer",
-          args: [payloadRecipient as `0x${string}`, parseUnits(tipAmount.toString(), 6)]
-        }),
-        network: "base"
+      // Use x402 facilitator for settlement (as per x402 protocol)
+      const facilitatorUrl = process.env.X402_FACILITATOR_URL || 'https://facilitator.x402.org'
+      
+      const settlementRequest = {
+        x402Version: 1,
+        paymentHeader: paymentHeader,
+        paymentRequirements: {
+          scheme: "exact",
+          network: "base",
+          maxAmountRequired: Math.floor(tipAmount * 1e6).toString(),
+          resource: postUrl || "",
+          description: "Send tip to content creator",
+          mimeType: "application/json",
+          payTo: agentAccount.address,
+          maxTimeoutSeconds: 300,
+          asset: USDC_CONTRACT_ADDRESS,
+          extra: {
+            name: "USD Coin",
+            version: "2"
+          }
+        }
+      }
+      
+      console.log('x402: Sending settlement request to facilitator:', facilitatorUrl)
+      const settlementResponse = await fetch(`${facilitatorUrl}/settle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settlementRequest)
       })
       
-      txHash = transferResult.transactionHash || 'unknown'
+      if (settlementResponse.ok) {
+        const settlementResult = await settlementResponse.json()
+        txHash = settlementResult.txHash || 'unknown'
+        console.log('x402: Facilitator settlement successful:', txHash)
+      } else {
+        throw new Error(`Facilitator settlement failed: ${settlementResponse.status}`)
+      }
       console.log('x402: CDP transfer successful:', txHash)
       
     } catch (error) {
