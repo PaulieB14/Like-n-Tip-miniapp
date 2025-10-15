@@ -152,8 +152,21 @@ export async function POST(request: NextRequest): Promise<Response> {
     // x402 gasless transaction - facilitator handles settlement
     console.log('x402: Processing gasless tip via facilitator')
     
+    // Parse the payment header to get the payment payload
+    let paymentPayload
+    try {
+      paymentPayload = JSON.parse(Buffer.from(paymentHeader, 'base64').toString())
+      console.log('x402: Payment payload:', paymentPayload)
+    } catch (error) {
+      console.error('x402: Failed to parse payment header:', error)
+      return NextResponse.json(
+        { error: 'Invalid payment header format' },
+        { status: 400 }
+      )
+    }
+    
     // The facilitator automatically handles gasless settlement
-    // No need for direct wallet transactions or gas fees
+    // For now, simulate successful settlement
     const txHash = `0x${Math.random().toString(16).substr(2, 64)}`
     
     console.log('x402: Gasless tip processed via facilitator:', txHash)
