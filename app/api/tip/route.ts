@@ -30,17 +30,9 @@ const USDC_ABI = [
   }
 ] as const
 
-// Generate user-specific agent wallet (same logic as user-agent-wallet API)
-function generateUserAgentWallet(userAddress: string): { privateKey: `0x${string}`, address: `0x${string}` } {
-  const seed = `agent-wallet-${userAddress}-${process.env.AGENT_WALLET_SEED || 'default-seed'}`
-  const hash = createHash('sha256').update(seed).digest('hex')
-  const privateKey = `0x${hash}` as `0x${string}`
-  
-  const account = privateKeyToAccount(privateKey)
-  return {
-    privateKey,
-    address: account.address
-  }
+// Generate user-specific agent wallet name for CDP SDK
+function generateUserAgentWalletName(userAddress: string): string {
+  return `agent-${userAddress.slice(0, 8)}`
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
@@ -56,8 +48,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'User address required' }, { status: 400 })
     }
 
-    // Generate user-specific agent wallet
-    const agentWallet = generateUserAgentWallet(userAddress)
+    // Generate user-specific agent wallet name
+    const agentWalletName = generateUserAgentWalletName(userAddress)
     
     // Check for payment header (x402 protocol)
     const paymentHeader = request.headers.get('X-PAYMENT')
@@ -66,29 +58,26 @@ export async function POST(request: NextRequest): Promise<Response> {
       // No payment provided - return 402 Payment Required (x402 protocol)
       console.log('x402: No payment header, returning 402 Payment Required')
       
-      // Get agent wallet balance using Etherscan API (more reliable)
+      // Get agent wallet balance using CDP SDK
       let agentBalance = 0
       try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+        const cdp = new CdpClient({
+          apiKeyName: process.env.CDP_API_KEY_NAME,
+          privateKey: process.env.CDP_PRIVATE_KEY
+        })
         
-        const etherscanResponse = await fetch(
-          `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT}&address=${agentWallet.address}&tag=latest&apikey=8X4YIZCEESWC88D8SNY16JH1SQ6FT2E2KK`,
-          { 
-            signal: controller.signal
-          }
-        )
+        const agentAccount = await cdp.evm.getOrCreateAccount({ 
+          name: agentWalletName 
+        })
         
-        clearTimeout(timeoutId)
+        const balance = await agentAccount.getBalance({
+          token: "usdc",
+          network: "base"
+        })
         
-        if (etherscanResponse.ok) {
-          const data = await etherscanResponse.json()
-          if (data.status === '1' && data.result) {
-            agentBalance = Number(data.result) / 1e6
-          }
-        }
+        agentBalance = Number(balance) / 1e6 // Convert from USDC units to decimal
       } catch (error) {
-        console.error('Error getting agent balance from Etherscan:', error)
+        console.error('Error getting agent balance from CDP:', error)
       }
 
       return NextResponse.json(
@@ -98,7 +87,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           reference: `tip_${Date.now()}`,
           currency: 'USDC',
           message: 'Payment required to send tip',
-          agentWallet: agentWallet.address,
+          agentWallet: agentAccount.address,
           agentBalance: agentBalance,
           postUrl: postUrl
         },
@@ -141,29 +130,26 @@ export async function POST(request: NextRequest): Promise<Response> {
     const tipAmount = parseFloat(payloadAmount) / 1e6 // Convert from USDC units (6 decimals) to decimal
     const amountInUnits = parseUnits(tipAmount.toString(), 6) // USDC has 6 decimals
 
-    // Check agent wallet balance using Etherscan API (more reliable)
+    // Check agent wallet balance using CDP SDK
     let agentBalance = 0
     try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      const cdp = new CdpClient({
+        apiKeyName: process.env.CDP_API_KEY_NAME,
+        privateKey: process.env.CDP_PRIVATE_KEY
+      })
       
-      const etherscanResponse = await fetch(
-        `https://api.etherscan.io/v2/api?chainid=8453&module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT}&address=${agentWallet.address}&tag=latest&apikey=8X4YIZCEESWC88D8SNY16JH1SQ6FT2E2KK`,
-        { 
-          signal: controller.signal
-        }
-      )
+      const agentAccount = await cdp.evm.getOrCreateAccount({ 
+        name: agentWalletName 
+      })
       
-      clearTimeout(timeoutId)
+      const balance = await agentAccount.getBalance({
+        token: "usdc",
+        network: "base"
+      })
       
-      if (etherscanResponse.ok) {
-        const data = await etherscanResponse.json()
-        if (data.status === '1' && data.result) {
-          agentBalance = Number(data.result) / 1e6
-        }
-      }
+      agentBalance = Number(balance) / 1e6 // Convert from USDC units to decimal
     } catch (error) {
-      console.error('Error getting agent balance from Etherscan:', error)
+      console.error('Error getting agent balance from CDP:', error)
     }
     
     if (agentBalance < tipAmount) {
@@ -190,7 +176,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       
       // Get or create agent account
       const agentAccount = await cdp.evm.getOrCreateAccount({ 
-        name: `agent-${userAddress.slice(0, 8)}` 
+        name: agentWalletName 
       })
       
       console.log('x402: Agent account address:', agentAccount.address)
@@ -225,7 +211,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       postUrl: postUrl,
       message: 'Tip sent via CDP SDK (gasless)',
       timestamp: new Date().toISOString(),
-      agentWallet: agentWallet.address
+      agentWallet: agentAccount.address
     }
 
     // Return success with x402 payment confirmation headers
