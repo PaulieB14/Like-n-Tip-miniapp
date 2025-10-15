@@ -254,7 +254,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       postUrl: postUrl,
       message: 'Tip sent via CDP SDK (gasless)',
       timestamp: new Date().toISOString(),
-      agentWallet: agentAccount.address
+      agentWallet: agentAccountAddress
     }
 
     // Return success with x402 payment confirmation headers
