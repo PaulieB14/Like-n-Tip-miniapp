@@ -32,6 +32,21 @@ function generateUserAgentWalletName(userAddress: string): string {
   return `agent-${userAddress.slice(0, 8)}`
 }
 
+// Generate a deterministic agent wallet for each user (same as client-side)
+function generateUserAgentWallet(userAddress: string): { privateKey: `0x${string}`, address: `0x${string}` } {
+  // In production, use a proper key derivation function
+  // For now, we'll use a simple hash-based approach
+  const seed = `agent-wallet-${userAddress}-${process.env.AGENT_WALLET_SEED || 'default-seed'}`
+  const hash = createHash('sha256').update(seed).digest('hex')
+  const privateKey = `0x${hash}` as `0x${string}`
+  
+  const account = privateKeyToAccount(privateKey)
+  return {
+    privateKey,
+    address: account.address
+  }
+}
+
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const body = await request.json()
@@ -55,25 +70,21 @@ export async function POST(request: NextRequest): Promise<Response> {
       // No payment provided - return 402 Payment Required (x402 protocol)
       console.log('x402: No payment header, returning 402 Payment Required')
       
-      // Get agent wallet balance using CDP SDK
+      // Get agent wallet balance using deterministic wallet generation (same as client-side)
       let agentBalance = 0
       let agentWalletAddress = '0x0000000000000000000000000000000000000000'
       try {
-        const cdp = new CdpClient({
-          apiKeyId: process.env.CDP_API_KEY_NAME,
-          apiKeySecret: process.env.CDP_API_KEY_SECRET
-        })
+        // Use the same deterministic wallet generation as client-side
+        const agentWallet = generateUserAgentWallet(userAddress)
+        agentWalletAddress = agentWallet.address
         
-        const agentAccount = await cdp.evm.getOrCreateAccount({ 
-          name: agentWalletName 
-        })
-        agentWalletAddress = agentAccount.address
+        console.log('x402: Using deterministic agent wallet:', agentWalletAddress)
         
-        // Get USDC balance using Etherscan API (more reliable than CDP SDK)
+        // Get USDC balance using Etherscan API (same as client-side)
         const etherscanApiKey = process.env.ETHERSCAN_API_KEY
         if (etherscanApiKey) {
           const balanceResponse = await fetch(
-            `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${agentAccount.address}&tag=latest&apikey=${etherscanApiKey}`,
+            `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${agentWalletAddress}&tag=latest&apikey=${etherscanApiKey}`,
             { 
               method: 'GET',
               headers: { 'User-Agent': 'Like-n-Tip-Miniapp/1.0' }
@@ -84,11 +95,12 @@ export async function POST(request: NextRequest): Promise<Response> {
             const balanceData = await balanceResponse.json()
             if (balanceData.status === '1' && balanceData.result) {
               agentBalance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
+              console.log('x402: Agent balance from Etherscan:', agentBalance, 'USDC')
             }
           }
         }
       } catch (error) {
-        console.error('Error getting agent balance from CDP:', error)
+        console.error('Error getting agent balance:', error)
       }
 
       // Return proper x402 Payment Required Response
@@ -153,25 +165,21 @@ export async function POST(request: NextRequest): Promise<Response> {
     const tipAmount = parseFloat(payloadAmount) / 1e6 // Convert from USDC units (6 decimals) to decimal
     const amountInUnits = parseUnits(tipAmount.toString(), 6) // USDC has 6 decimals
 
-    // Check agent wallet balance using CDP SDK
+    // Check agent wallet balance using deterministic wallet generation (same as client-side)
     let agentBalance = 0
     let agentAccountAddress = '0x0000000000000000000000000000000000000000'
     try {
-      const cdp = new CdpClient({
-        apiKeyId: process.env.CDP_API_KEY_NAME,
-        apiKeySecret: process.env.CDP_API_KEY_SECRET
-      })
+      // Use the same deterministic wallet generation as client-side
+      const agentWallet = generateUserAgentWallet(userAddress)
+      agentAccountAddress = agentWallet.address
       
-      const agentAccount = await cdp.evm.getOrCreateAccount({ 
-        name: agentWalletName 
-      })
-      agentAccountAddress = agentAccount.address
+      console.log('x402: Using deterministic agent wallet for payment:', agentAccountAddress)
       
-      // Get USDC balance using Etherscan API (more reliable than CDP SDK)
+      // Get USDC balance using Etherscan API (same as client-side)
       const etherscanApiKey = process.env.ETHERSCAN_API_KEY
       if (etherscanApiKey) {
         const balanceResponse = await fetch(
-          `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${agentAccount.address}&tag=latest&apikey=${etherscanApiKey}`,
+          `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${agentAccountAddress}&tag=latest&apikey=${etherscanApiKey}`,
           { 
             method: 'GET',
             headers: { 'User-Agent': 'Like-n-Tip-Miniapp/1.0' }
@@ -182,11 +190,12 @@ export async function POST(request: NextRequest): Promise<Response> {
           const balanceData = await balanceResponse.json()
           if (balanceData.status === '1' && balanceData.result) {
             agentBalance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
+            console.log('x402: Agent balance for payment:', agentBalance, 'USDC')
           }
         }
       }
     } catch (error) {
-      console.error('Error getting agent balance from CDP:', error)
+      console.error('Error getting agent balance for payment:', error)
     }
     
     if (agentBalance < tipAmount) {
@@ -211,22 +220,16 @@ export async function POST(request: NextRequest): Promise<Response> {
         apiKeySecret: process.env.CDP_API_KEY_SECRET
       })
       
-      // Get or create agent account
-      const agentAccount = await cdp.evm.getOrCreateAccount({ 
-        name: agentWalletName 
-      })
+      // Use deterministic wallet instead of CDP SDK
       
-      console.log('x402: Agent account address:', agentAccount.address)
       console.log('x402: Transferring USDC to recipient:', payloadRecipient)
       console.log('x402: Amount:', tipAmount, 'USDC')
       
-      // Use CDP SDK for automatic disbursement (following tip-md pattern)
-      console.log('x402: Processing payment via CDP SDK disbursement')
+      // Use deterministic wallet for disbursement (same as client-side)
+      console.log('x402: Processing payment via deterministic wallet disbursement')
       
-      // Create recipient account in CDP
-      const recipientAccount = await cdp.evm.getOrCreateAccount({ 
-        name: `recipient-${payloadRecipient.slice(0, 8)}`
-      })
+      // Get the agent wallet for sending the transaction
+      const agentWallet = generateUserAgentWallet(userAddress)
       
       // Calculate disbursement (96% to recipient, 4% to platform)
       const recipientAmount = Math.floor(tipAmount * 0.96 * 1e6) // 96% in USDC units
@@ -234,9 +237,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       
       console.log('x402: Disbursing to recipient:', recipientAmount, 'USDC units')
       console.log('x402: Platform fee:', platformAmount, 'USDC units')
+      console.log('x402: Agent wallet address:', agentWallet.address)
+      console.log('x402: Recipient address:', payloadRecipient)
       
-      // For now, simulate the disbursement since CDP SDK transaction methods are not working
-      // TODO: Implement proper CDP SDK disbursement when the correct API is available
+      // For now, simulate the disbursement since we need to implement proper transaction sending
+      // TODO: Implement proper USDC transfer using the agent wallet private key
       console.log('x402: Simulating disbursement - 96% to recipient, 4% platform fee')
       console.log('x402: Recipient amount:', (tipAmount * 0.96).toFixed(3), 'USDC')
       console.log('x402: Platform fee:', (tipAmount * 0.04).toFixed(3), 'USDC')
