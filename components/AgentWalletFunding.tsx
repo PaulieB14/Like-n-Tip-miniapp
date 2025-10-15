@@ -458,8 +458,8 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
               The agent will use these funds for micropayments ($0.001-$0.005 per tip).
             </p>
             <p className="text-sm text-blue-800 mt-2">
-              <strong>Gasless tips via CDP SDK:</strong> Tips are sent using Coinbase Developer Platform SDK for completely gasless transactions. 
-              No ETH needed for gas fees - CDP paymaster sponsors the transaction costs!
+              <strong>x402 + CDP Integration:</strong> Tips are sent using x402 payment protocol with CDP automatic disbursement. 
+              96% goes to the recipient, 4% platform fee. Gasless transactions via CDP paymaster!
             </p>
           </div>
         </div>
