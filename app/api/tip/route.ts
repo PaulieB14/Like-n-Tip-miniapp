@@ -62,7 +62,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       let agentBalance = 0
       try {
         const cdp = new CdpClient({
-          apiKey: process.env.CDP_API_KEY_NAME,
+          apiKeyId: process.env.CDP_API_KEY_NAME,
           privateKey: process.env.CDP_PRIVATE_KEY
         })
         
@@ -134,7 +134,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     let agentBalance = 0
     try {
       const cdp = new CdpClient({
-        apiKey: process.env.CDP_API_KEY_NAME,
+        apiKeyId: process.env.CDP_API_KEY_NAME,
         privateKey: process.env.CDP_PRIVATE_KEY
       })
       
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
       // Initialize CDP client
       const cdp = new CdpClient({
-        apiKey: process.env.CDP_API_KEY_NAME,
+        apiKeyId: process.env.CDP_API_KEY_NAME,
         privateKey: process.env.CDP_PRIVATE_KEY
       })
       
