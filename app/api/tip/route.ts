@@ -178,57 +178,30 @@ export async function POST(request: NextRequest): Promise<Response> {
       )
     }
 
-    // x402 gasless transaction - facilitator handles settlement
-    console.log('x402: Processing gasless tip via facilitator')
+    // Send real on-chain USDC transfer using agent wallet
+    console.log('x402: Processing real on-chain USDC transfer')
     
-    // Send payment to x402 facilitator for gasless settlement
-    let txHash: string
-    try {
-      const facilitatorResponse = await fetch('https://facilitator.x402.org/settle', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          x402Version: 1,
-          paymentHeader: paymentHeader,
-          paymentRequirements: {
-            scheme: "exact",
-            network: "base",
-            maxAmountRequired: Math.floor(tipAmount * 1e6).toString(),
-            resource: "/api/tip",
-            description: "Send tip to content creator",
-            mimeType: "application/json",
-            payTo: process.env.RESOURCE_WALLET_ADDRESS || "0x0000000000000000000000000000000000000000",
-            maxTimeoutSeconds: 30,
-            asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-            extra: {
-              name: "USD Coin",
-              version: "2"
-            }
-          }
-        })
-      })
-      
-      if (!facilitatorResponse.ok) {
-        throw new Error(`Facilitator error: ${facilitatorResponse.status}`)
-      }
-      
-      const facilitatorResult = await facilitatorResponse.json()
-      
-      if (!facilitatorResult.success) {
-        throw new Error(`Facilitator settlement failed: ${facilitatorResult.error}`)
-      }
-      
-      txHash = facilitatorResult.txHash
-      console.log('x402: Facilitator settlement successful:', txHash)
-      
-    } catch (error) {
-      console.error('x402: Facilitator settlement failed:', error)
-      // Fallback to simulated transaction for now
-      txHash = `0x${Math.random().toString(16).substr(2, 64)}`
-      console.log('x402: Using fallback simulated transaction:', txHash)
-    }
+    // Create wallet client for agent wallet
+    const walletClient = createWalletClient({
+      account: privateKeyToAccount(agentWallet.privateKey),
+      chain: base,
+      transport: http('https://mainnet.base.org')
+    })
+    
+    console.log('x402: Sending USDC transfer from agent wallet:', agentWallet.address)
+    console.log('x402: To recipient:', payloadRecipient)
+    console.log('x402: Amount in USDC units:', amountInUnits.toString())
+    
+    // Send USDC transfer from agent wallet to recipient
+    const txHash = await walletClient.writeContract({
+      address: USDC_CONTRACT,
+      abi: USDC_ABI,
+      functionName: 'transfer',
+      args: [payloadRecipient as `0x${string}`, amountInUnits],
+      account: privateKeyToAccount(agentWallet.privateKey)
+    })
+    
+    console.log('x402: Real on-chain USDC transfer sent:', txHash)
 
     console.log('x402: Tip sent successfully:', txHash)
 
@@ -238,7 +211,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       amount: tipAmount,
       recipient: recipient,
       postUrl: postUrl,
-      message: 'Tip sent via x402 facilitator (gasless)',
+      message: 'Tip sent on-chain via agent wallet',
       timestamp: new Date().toISOString(),
       agentWallet: agentWallet.address
     }
