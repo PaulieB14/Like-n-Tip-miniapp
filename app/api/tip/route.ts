@@ -3,11 +3,14 @@ import { createPublicClient, createWalletClient, http, parseUnits, encodeFunctio
 import { privateKeyToAccount } from 'viem/accounts'
 import { base } from 'viem/chains'
 import { createHash } from 'crypto'
+import { createX402Client } from '@coinbase/x402'
 
 // USDC contract on Base
 const USDC_CONTRACT = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const
 
-// Note: Gasless transactions via Base Paymaster will be implemented in a future update
+// CDP x402 Facilitator Configuration
+const CDP_FACILITATOR_URL = 'https://api.developer.coinbase.com/x402/facilitator'
+const CDP_API_KEY = process.env.CDP_API_KEY || 'your-cdp-api-key-here'
 const USDC_ABI = [
   {
     "inputs": [
@@ -148,21 +151,30 @@ export async function POST(request: NextRequest): Promise<Response> {
       )
     }
 
-    // Send USDC transfer using regular wallet (for now, until we can implement proper gasless)
-    const walletClient = createWalletClient({
-      account: privateKeyToAccount(agentWallet.privateKey),
-      chain: base,
-      transport: http('https://mainnet.base.org')
+    // Send USDC transfer using CDP x402 facilitator for gasless transactions
+    const x402Client = createX402Client({
+      apiKey: CDP_API_KEY,
+      baseUrl: CDP_FACILITATOR_URL
     })
 
-    const txHash = await walletClient.writeContract({
-      address: USDC_CONTRACT,
-      abi: USDC_ABI,
-      functionName: 'transfer',
-      args: [recipient as `0x${string}`, amountInUnits],
-      account: privateKeyToAccount(agentWallet.privateKey),
-      chain: base
-    })
+    // Create payment request for the facilitator
+    const paymentRequest = {
+      amount: tipAmount.toString(),
+      currency: 'USDC',
+      recipient: recipient as `0x${string}`,
+      reference: `tip_${Date.now()}`,
+      postUrl: postUrl,
+      sender: agentWallet.address
+    }
+
+    // Submit payment to CDP facilitator for gasless settlement
+    const facilitatorResponse = await x402Client.submitPayment(paymentRequest)
+    
+    if (!facilitatorResponse.success) {
+      throw new Error(`Facilitator payment failed: ${facilitatorResponse.error}`)
+    }
+
+    const txHash = facilitatorResponse.txHash
 
     console.log('x402: Tip sent successfully:', txHash)
 
@@ -172,7 +184,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       amount: tipAmount,
       recipient: recipient,
       postUrl: postUrl,
-      message: 'Tip sent via x402 protocol',
+      message: 'Tip sent via CDP x402 facilitator (gasless)',
       timestamp: new Date().toISOString(),
       agentWallet: agentWallet.address
     }
