@@ -89,12 +89,12 @@ export async function POST(request: NextRequest): Promise<Response> {
       let x402Balance = 0
       let x402WalletAddress = '0x0000000000000000000000000000000000000000'
       try {
-        // Use the funded x402 wallet (following tip-md pattern)
-        const x402Wallet = getX402Wallet()
-        x402WalletAddress = x402Wallet.address
+        // Use the same deterministic agent wallet that frontend is checking
+        const agentWallet = generateUserAgentWallet(userAddress)
+        x402WalletAddress = agentWallet.address
         
-        console.log('x402: Using funded x402 wallet:', x402WalletAddress)
-        console.log('x402: X402_WALLET_PRIVATE_KEY exists:', !!process.env.X402_WALLET_PRIVATE_KEY)
+        console.log('x402: Using agent wallet (same as frontend):', x402WalletAddress)
+        console.log('x402: User address:', userAddress)
         
         // Get USDC balance using Etherscan API
         const etherscanApiKey = process.env.ETHERSCAN_API_KEY
@@ -186,11 +186,11 @@ export async function POST(request: NextRequest): Promise<Response> {
     let x402Balance = 0
     let x402WalletAddress = '0x0000000000000000000000000000000000000000'
     try {
-      // Use the funded x402 wallet (following tip-md pattern)
-      const x402Wallet = getX402Wallet()
-      x402WalletAddress = x402Wallet.address
+      // Use the same deterministic agent wallet that frontend is checking
+      const agentWallet = generateUserAgentWallet(userAddress)
+      x402WalletAddress = agentWallet.address
       
-      console.log('x402: Using funded x402 wallet for payment:', x402WalletAddress)
+      console.log('x402: Using agent wallet for payment (same as frontend):', x402WalletAddress)
       
       // Get USDC balance using Etherscan API
       const etherscanApiKey = process.env.ETHERSCAN_API_KEY
@@ -250,8 +250,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Use x402 wallet for disbursement (following tip-md pattern)
       console.log('x402: Processing payment via x402 wallet disbursement')
       
-      // Get the funded x402 wallet for sending the transaction
-      const x402Wallet = getX402Wallet()
+      // Get the agent wallet for sending the transaction (same as frontend)
+      const agentWallet = generateUserAgentWallet(userAddress)
       
       // Calculate disbursement (96% to recipient, 4% to platform)
       const recipientAmount = Math.floor(tipAmount * 0.96 * 1e6) // 96% in USDC units
@@ -259,7 +259,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       
       console.log('x402: Disbursing to recipient:', recipientAmount, 'USDC units')
       console.log('x402: Platform fee:', platformAmount, 'USDC units')
-      console.log('x402: x402 wallet address:', x402Wallet.address)
+      console.log('x402: agent wallet address:', agentWallet.address)
       console.log('x402: Recipient address:', payloadRecipient)
       
       // For now, simulate the disbursement since we need to implement proper transaction sending
@@ -279,8 +279,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Fallback: Use viem directly to send transaction
       console.log('x402: Falling back to direct viem transaction')
       try {
-        // Get the funded x402 wallet for sending the transaction
-        const x402Wallet = getX402Wallet()
+        // Get the agent wallet for sending the transaction (same as frontend)
+        const agentWallet = generateUserAgentWallet(userAddress)
         
         // Use viem directly to send the USDC transfer
         const publicClient = createPublicClient({
@@ -291,7 +291,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         const walletClient = createWalletClient({
           chain: base,
           transport: http('https://mainnet.base.org'),
-          account: privateKeyToAccount(x402Wallet.privateKey)
+          account: privateKeyToAccount(agentWallet.privateKey)
         })
         
         // Send USDC transfer
@@ -300,7 +300,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           abi: USDC_ABI,
           functionName: 'transfer',
           args: [payloadRecipient as `0x${string}`, parseUnits(tipAmount.toString(), 6)],
-          account: privateKeyToAccount(x402Wallet.privateKey),
+          account: privateKeyToAccount(agentWallet.privateKey),
           chain: base
         })
         
