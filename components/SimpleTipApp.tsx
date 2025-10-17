@@ -209,8 +209,12 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       }
 
       const tipData = await tipResponse.json()
+      console.log('x402: Tip response data:', tipData)
+      console.log('x402: Response status:', tipResponse.status)
+      console.log('x402: Response ok:', tipResponse.ok)
       
       if (tipData.success && tipData.txHash) {
+        console.log('x402: Tip successful! Transaction hash:', tipData.txHash)
         setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor}`)
         
         // Add to history with real transaction hash
