@@ -170,6 +170,9 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       // If we get 402, retry with payment header (x402 protocol)
       if (tipResponse.status === 402) {
         console.log('x402: Got 402 response, retrying with payment header')
+        console.log('x402: Payment header being sent:', paymentHeader.substring(0, 50) + '...')
+        console.log('x402: Payment payload:', JSON.stringify(paymentPayload))
+        
         tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
           method: 'POST',
           headers: {
@@ -183,6 +186,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
             recipientUsername: postAuthor // Keep the username for display
           })
         })
+        
+        console.log('x402: Retry response status:', tipResponse.status)
       }
 
       if (!tipResponse.ok) {
