@@ -6,10 +6,15 @@ export function middleware(request: Request) {
   
   // Only protect the tip endpoint
   if (url.pathname === '/api/tip') {
+    console.log('🔍 MIDDLEWARE: Checking /api/tip request');
+    
     // Check for payment header
     const paymentHeader = request.headers.get('X-PAYMENT');
+    console.log('🔍 MIDDLEWARE: Payment header present:', !!paymentHeader);
+    console.log('🔍 MIDDLEWARE: Payment header value:', paymentHeader ? paymentHeader.substring(0, 50) + '...' : 'null');
     
     if (!paymentHeader) {
+      console.log('🔍 MIDDLEWARE: No payment header - returning 402');
       // Return 402 Payment Required with x402 response
       return new Response(
         JSON.stringify({
