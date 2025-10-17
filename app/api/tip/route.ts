@@ -85,41 +85,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       // No payment provided - return 402 Payment Required (x402 protocol)
       console.log('x402: No payment header, returning 402 Payment Required')
       
-      // Get x402 wallet balance (the funded wallet that actually holds USDC)
-      let x402Balance = 0
-      let x402WalletAddress = '0x0000000000000000000000000000000000000000'
-      try {
-        // Use the same deterministic agent wallet that frontend is checking
-        const agentWallet = generateUserAgentWallet(userAddress)
-        x402WalletAddress = agentWallet.address
-        
-        console.log('x402: Using agent wallet (same as frontend):', x402WalletAddress)
-        console.log('x402: User address:', userAddress)
-        
-        // Get USDC balance using Etherscan API
-        const etherscanApiKey = process.env.ETHERSCAN_API_KEY
-        if (etherscanApiKey) {
-          const balanceResponse = await fetch(
-            `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${x402WalletAddress}&tag=latest&apikey=${etherscanApiKey}`,
-            { 
-              method: 'GET',
-              headers: { 'User-Agent': 'Like-n-Tip-Miniapp/1.0' }
-            }
-          )
-          
-          if (balanceResponse.ok) {
-            const balanceData = await balanceResponse.json()
-            if (balanceData.status === '1' && balanceData.result) {
-              x402Balance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
-              console.log('x402: Funded wallet balance from Etherscan:', x402Balance, 'USDC')
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error getting x402 wallet balance:', error)
-      }
-
-      // Return proper x402 Payment Required Response
+      // Return proper x402 Payment Required Response (no balance check needed)
       return NextResponse.json(
         {
           x402Version: 1,
@@ -131,7 +97,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               resource: postUrl || "",
               description: "Send tip to content creator",
               mimeType: "application/json",
-              payTo: x402WalletAddress,
+              payTo: "0x07748C1a56ddCE2fC014633c220C79bbaF35810f", // Fixed payTo address
               maxTimeoutSeconds: 300,
               asset: USDC_CONTRACT_ADDRESS, // USDC on Base
               extra: {
@@ -140,7 +106,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               }
             }
           ],
-          error: x402Balance < (amount || 0.10) ? `Insufficient x402 wallet balance. Current: $${x402Balance.toFixed(3)}, Required: $${(amount || 0.10).toFixed(3)}` : null
+          error: null // No balance check in x402 protocol
         },
         { status: 402 }
       )
@@ -182,54 +148,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const tipAmount = parseFloat(payloadAmount) / 1e6 // Convert from USDC units (6 decimals) to decimal
     const amountInUnits = parseUnits(tipAmount.toString(), 6) // USDC has 6 decimals
 
-    // Check x402 wallet balance (the funded wallet that actually holds USDC)
-    let x402Balance = 0
-    let x402WalletAddress = '0x0000000000000000000000000000000000000000'
-    try {
-      // Use the same deterministic agent wallet that frontend is checking
-      const agentWallet = generateUserAgentWallet(userAddress)
-      x402WalletAddress = agentWallet.address
-      
-      console.log('x402: Using agent wallet for payment (same as frontend):', x402WalletAddress)
-      
-      // Get USDC balance using Etherscan API
-      const etherscanApiKey = process.env.ETHERSCAN_API_KEY
-      if (etherscanApiKey) {
-        const balanceResponse = await fetch(
-          `https://api.basescan.org/api?module=account&action=tokenbalance&contractaddress=${USDC_CONTRACT_ADDRESS}&address=${x402WalletAddress}&tag=latest&apikey=${etherscanApiKey}`,
-          { 
-            method: 'GET',
-            headers: { 'User-Agent': 'Like-n-Tip-Miniapp/1.0' }
-          }
-        )
-        
-        if (balanceResponse.ok) {
-          const balanceData = await balanceResponse.json()
-          if (balanceData.status === '1' && balanceData.result) {
-            x402Balance = Number(balanceData.result) / 1e6 // USDC has 6 decimals
-            console.log('x402: Funded wallet balance for payment:', x402Balance, 'USDC')
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error getting x402 wallet balance for payment:', error)
-    }
-    
-    console.log('x402: Balance check - Current:', x402Balance, 'Required:', tipAmount, 'Sufficient?', x402Balance >= tipAmount)
-    
-    if (x402Balance < tipAmount) {
-      console.log('x402: INSUFFICIENT BALANCE - returning 402')
-      return NextResponse.json(
-        { 
-          error: `Insufficient x402 wallet balance. Current: $${x402Balance.toFixed(2)}, Required: $${tipAmount.toFixed(2)}`,
-          x402Balance: x402Balance,
-          requiredAmount: tipAmount
-        },
-        { status: 402 }
-      )
-    }
-    
-    console.log('x402: SUFFICIENT BALANCE - proceeding with payment')
+    console.log('x402: Processing payment - Amount:', tipAmount, 'USDC, Recipient:', payloadRecipient)
 
     // Use CDP SDK for gasless transfers
     console.log('x402: Processing payment via CDP SDK')
