@@ -80,6 +80,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     
     // Check for payment header (x402 protocol)
     const paymentHeader = request.headers.get('X-PAYMENT')
+    
+    console.log('x402: Payment header present:', !!paymentHeader)
+    console.log('x402: Payment header value:', paymentHeader ? paymentHeader.substring(0, 50) + '...' : 'null')
 
     if (!paymentHeader) {
       // No payment provided - return 402 Payment Required (x402 protocol)
