@@ -247,7 +247,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       postUrl: postUrl,
       message: 'Tip sent via x402 + CDP disbursement (96% to recipient, 4% platform fee)',
       timestamp: new Date().toISOString(),
-      agentWallet: x402WalletAddress
+      agentWallet: "0x07748C1a56ddCE2fC014633c220C79bbaF35810f" // Fixed agent wallet address
     }
 
     // Return success with x402 payment confirmation headers
