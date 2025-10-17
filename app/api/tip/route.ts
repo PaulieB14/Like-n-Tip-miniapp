@@ -94,6 +94,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         x402WalletAddress = x402Wallet.address
         
         console.log('x402: Using funded x402 wallet:', x402WalletAddress)
+        console.log('x402: X402_WALLET_PRIVATE_KEY exists:', !!process.env.X402_WALLET_PRIVATE_KEY)
         
         // Get USDC balance using Etherscan API
         const etherscanApiKey = process.env.ETHERSCAN_API_KEY
@@ -147,6 +148,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Payment provided - process the tip (x402 protocol)
     console.log('x402: Processing payment:', paymentHeader)
+    console.log('x402: X402_WALLET_PRIVATE_KEY exists for payment:', !!process.env.X402_WALLET_PRIVATE_KEY)
     
     // Parse the payment header to get the payment payload
     let paymentPayload
