@@ -169,7 +169,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
 
       if (!tipResponse.ok) {
         if (tipResponse.status === 402) {
-          setTipError('Payment required - please fund your agent wallet')
+          setTipError('x402 payment required - insufficient x402 wallet balance')
         } else {
           let errorMessage = 'Failed to send tip'
           try {
