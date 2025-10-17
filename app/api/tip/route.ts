@@ -64,12 +64,18 @@ function getX402Wallet(): { privateKey: `0x${string}`, address: `0x${string}` } 
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
+    console.log('🚀 TIP API CALLED - Server is receiving the request!')
+    
     const body = await request.json()
     const { postUrl, amount, recipient } = body
 
     // Get user address from query params or body
     const { searchParams } = new URL(request.url)
     const userAddress = searchParams.get('userAddress') || body.userAddress
+
+    console.log('🚀 User address:', userAddress)
+    console.log('🚀 Amount:', amount)
+    console.log('🚀 Recipient:', recipient)
 
     if (!userAddress) {
       return NextResponse.json({ error: 'User address required' }, { status: 400 })
