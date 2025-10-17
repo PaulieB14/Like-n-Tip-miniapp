@@ -14,9 +14,11 @@ export function middleware(request: Request) {
     const allHeaders = Object.fromEntries(request.headers.entries());
     console.log('🔍 MIDDLEWARE: All headers:', JSON.stringify(allHeaders, null, 2));
     
-    // Check for payment header
+    // Check for payment header with case sensitivity
     const paymentHeader = request.headers.get('X-PAYMENT');
-    console.log('🔍 MIDDLEWARE: Payment header present:', !!paymentHeader);
+    const paymentHeaderLower = request.headers.get('x-payment');
+    console.log('🔍 MIDDLEWARE: X-PAYMENT header present:', !!paymentHeader);
+    console.log('🔍 MIDDLEWARE: x-payment header present:', !!paymentHeaderLower);
     console.log('🔍 MIDDLEWARE: Payment header value:', paymentHeader ? paymentHeader.substring(0, 50) + '...' : 'null');
     
     if (!paymentHeader) {
