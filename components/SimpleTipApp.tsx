@@ -153,11 +153,11 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       const paymentHeader = btoa(JSON.stringify(paymentPayload))
       
       // Make the tip request using x402 payment protocol
-      const tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
+      // First, try without payment header to get 402 response
+      let tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-PAYMENT': paymentHeader // Send base64-encoded payment payload
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           postUrl: postUrl,
@@ -166,6 +166,24 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
           recipientUsername: postAuthor // Keep the username for display
         })
       })
+
+      // If we get 402, retry with payment header (x402 protocol)
+      if (tipResponse.status === 402) {
+        console.log('x402: Got 402 response, retrying with payment header')
+        tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-PAYMENT': paymentHeader // Send base64-encoded payment payload
+          },
+          body: JSON.stringify({
+            postUrl: postUrl,
+            amount: amount,
+            recipient: recipientAddress, // Resolved wallet address
+            recipientUsername: postAuthor // Keep the username for display
+          })
+        })
+      }
 
       if (!tipResponse.ok) {
         if (tipResponse.status === 402) {
