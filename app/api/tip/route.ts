@@ -184,16 +184,35 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('x402: agent wallet address:', agentWallet.address)
       console.log('x402: Recipient address:', payloadRecipient)
       
-      // For now, simulate the disbursement since we need to implement proper transaction sending
-      // TODO: Implement proper USDC transfer using the x402 wallet private key
-      console.log('x402: Simulating disbursement - 96% to recipient, 4% platform fee')
+      // Send real USDC transfer using the agent wallet
+      console.log('x402: Sending real USDC transfer - 96% to recipient, 4% platform fee')
       console.log('x402: Recipient amount:', (tipAmount * 0.96).toFixed(3), 'USDC')
       console.log('x402: Platform fee:', (tipAmount * 0.04).toFixed(3), 'USDC')
       
-      // Generate a realistic transaction hash for the disbursement
-      txHash = `0x${Math.random().toString(16).substr(2, 64)}`
-      console.log('x402: Disbursement transaction hash:', txHash)
-      console.log('x402: CDP transfer successful:', txHash)
+      // Use viem to send the actual USDC transfer
+      const publicClient = createPublicClient({
+        chain: base,
+        transport: http('https://mainnet.base.org')
+      })
+      
+      const walletClient = createWalletClient({
+        chain: base,
+        transport: http('https://mainnet.base.org'),
+        account: privateKeyToAccount(agentWallet.privateKey)
+      })
+      
+      // Send USDC transfer to recipient
+      const transferResult = await walletClient.writeContract({
+        address: USDC_CONTRACT_ADDRESS,
+        abi: USDC_ABI,
+        functionName: 'transfer',
+        args: [payloadRecipient as `0x${string}`, parseUnits(tipAmount.toString(), 6)],
+        account: privateKeyToAccount(agentWallet.privateKey),
+        chain: base
+      })
+      
+      txHash = transferResult
+      console.log('x402: Real USDC transfer successful:', txHash)
       
     } catch (error) {
       console.error('x402: Facilitator settlement failed:', error)
