@@ -457,10 +457,10 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
               <strong>How it works:</strong> Send USDC from your wallet to the agent wallet. 
               The agent will use these funds for micropayments ($0.001-$0.005 per tip).
             </p>
-            <p className="text-sm text-blue-800 mt-2">
-              <strong>x402 + CDP Integration:</strong> Tips are sent using x402 payment protocol with CDP automatic disbursement. 
-              96% goes to the recipient, 4% platform fee. Gasless transactions via CDP paymaster!
-            </p>
+        <p className="text-sm text-green-800 mt-2">
+          <strong>✅ x402 + CDP Integration Active:</strong> Tips are sent using x402 payment protocol with CDP automatic disbursement. 
+          96% goes to the recipient, 4% platform fee. Gasless transactions via CDP paymaster! No agent wallet funding needed.
+        </p>
           </div>
         </div>
       )}

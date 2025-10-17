@@ -125,23 +125,9 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     setTipSuccess('')
 
     try {
-      // First, check if we need to fund the agent wallet
-      const agentResponse = await fetch(`/api/user-agent-wallet?userAddress=${address}`)
-      const agentData = await agentResponse.json()
-      
-      if (!agentData.success) {
-        console.error('Agent wallet API error:', agentData.error || agentData.message)
-        setTipError(`Failed to get agent wallet info: ${agentData.error || agentData.message || 'Unknown error'}`)
-        return
-      }
-
-      const agentBalance = parseFloat(agentData.balance)
-      const amountInUnits = amount * 1e6 // Convert to USDC units (6 decimals)
-
-      if (agentBalance < amount) {
-        setTipError(`Insufficient agent wallet balance. Current: $${agentBalance.toFixed(2)}, Required: $${amount.toFixed(3)}. Please fund your agent wallet first.`)
-        return
-      }
+      // Skip agent wallet balance check - x402 wallet handles funding
+      // The x402 wallet is pre-funded and handles all transactions
+      console.log('x402: Using gasless x402 + CDP integration - no agent wallet funding needed')
 
       // Resolve the recipient address from the username
       const recipientAddress = await resolveFarcasterAddress(postAuthor)
