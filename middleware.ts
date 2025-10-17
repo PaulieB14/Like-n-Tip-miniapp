@@ -7,6 +7,8 @@ export function middleware(request: Request) {
   // Only protect the tip endpoint
   if (url.pathname === '/api/tip') {
     console.log('🔍 MIDDLEWARE: Checking /api/tip request');
+    console.log('🔍 MIDDLEWARE: Request method:', request.method);
+    console.log('🔍 MIDDLEWARE: Request headers:', Object.fromEntries(request.headers.entries()));
     
     // Check for payment header
     const paymentHeader = request.headers.get('X-PAYMENT');
