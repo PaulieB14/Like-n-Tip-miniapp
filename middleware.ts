@@ -10,6 +10,10 @@ export function middleware(request: Request) {
     console.log('🔍 MIDDLEWARE: Request method:', request.method);
     console.log('🔍 MIDDLEWARE: Request headers:', Object.fromEntries(request.headers.entries()));
     
+    // Log all headers to see what's being sent
+    const allHeaders = Object.fromEntries(request.headers.entries());
+    console.log('🔍 MIDDLEWARE: All headers:', JSON.stringify(allHeaders, null, 2));
+    
     // Check for payment header
     const paymentHeader = request.headers.get('X-PAYMENT');
     console.log('🔍 MIDDLEWARE: Payment header present:', !!paymentHeader);
