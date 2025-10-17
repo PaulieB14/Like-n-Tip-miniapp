@@ -39,13 +39,15 @@ export function middleware(request: Request) {
               name: "USD Coin",
               version: "2"
             }
-          }]
+          }],
+          debug: "MIDDLEWARE: No X-PAYMENT header found"
         }),
         {
           status: 402,
           headers: {
             'Content-Type': 'application/json',
-            'X-PAYMENT-REQUIRED': 'true'
+            'X-PAYMENT-REQUIRED': 'true',
+            'X-DEBUG': 'middleware-no-payment-header'
           }
         }
       );
