@@ -215,7 +215,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.error('Error getting x402 wallet balance for payment:', error)
     }
     
+    console.log('x402: Balance check - Current:', x402Balance, 'Required:', tipAmount, 'Sufficient?', x402Balance >= tipAmount)
+    
     if (x402Balance < tipAmount) {
+      console.log('x402: INSUFFICIENT BALANCE - returning 402')
       return NextResponse.json(
         { 
           error: `Insufficient x402 wallet balance. Current: $${x402Balance.toFixed(2)}, Required: $${tipAmount.toFixed(2)}`,
@@ -225,6 +228,8 @@ export async function POST(request: NextRequest): Promise<Response> {
         { status: 402 }
       )
     }
+    
+    console.log('x402: SUFFICIENT BALANCE - proceeding with payment')
 
     // Use CDP SDK for gasless transfers
     console.log('x402: Processing payment via CDP SDK')
