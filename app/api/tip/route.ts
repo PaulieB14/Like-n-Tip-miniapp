@@ -192,33 +192,40 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
       // Use CDP SDK for real gasless disbursement
       // CDP handles paymaster sponsorship for gasless transactions
-      const disbursementResult = await cdp.evm.sendTransaction({
-        accountId: x402Wallet.address,
-        to: payloadRecipient,
-        value: parseUnits(recipientAmount.toString(), 6).toString(),
-        data: encodeFunctionData({
-          abi: USDC_ABI,
-          functionName: 'transfer',
-          args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)]
-        }),
-        // CDP paymaster sponsorship for gasless transactions
-        gasless: true
+      const disbursementResult = await cdp.evm.sendUserOperation({
+        smartAccount: x402Wallet.address,
+        network: "base",
+        calls: [
+          {
+            to: payloadRecipient,
+            value: parseUnits(recipientAmount.toString(), 6).toString(),
+            data: encodeFunctionData({
+              abi: USDC_ABI,
+              functionName: 'transfer',
+              args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)]
+            })
+          }
+        ]
       })
       
       console.log('x402: Real gasless CDP disbursement successful:', disbursementResult.transactionHash)
       
       // Send 4% to platform (if platformAmount > 0)
       if (platformAmount > 0) {
-        const platformTransfer = await cdp.evm.sendTransaction({
-          accountId: x402Wallet.address,
-          to: process.env.PLATFORM_FEE_RECIPIENT || '0x0000000000000000000000000000000000000000',
-          value: parseUnits(platformAmount.toString(), 6).toString(),
-          data: encodeFunctionData({
-            abi: USDC_ABI,
-            functionName: 'transfer',
-            args: [process.env.PLATFORM_FEE_RECIPIENT as `0x${string}`, parseUnits(platformAmount.toString(), 6)]
-          }),
-          gasless: true
+        const platformTransfer = await cdp.evm.sendUserOperation({
+          smartAccount: x402Wallet.address,
+          network: "base",
+          calls: [
+            {
+              to: process.env.PLATFORM_FEE_RECIPIENT || '0x0000000000000000000000000000000000000000',
+              value: parseUnits(platformAmount.toString(), 6).toString(),
+              data: encodeFunctionData({
+                abi: USDC_ABI,
+                functionName: 'transfer',
+                args: [process.env.PLATFORM_FEE_RECIPIENT as `0x${string}`, parseUnits(platformAmount.toString(), 6)]
+              })
+            }
+          ]
         })
         
         console.log('x402: Real gasless platform transfer successful:', platformTransfer.transactionHash)
