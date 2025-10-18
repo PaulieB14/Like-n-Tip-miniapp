@@ -103,13 +103,15 @@ export async function GET(request: NextRequest): Promise<Response> {
       balance = 0
     }
 
-    // Return error instead of fake agent wallet data
-    console.log('x402: No agent wallet needed - using x402 + CDP gasless integration')
+    // Return real agent wallet data for x402 + CDP integration
+    console.log('x402: Returning agent wallet data for x402 + CDP integration')
     return NextResponse.json({
-      success: false,
-      error: 'Agent wallet not needed - using x402 + CDP gasless integration',
-      message: 'This app uses x402 + CDP gasless disbursement, no agent wallet funding required'
-    }, { status: 400 })
+      success: true,
+      address: agentWallet.address,
+      balance: balance,
+      hasEnoughFunds: balance >= 0.01, // Threshold for micropayments
+      message: 'Agent wallet ready for x402 + CDP gasless disbursement'
+    }, { status: 200 })
   })()
 
   try {
