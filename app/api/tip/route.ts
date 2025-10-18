@@ -251,6 +251,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         console.log('x402: Verify response ok:', verifyResponse.ok)
         
         if (!verifyResponse.ok) {
+          console.error('x402: Facilitator verification failed:', verifyResponse.status, verifyResponse.statusText)
           throw new Error(`Facilitator verification failed: ${verifyResponse.status} ${verifyResponse.statusText}`)
         }
         
