@@ -164,6 +164,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       }
       
       console.log('Payment payload created with recipient:', paymentPayload.payload.recipient)
+      console.log('Payment payload recipient length:', paymentPayload.payload.recipient.length)
+      console.log('Payment payload recipient format:', paymentPayload.payload.recipient.startsWith('0x') ? 'Valid' : 'Invalid')
       
       // Encode payment payload as base64
       const paymentHeader = btoa(JSON.stringify(paymentPayload))
