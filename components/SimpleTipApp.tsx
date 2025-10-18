@@ -137,6 +137,14 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         return
       }
       
+      // Validate the address format
+      if (!recipientAddress.startsWith('0x') || recipientAddress.length !== 42) {
+        setTipError(`Invalid address format for @${postAuthor}: ${recipientAddress}`)
+        return
+      }
+      
+      console.log('Using resolved address for payment:', recipientAddress)
+      
       // Create x402 payment payload
       const paymentPayload = {
         x402Version: 1,
