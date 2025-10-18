@@ -190,24 +190,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     console.log('x402: Platform fee:', platformAmount, 'USDC')
     
     try {
-      // Use CDP gasless disbursement via x402 protocol
-      console.log('x402: Using CDP gasless disbursement via x402 protocol')
-      
-      // For now, simulate the gasless disbursement
-      // TODO: Implement proper CDP disbursement when API is available
-      const disbursementId = `x402-cdp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      
-      console.log('x402: Gasless disbursement via x402 + CDP:', {
-        disbursementId,
-        recipient: payloadRecipient,
-        recipientAmount: `${recipientAmount} USDC`,
-        platformAmount: `${platformAmount} USDC`,
-        platformRecipient: process.env.PLATFORM_FEE_RECIPIENT,
-        method: 'x402 + CDP gasless disbursement'
-      })
-      
-      txHash = disbursementId
-      console.log('x402: x402 + CDP gasless disbursement successful:', txHash)
+      // Return error - no real CDP disbursement implementation yet
+      console.log('x402: CDP disbursement not implemented - returning error')
+      return NextResponse.json(
+        { error: 'CDP disbursement not implemented - no real transactions available' },
+        { status: 501 }
+      )
       
     } catch (error) {
       console.error('x402: x402 + CDP gasless disbursement failed:', error)
