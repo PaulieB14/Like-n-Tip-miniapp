@@ -217,17 +217,76 @@ export async function POST(request: NextRequest): Promise<Response> {
         })
         
         // x402 protocol: Server verifies payment, facilitator handles blockchain
-        // The x402 protocol is about payment verification, not transaction execution
         console.log('x402: x402 protocol - server verifies payment, facilitator handles blockchain')
         
-        // For now, use x402 simulation until we have a real x402 facilitator
-        // In a real x402 implementation, the facilitator would handle the blockchain transaction
-        console.log('x402: x402 facilitator service not available - using gasless simulation')
-        console.log('x402: In production, facilitator would handle real blockchain transaction')
+        // Use real x402 facilitator service
+        console.log('x402: Using real x402 facilitator service')
         
-        // Generate x402 gasless transaction hash
-        txHash = `x402-gasless-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        console.log('x402: x402 gasless transaction hash:', txHash)
+        // Step 1: Verify payment with facilitator
+        console.log('x402: Step 1 - Verifying payment with facilitator...')
+        const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/facilitator/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            x402Version: 1,
+            paymentHeader: paymentHeader,
+            paymentRequirements: {
+              scheme: 'exact',
+              network: 'base',
+              maxAmountRequired: '5000',
+              resource: '/api/tip',
+              description: 'Send tip to content creator',
+              mimeType: 'application/json',
+              payTo: payloadRecipient,
+              maxTimeoutSeconds: 30,
+              asset: USDC_CONTRACT_ADDRESS,
+              extra: { name: 'USD Coin', version: '2' }
+            }
+          })
+        })
+        
+        const verifyResult = await verifyResponse.json()
+        console.log('x402: Verification result:', verifyResult)
+        
+        if (!verifyResult.isValid) {
+          throw new Error(`Payment verification failed: ${verifyResult.invalidReason}`)
+        }
+        
+        console.log('✅ x402: Payment verification successful')
+        
+        // Step 2: Settle payment with facilitator
+        console.log('x402: Step 2 - Settling payment with facilitator...')
+        const settleResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/facilitator/settle`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            x402Version: 1,
+            paymentHeader: paymentHeader,
+            paymentRequirements: {
+              scheme: 'exact',
+              network: 'base',
+              maxAmountRequired: '5000',
+              resource: '/api/tip',
+              description: 'Send tip to content creator',
+              mimeType: 'application/json',
+              payTo: payloadRecipient,
+              maxTimeoutSeconds: 30,
+              asset: USDC_CONTRACT_ADDRESS,
+              extra: { name: 'USD Coin', version: '2' }
+            }
+          })
+        })
+        
+        const settleResult = await settleResponse.json()
+        console.log('x402: Settlement result:', settleResult)
+        
+        if (!settleResult.success) {
+          throw new Error(`Payment settlement failed: ${settleResult.error}`)
+        }
+        
+        console.log('✅ x402: Payment settlement successful')
+        txHash = settleResult.txHash
+        console.log('x402: Real blockchain transaction hash:', txHash)
         console.log('x402: Recipient:', payloadRecipient, 'Amount:', recipientAmount)
         console.log('x402: Platform fee recipient:', process.env.PLATFORM_FEE_RECIPIENT, 'Amount:', platformAmount)
         
