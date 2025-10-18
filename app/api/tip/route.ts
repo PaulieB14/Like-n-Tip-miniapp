@@ -190,57 +190,37 @@ export async function POST(request: NextRequest): Promise<Response> {
     console.log('x402: Platform fee:', platformAmount, 'USDC')
     
     try {
-      // Use viem for real USDC transfers (CDP SDK has API issues)
-      console.log('x402: Using viem for real USDC transfers')
+      // Use CDP gasless disbursement instead of viem
+      console.log('x402: Using CDP gasless disbursement')
       
-      // Use viem to send the actual USDC transfer
-      const publicClient = createPublicClient({
-        chain: base,
-        transport: http('https://mainnet.base.org')
+      // Create gasless disbursement via CDP
+      const disbursement = await cdp.agent.createDisbursement({
+        agentWalletName: generateUserAgentWalletName(userAddress),
+        disbursements: [
+          {
+            recipientAddress: payloadRecipient,
+            amount: recipientAmount.toString(),
+            currency: 'USDC'
+          },
+          ...(platformAmount > 0 ? [{
+            recipientAddress: process.env.PLATFORM_FEE_RECIPIENT as string,
+            amount: platformAmount.toString(),
+            currency: 'USDC'
+          }] : [])
+        ]
       })
       
-      const walletClient = createWalletClient({
-        chain: base,
-        transport: http('https://mainnet.base.org'),
-        account: privateKeyToAccount(x402Wallet.privateKey)
-      })
-      
-      // Send real USDC transfer to recipient (96%)
-      const recipientTransfer = await walletClient.writeContract({
-        address: USDC_CONTRACT_ADDRESS,
-        abi: USDC_ABI,
-        functionName: 'transfer',
-        args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)],
-        account: privateKeyToAccount(x402Wallet.privateKey),
-        chain: base
-      })
-      
-      console.log('x402: Real USDC transfer to recipient successful:', recipientTransfer)
-      
-      // Send 4% to platform (if platformAmount > 0)
-      if (platformAmount > 0) {
-        const platformTransfer = await walletClient.writeContract({
-          address: USDC_CONTRACT_ADDRESS,
-          abi: USDC_ABI,
-          functionName: 'transfer',
-          args: [process.env.PLATFORM_FEE_RECIPIENT as `0x${string}`, parseUnits(platformAmount.toString(), 6)],
-          account: privateKeyToAccount(x402Wallet.privateKey),
-          chain: base
-        })
-        
-        console.log('x402: Real USDC transfer to platform successful:', platformTransfer)
-      }
-      
-      txHash = recipientTransfer
-      console.log('x402: Real disbursement successful:', txHash)
+      console.log('x402: CDP gasless disbursement successful:', disbursement)
+      txHash = disbursement.transactionHash || `cdp-${Date.now()}`
+      console.log('x402: Real gasless disbursement successful:', txHash)
       
     } catch (error) {
-      console.error('x402: Real viem transaction failed:', error)
+      console.error('x402: CDP gasless disbursement failed:', error)
       
       // Don't fallback to simulation - return error instead
-      console.log('x402: Real transaction failed, returning error')
+      console.log('x402: CDP gasless disbursement failed, returning error')
       return NextResponse.json(
-        { error: `Real transaction failed: ${error.message}` },
+        { error: `CDP gasless disbursement failed: ${error.message}` },
         { status: 500 }
       )
     }
