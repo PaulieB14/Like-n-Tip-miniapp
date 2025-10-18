@@ -194,10 +194,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('x402: Using real x402 + CDP integration for blockchain transactions')
       
       // Check if we're in production mode
-      if (process.env.NODE_ENV === 'demo' || process.env.NODE_ENV === 'development') {
-        console.log('x402: Demo mode detected - using simulation')
-        txHash = `x402-demo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-        console.log('x402: Demo mode transaction hash:', txHash)
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('x402: Non-production mode detected - using simulation')
+        txHash = `x402-sim-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        console.log('x402: Simulation mode transaction hash:', txHash)
         return
       }
       
