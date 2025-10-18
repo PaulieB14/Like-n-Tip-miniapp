@@ -163,111 +163,59 @@ export async function POST(request: NextRequest): Promise<Response> {
     console.log('x402: Processing payment via CDP x402 facilitator')
     
     let txHash: string
-    try {
-      // Use CDP SDK for automatic disbursement (following tip-md pattern)
-      console.log('x402: Using CDP SDK for automatic disbursement')
-      
-      // Initialize CDP client
-      const cdp = new CdpClient({
-        apiKeyId: process.env.CDP_API_KEY_NAME,
-        apiKeySecret: process.env.CDP_API_KEY_SECRET
-      })
-      
-      // Calculate disbursement (96% to recipient, 4% to platform)
-      const recipientAmount = tipAmount * 0.96
-      const platformAmount = tipAmount * 0.04
-      
-      console.log('x402: Disbursing to recipient:', recipientAmount, 'USDC')
-      console.log('x402: Platform fee:', platformAmount, 'USDC')
-      
-      // Use viem for real disbursement (CDP SDK has API issues)
-      console.log('x402: Using viem for real disbursement')
-      
-      // Get the funded x402 wallet (following tip-md pattern)
-      const x402Wallet = getX402Wallet()
-      
-      // Use viem to send the actual USDC transfer
-      const publicClient = createPublicClient({
-        chain: base,
-        transport: http('https://mainnet.base.org')
-      })
-      
-      const walletClient = createWalletClient({
-        chain: base,
-        transport: http('https://mainnet.base.org'),
-        account: privateKeyToAccount(x402Wallet.privateKey)
-      })
-      
-      // Send real USDC transfer to recipient (96%)
-      const recipientTransfer = await walletClient.writeContract({
+    // Use viem for real disbursement (no CDP SDK issues)
+    console.log('x402: Using viem for real disbursement')
+    
+    // Calculate disbursement (96% to recipient, 4% to platform)
+    const recipientAmount = tipAmount * 0.96
+    const platformAmount = tipAmount * 0.04
+    
+    console.log('x402: Disbursing to recipient:', recipientAmount, 'USDC')
+    console.log('x402: Platform fee:', platformAmount, 'USDC')
+    
+    // Get the funded x402 wallet (following tip-md pattern)
+    const x402Wallet = getX402Wallet()
+    
+    // Use viem to send the actual USDC transfer
+    const publicClient = createPublicClient({
+      chain: base,
+      transport: http('https://mainnet.base.org')
+    })
+    
+    const walletClient = createWalletClient({
+      chain: base,
+      transport: http('https://mainnet.base.org'),
+      account: privateKeyToAccount(x402Wallet.privateKey)
+    })
+    
+    // Send real USDC transfer to recipient (96%)
+    const recipientTransfer = await walletClient.writeContract({
+      address: USDC_CONTRACT_ADDRESS,
+      abi: USDC_ABI,
+      functionName: 'transfer',
+      args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)],
+      account: privateKeyToAccount(x402Wallet.privateKey),
+      chain: base
+    })
+    
+    console.log('x402: Real USDC transfer to recipient successful:', recipientTransfer)
+    
+    // Send 4% to platform (if platformAmount > 0)
+    if (platformAmount > 0) {
+      const platformTransfer = await walletClient.writeContract({
         address: USDC_CONTRACT_ADDRESS,
         abi: USDC_ABI,
         functionName: 'transfer',
-        args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)],
+        args: [process.env.PLATFORM_WALLET_ADDRESS as `0x${string}`, parseUnits(platformAmount.toString(), 6)],
         account: privateKeyToAccount(x402Wallet.privateKey),
         chain: base
       })
       
-      console.log('x402: Real USDC transfer to recipient successful:', recipientTransfer)
-      
-      // Send 4% to platform (if platformAmount > 0)
-      if (platformAmount > 0) {
-        const platformTransfer = await walletClient.writeContract({
-          address: USDC_CONTRACT_ADDRESS,
-          abi: USDC_ABI,
-          functionName: 'transfer',
-          args: [process.env.PLATFORM_WALLET_ADDRESS as `0x${string}`, parseUnits(platformAmount.toString(), 6)],
-          account: privateKeyToAccount(x402Wallet.privateKey),
-          chain: base
-        })
-        
-        console.log('x402: Real USDC transfer to platform successful:', platformTransfer)
-      }
-      
-      txHash = recipientTransfer
-      console.log('x402: Real disbursement successful:', txHash)
-      
-    } catch (error) {
-      console.error('x402: Facilitator settlement failed:', error)
-      
-      // Fallback: Use viem directly to send transaction
-      console.log('x402: Falling back to direct viem transaction')
-      try {
-        // Get the agent wallet for sending the transaction (same as frontend)
-        const agentWallet = generateUserAgentWallet(userAddress)
-        
-        // Use viem directly to send the USDC transfer
-        const publicClient = createPublicClient({
-          chain: base,
-          transport: http('https://mainnet.base.org')
-        })
-        
-        const walletClient = createWalletClient({
-          chain: base,
-          transport: http('https://mainnet.base.org'),
-          account: privateKeyToAccount(agentWallet.privateKey)
-        })
-        
-        // Send USDC transfer
-        const transferResult = await walletClient.writeContract({
-          address: USDC_CONTRACT_ADDRESS,
-          abi: USDC_ABI,
-          functionName: 'transfer',
-          args: [payloadRecipient as `0x${string}`, parseUnits(tipAmount.toString(), 6)],
-          account: privateKeyToAccount(agentWallet.privateKey),
-          chain: base
-        })
-        
-        txHash = transferResult
-        console.log('x402: Direct viem transaction successful:', txHash)
-        
-      } catch (directError) {
-        console.error('x402: Direct CDP transaction also failed:', directError)
-        // Final fallback to simulated transaction
-        txHash = `0x${Math.random().toString(16).substr(2, 64)}`
-        console.log('x402: Using simulated transaction as final fallback:', txHash)
-      }
+      console.log('x402: Real USDC transfer to platform successful:', platformTransfer)
     }
+    
+    txHash = recipientTransfer
+    console.log('x402: Real disbursement successful:', txHash)
 
     console.log('x402: Tip sent successfully:', txHash)
 
