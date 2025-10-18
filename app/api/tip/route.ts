@@ -106,7 +106,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               resource: postUrl || "",
               description: "Send tip to content creator",
               mimeType: "application/json",
-              payTo: recipient, // The actual recipient address
+              payTo: recipient || "0xf635FFE1d82bF0EC93587F4b24eDc296998d8436", // The actual recipient address
               maxTimeoutSeconds: 300,
               asset: USDC_CONTRACT_ADDRESS, // USDC on Base
               extra: {
