@@ -186,18 +186,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Get the funded x402 wallet (following tip-md pattern)
       const x402Wallet = getX402Wallet()
       
-      // Create CDP account for the x402 wallet
-      const x402Account = await cdp.accounts.getOrCreateAccount({
-        name: `x402-wallet-${userAddress.slice(0, 8)}`,
-        privateKey: x402Wallet.privateKey
-      })
-      
-      console.log('x402: CDP account created:', x402Account.address)
-      
       // Use CDP SDK for real disbursement
       // Send 96% to recipient via CDP
       const recipientTransfer = await cdp.evm.sendTransaction({
-        accountId: x402Account.id,
+        privateKey: x402Wallet.privateKey,
         to: payloadRecipient,
         value: parseUnits(recipientAmount.toString(), 6).toString(),
         data: encodeFunctionData({
@@ -212,7 +204,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Send 4% to platform (if platformAmount > 0)
       if (platformAmount > 0) {
         const platformTransfer = await cdp.evm.sendTransaction({
-          accountId: x402Account.id,
+          privateKey: x402Wallet.privateKey,
           to: process.env.PLATFORM_WALLET_ADDRESS || '0x0000000000000000000000000000000000000000',
           value: parseUnits(platformAmount.toString(), 6).toString(),
           data: encodeFunctionData({
