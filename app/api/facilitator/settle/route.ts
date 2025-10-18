@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
             data: transferData
           }
         ],
-        paymasterUrl: process.env.CDP_PAYMASTER_URL // Paymaster URL for gas sponsorship
+        paymasterUrl: process.env.CDP_PAYMASTER_URL || 'https://paymaster.cdp.coinbase.com' // Paymaster URL for gas sponsorship
       })
 
       console.log('✅ FACILITATOR: CDP gasless transaction successful:', realTx)
