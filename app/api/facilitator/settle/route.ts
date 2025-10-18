@@ -134,13 +134,9 @@ export async function POST(request: NextRequest) {
       const realTx = await cdp.evm.sendUserOperation({
         smartAccount: smartAccount,
         network: 'base',
-        calls: [
-          {
-            to: USDC_CONTRACT_ADDRESS,
-            value: 0n,
-            data: transferData
-          }
-        ],
+        to: USDC_CONTRACT_ADDRESS,
+        data: transferData,
+        value: 0n,
         paymasterUrl: process.env.CDP_PAYMASTER_URL || 'https://paymaster.cdp.coinbase.com' // Paymaster URL for gas sponsorship
       })
 
