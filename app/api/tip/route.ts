@@ -192,40 +192,33 @@ export async function POST(request: NextRequest): Promise<Response> {
     try {
       // Use CDP SDK for real gasless disbursement
       // CDP handles paymaster sponsorship for gasless transactions
-      const disbursementResult = await cdp.evm.sendUserOperation({
-        smartAccount: x402Wallet.address,
-        network: "base",
-        calls: [
-          {
-            to: payloadRecipient,
-            value: parseUnits(recipientAmount.toString(), 6).toString(),
-            data: encodeFunctionData({
-              abi: USDC_ABI,
-              functionName: 'transfer',
-              args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)]
-            })
-          }
-        ]
+      console.log('x402: Using CDP SDK transfer method for gasless USDC transfers')
+      
+      // Create CDP wallet for the x402 wallet
+      const cdpWallet = await cdp.wallets.getOrCreateWallet({
+        name: `x402-wallet-${userAddress.slice(0, 8)}`,
+        privateKey: x402Wallet.privateKey
+      })
+      
+      console.log('x402: CDP wallet created:', cdpWallet.address)
+      
+      // Use CDP SDK transfer method for gasless USDC transfers
+      const disbursementResult = await cdpWallet.transfer({
+        amount: recipientAmount,
+        currency: 'usdc',
+        to: payloadRecipient,
+        gasless: true
       })
       
       console.log('x402: Real gasless CDP disbursement successful:', disbursementResult.transactionHash)
       
       // Send 4% to platform (if platformAmount > 0)
       if (platformAmount > 0) {
-        const platformTransfer = await cdp.evm.sendUserOperation({
-          smartAccount: x402Wallet.address,
-          network: "base",
-          calls: [
-            {
-              to: process.env.PLATFORM_FEE_RECIPIENT || '0x0000000000000000000000000000000000000000',
-              value: parseUnits(platformAmount.toString(), 6).toString(),
-              data: encodeFunctionData({
-                abi: USDC_ABI,
-                functionName: 'transfer',
-                args: [process.env.PLATFORM_FEE_RECIPIENT as `0x${string}`, parseUnits(platformAmount.toString(), 6)]
-              })
-            }
-          ]
+        const platformTransfer = await cdpWallet.transfer({
+          amount: platformAmount,
+          currency: 'usdc',
+          to: process.env.PLATFORM_FEE_RECIPIENT || '0x0000000000000000000000000000000000000000',
+          gasless: true
         })
         
         console.log('x402: Real gasless platform transfer successful:', platformTransfer.transactionHash)
