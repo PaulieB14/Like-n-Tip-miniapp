@@ -1,4 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { CdpClient } from '@coinbase/cdp-sdk'
+import { parseUnits, createPublicClient, createWalletClient, http, encodeFunctionData } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
+import { base } from 'viem/chains'
+
+// Initialize CDP client
+const cdp = new CdpClient({
+  apiKeyId: process.env.CDP_API_KEY_ID!,
+  apiKeySecret: process.env.CDP_API_KEY_SECRET!,
+})
 
 // USDC contract on Base
 const USDC_CONTRACT_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
@@ -48,18 +58,57 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 FACILITATOR: Transfer data created')
 
-    // For now, return simulation until we have real facilitator
-    console.log('🔍 FACILITATOR: Using simulation for now...')
-    
-    const simulationTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
-    console.log('✅ FACILITATOR: Simulation transaction hash:', simulationTxHash)
-    
-    return NextResponse.json({
-      success: true,
-      error: null,
-      txHash: simulationTxHash,
-      networkId: 'base'
-    })
+    // Use CDP SDK for gasless transaction
+    try {
+      console.log('🔍 FACILITATOR: Attempting CDP SDK gasless transaction...')
+      
+      // Try CDP SDK method for gasless transaction
+      const realTx = await cdp.evm.sendTransaction({
+        network: 'base',
+        to: USDC_CONTRACT_ADDRESS,
+        data: transferData,
+        value: 0n
+      })
+
+      console.log('✅ FACILITATOR: CDP gasless transaction successful:', realTx)
+      
+      return NextResponse.json({
+        success: true,
+        error: null,
+        txHash: realTx.transactionHash || realTx,
+        networkId: 'base'
+      })
+
+    } catch (cdpError) {
+      console.error('❌ FACILITATOR: CDP gasless transaction failed:', cdpError)
+      console.error('❌ FACILITATOR: CDP error message:', cdpError.message)
+      
+      // Fallback to viem with x402 wallet (requires gas)
+      console.log('🔍 FACILITATOR: Falling back to viem...')
+      
+      const x402Wallet = privateKeyToAccount(process.env.X402_WALLET_PRIVATE_KEY as `0x${string}`)
+      const walletClient = createWalletClient({
+        account: x402Wallet,
+        chain: base,
+        transport: http(process.env.BASE_RPC_URL)
+      })
+
+      const realTx = await walletClient.sendTransaction({
+        to: USDC_CONTRACT_ADDRESS,
+        data: transferData,
+        value: 0n,
+        gas: 100000n
+      })
+
+      console.log('✅ FACILITATOR: Viem transaction successful:', realTx)
+      
+      return NextResponse.json({
+        success: true,
+        error: null,
+        txHash: realTx,
+        networkId: 'base'
+      })
+    }
 
   } catch (error) {
     console.error('❌ FACILITATOR: Settlement error:', error)
