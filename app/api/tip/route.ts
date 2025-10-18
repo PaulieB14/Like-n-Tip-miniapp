@@ -194,6 +194,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('x402: Using real x402 + CDP integration for blockchain transactions')
       
       // Check if we're in production mode
+      console.log('x402: NODE_ENV:', process.env.NODE_ENV)
       if (process.env.NODE_ENV !== 'production') {
         console.log('x402: Non-production mode detected - using simulation')
         txHash = `x402-sim-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -234,7 +235,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         data: transferData,
         value: 0n, // No ETH value for USDC transfer
         gas: 100000n // Gas limit for USDC transfer
-      })
+      } as any)
       
       console.log('x402: Real USDC transfer transaction hash:', realTxHash)
       
