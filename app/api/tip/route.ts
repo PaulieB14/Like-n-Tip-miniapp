@@ -188,7 +188,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Use CDP SDK for gasless disbursement
     // CDP handles paymaster sponsorship for gasless transactions
     const disbursementResult = await cdp.evm.sendTransaction({
-      privateKey: x402Wallet.privateKey,
+      accountId: x402Wallet.address, // Use wallet address as account ID
       to: payloadRecipient,
       value: parseUnits(recipientAmount.toString(), 6).toString(),
       data: encodeFunctionData({
