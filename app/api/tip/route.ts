@@ -204,16 +204,46 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Real x402 + CDP gasless integration for production
       console.log('x402: Production mode - using real x402 + CDP gasless integration')
       
-      // For now, use simulation until we have proper x402 facilitator
-      // The x402 protocol requires a facilitator service that handles gasless transactions
-      console.log('x402: Using x402 simulation - facilitator service not available')
-      console.log('x402: In production, this would use a real x402 facilitator service')
+      // Get the funded x402 wallet for real transactions
+      const x402Wallet = getX402Wallet()
+      console.log('x402: Using funded x402 wallet:', x402Wallet.address)
       
-      // Simulate the x402 gasless transaction
-      txHash = `x402-gasless-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      console.log('x402: x402 gasless simulation transaction hash:', txHash)
-      console.log('x402: Recipient:', payloadRecipient, 'Amount:', recipientAmount)
-      console.log('x402: Platform fee recipient:', process.env.PLATFORM_FEE_RECIPIENT, 'Amount:', platformAmount)
+      // Create public and wallet clients for Base network
+      const publicClient = createPublicClient({
+        chain: base,
+        transport: http(process.env.BASE_RPC_URL)
+      })
+      
+      const walletClient = createWalletClient({
+        account: privateKeyToAccount(x402Wallet.privateKey),
+        chain: base,
+        transport: http(process.env.BASE_RPC_URL)
+      })
+      
+      console.log('x402: Executing real USDC transfer via x402 wallet')
+      
+      // Execute real USDC transfer using the funded x402 wallet
+      const transferData = encodeFunctionData({
+        abi: USDC_ABI,
+        functionName: 'transfer',
+        args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)]
+      })
+      
+      const realTxHash = await walletClient.sendTransaction({
+        to: USDC_CONTRACT_ADDRESS,
+        data: transferData,
+        value: 0n, // No ETH value for USDC transfer
+        gas: 100000n // Gas limit for USDC transfer
+      })
+      
+      console.log('x402: Real USDC transfer transaction hash:', realTxHash)
+      
+      // Wait for transaction confirmation
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: realTxHash })
+      console.log('x402: Transaction confirmed:', receipt)
+      
+      txHash = realTxHash
+      console.log('x402: Real blockchain transaction hash:', txHash)
       
     } catch (error) {
       console.error('x402: x402 gasless disbursement failed:', error)
