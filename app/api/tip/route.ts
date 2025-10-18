@@ -217,14 +217,12 @@ export async function POST(request: NextRequest): Promise<Response> {
         })
         
         // Send real USDC transfer via CDP SDK
+        // Use CDP SDK for real blockchain transactions
         const realTx = await cdp.evm.sendTransaction({
-          address: generateUserAgentWalletName(userAddress),
           network: 'base',
-          transaction: {
-            to: USDC_CONTRACT_ADDRESS,
-            data: transferData,
-            value: 0n
-          }
+          to: USDC_CONTRACT_ADDRESS,
+          data: transferData,
+          value: 0n
         })
         
         console.log('x402: Real CDP transaction successful:', realTx)
