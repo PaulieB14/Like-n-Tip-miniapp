@@ -235,12 +235,14 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('x402: Real disbursement successful:', txHash)
       
     } catch (error) {
-      console.error('x402: CDP gasless transaction failed:', error)
+      console.error('x402: Real viem transaction failed:', error)
       
-      // Fallback to simulated gasless transaction
-      console.log('x402: Falling back to simulated gasless transaction')
-      txHash = `0x${Math.random().toString(16).substr(2, 64)}`
-      console.log('x402: Simulated gasless transaction:', txHash)
+      // Don't fallback to simulation - return error instead
+      console.log('x402: Real transaction failed, returning error')
+      return NextResponse.json(
+        { error: `Real transaction failed: ${error.message}` },
+        { status: 500 }
+      )
     }
 
     console.log('x402: Tip sent successfully:', txHash)
