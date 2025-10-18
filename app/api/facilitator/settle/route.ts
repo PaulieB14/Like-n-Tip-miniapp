@@ -126,6 +126,8 @@ export async function POST(request: NextRequest) {
     } catch (cdpError) {
       console.error('❌ FACILITATOR: CDP gasless transaction failed:', cdpError)
       console.error('❌ FACILITATOR: CDP error message:', cdpError.message)
+      console.error('❌ FACILITATOR: CDP error stack:', cdpError.stack)
+      console.error('❌ FACILITATOR: CDP error details:', JSON.stringify(cdpError, null, 2))
       
       // If CDP fails, throw error - no fallback to simulation
       throw new Error(`CDP gasless transaction failed: ${cdpError.message}`)
