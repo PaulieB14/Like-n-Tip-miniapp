@@ -200,27 +200,6 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         setTipError(`x402 payment failed: ${x402Error.message}`)
         return
       }
-      console.log('x402: Response ok:', tipResponse.ok)
-      
-      if (tipData.success && tipData.txHash) {
-        console.log('x402: Tip successful! Transaction hash:', tipData.txHash)
-        setTipSuccess(`Tip sent! $${amount.toFixed(3)} USDC to @${postAuthor}`)
-        
-        // Add to history with real transaction hash
-        if (onTipSent) {
-          onTipSent({
-            postId: postUrl.split('/').pop() || 'unknown',
-            amount: amount,
-            txHash: tipData.txHash,
-            recipient: postAuthor,
-            postUrl: postUrl,
-            postContent: postContent,
-            platform: postPlatform
-          })
-        }
-      } else {
-        setTipError(tipData.error || 'Failed to send tip')
-      }
     } catch (error: any) {
       console.error('Tip error:', error)
       setTipError(error.message || 'Failed to send tip')
