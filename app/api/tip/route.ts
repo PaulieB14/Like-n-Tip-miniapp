@@ -156,7 +156,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         { status: 400 }
       )
     }
-    
+
     // Convert payload amount from USDC units back to decimal
     const tipAmount = parseFloat(payloadAmount) / 1e6 // Convert from USDC units (6 decimals) to decimal
     const amountInUnits = parseUnits(tipAmount.toString(), 6) // USDC has 6 decimals
