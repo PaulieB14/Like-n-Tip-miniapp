@@ -3,6 +3,7 @@ import { CdpClient } from '@coinbase/cdp-sdk'
 import { parseUnits, createPublicClient, createWalletClient, http, encodeFunctionData } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { base } from 'viem/chains'
+import { createHash } from 'crypto'
 
 // Initialize CDP client
 const cdp = new CdpClient({
@@ -13,14 +14,21 @@ const cdp = new CdpClient({
 // USDC contract on Base
 const USDC_CONTRACT_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
 
-// USDC ABI for transfers
+// USDC ABI for ERC-3009 TransferWithAuthorization (gasless transfers)
 const USDC_ABI = [
   {
     "inputs": [
+      { "internalType": "address", "name": "from", "type": "address" },
       { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "value", "type": "uint256" }
+      { "internalType": "uint256", "name": "value", "type": "uint256" },
+      { "internalType": "uint256", "name": "validAfter", "type": "uint256" },
+      { "internalType": "uint256", "name": "validBefore", "type": "uint256" },
+      { "internalType": "bytes32", "name": "nonce", "type": "bytes32" },
+      { "internalType": "bytes", "name": "v", "type": "bytes" },
+      { "internalType": "bytes32", "name": "r", "type": "bytes32" },
+      { "internalType": "bytes32", "name": "s", "type": "bytes32" }
     ],
-    "name": "transfer",
+    "name": "transferWithAuthorization",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -49,27 +57,72 @@ export async function POST(request: NextRequest) {
     console.log('🔍 FACILITATOR: Amount:', amount)
     console.log('🔍 FACILITATOR: Asset:', asset)
 
-    // Create USDC transfer data
+    // Create ERC-3009 TransferWithAuthorization data for gasless transfer
+    const from = process.env.X402_WALLET_ADDRESS as `0x${string}`
+    const to = recipient as `0x${string}`
+    const value = parseUnits(amount.toString(), 6)
+    const validAfter = Math.floor(Date.now() / 1000)
+    const validBefore = validAfter + 3600 // 1 hour validity
+    const nonce = `0x${Math.random().toString(16).substr(2, 64)}`
+    
+    // In x402, the client signs the payment payload in the X-PAYMENT header
+    // The facilitator uses this signature for the TransferWithAuthorization
+    // For now, we'll use the x402 wallet to sign (in real implementation, client would sign)
+    const x402Wallet = privateKeyToAccount(process.env.X402_WALLET_PRIVATE_KEY as `0x${string}`)
+    
+    // Create the authorization message hash for ERC-3009
+    const messageHash = createHash('sha256').update(
+      `${from}${to}${value.toString()}${validAfter}${validBefore}${nonce}`
+    ).digest('hex')
+    
+    // Sign the message hash
+    const signature = await x402Wallet.signMessage({ message: `0x${messageHash}` })
+    const v = signature.slice(130, 132)
+    const r = signature.slice(2, 66)
+    const s = signature.slice(66, 130)
+    
     const transferData = encodeFunctionData({
       abi: USDC_ABI,
-      functionName: 'transfer',
-      args: [recipient as `0x${string}`, parseUnits(amount.toString(), 6)]
+      functionName: 'transferWithAuthorization',
+      args: [from, to, value, validAfter, validBefore, nonce, v, r, s]
     })
 
     console.log('🔍 FACILITATOR: Transfer data created')
 
-    // For now, use simulation until we get CDP SDK working
-    console.log('🔍 FACILITATOR: Using simulation until CDP SDK is working...')
-    
-    const simulationTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
-    console.log('✅ FACILITATOR: Simulation transaction hash:', simulationTxHash)
-    
-    return NextResponse.json({
-      success: true,
-      error: null,
-      txHash: simulationTxHash,
-      networkId: 'base'
-    })
+    // Use CDP SDK with Server Wallet for gasless transactions
+    try {
+      console.log('🔍 FACILITATOR: Attempting CDP SDK gasless transaction with Server Wallet...')
+      
+      // Create CDP account for gasless transactions
+      const cdpAccount = await cdp.evm.createAccount({
+        network: 'base'
+      })
+      
+      // Use CDP SDK sendUserOperation for gasless transactions
+      const realTx = await cdp.evm.sendUserOperation({
+        network: 'base',
+        to: USDC_CONTRACT_ADDRESS,
+        data: transferData,
+        value: 0n,
+        account: cdpAccount
+      })
+
+      console.log('✅ FACILITATOR: CDP gasless transaction successful:', realTx)
+      
+      return NextResponse.json({
+        success: true,
+        error: null,
+        txHash: realTx.transactionHash || realTx,
+        networkId: 'base'
+      })
+
+    } catch (cdpError) {
+      console.error('❌ FACILITATOR: CDP gasless transaction failed:', cdpError)
+      console.error('❌ FACILITATOR: CDP error message:', cdpError.message)
+      
+      // If CDP fails, throw error - no fallback to simulation
+      throw new Error(`CDP gasless transaction failed: ${cdpError.message}`)
+    }
 
   } catch (error) {
     console.error('❌ FACILITATOR: Settlement error:', error)

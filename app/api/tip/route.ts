@@ -299,6 +299,28 @@ export async function POST(request: NextRequest): Promise<Response> {
         console.log('x402: Recipient:', payloadRecipient, 'Amount:', recipientAmount)
         console.log('x402: Platform fee recipient:', process.env.PLATFORM_FEE_RECIPIENT, 'Amount:', platformAmount)
         
+        // Return 200 OK with X-PAYMENT-RESPONSE header as per x402 protocol
+        return NextResponse.json({
+          success: true,
+          txHash: txHash,
+          amount: recipientAmount,
+          recipient: payloadRecipient,
+          postUrl: postUrl,
+          message: 'Tip sent via x402 gasless disbursement (96% to recipient, 4% platform fee)',
+          timestamp: new Date().toISOString(),
+          agentWallet: process.env.X402_WALLET_ADDRESS
+        }, {
+          status: 200,
+          headers: {
+            'X-PAYMENT-RESPONSE': Buffer.from(JSON.stringify({
+              success: true,
+              txHash: txHash,
+              networkId: 'base',
+              timestamp: new Date().toISOString()
+            })).toString('base64')
+          }
+        })
+        
       } catch (cdpError) {
         console.error('x402: CDP transaction failed:', cdpError)
         console.error('x402: CDP error message:', cdpError.message)
