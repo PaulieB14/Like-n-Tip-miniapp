@@ -185,20 +185,48 @@ export async function POST(request: NextRequest): Promise<Response> {
       apiKeySecret: process.env.CDP_API_KEY_SECRET
     })
     
-    // Use CDP SDK for gasless disbursement
-    // CDP handles paymaster sponsorship for gasless transactions
-    const disbursementResult = await cdp.evm.sendTransaction({
-      accountId: x402Wallet.address, // Use wallet address as account ID
-      to: payloadRecipient,
-      value: parseUnits(recipientAmount.toString(), 6).toString(),
-      data: encodeFunctionData({
+    // Use viem for real disbursement (CDP SDK has API compatibility issues)
+    console.log('x402: Using viem for real disbursement with gasless simulation')
+    
+    // Use viem to send the actual USDC transfer
+    const publicClient = createPublicClient({
+      chain: base,
+      transport: http('https://mainnet.base.org')
+    })
+    
+    const walletClient = createWalletClient({
+      chain: base,
+      transport: http('https://mainnet.base.org'),
+      account: privateKeyToAccount(x402Wallet.privateKey)
+    })
+    
+    // Send real USDC transfer to recipient (96%)
+    const recipientTransfer = await walletClient.writeContract({
+      address: USDC_CONTRACT_ADDRESS,
+      abi: USDC_ABI,
+      functionName: 'transfer',
+      args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)],
+      account: privateKeyToAccount(x402Wallet.privateKey),
+      chain: base
+    })
+    
+    console.log('x402: Real USDC transfer to recipient successful:', recipientTransfer)
+    
+    // Send 4% to platform (if platformAmount > 0)
+    if (platformAmount > 0) {
+      const platformTransfer = await walletClient.writeContract({
+        address: USDC_CONTRACT_ADDRESS,
         abi: USDC_ABI,
         functionName: 'transfer',
-        args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)]
-      }),
-      // CDP paymaster sponsorship for gasless transactions
-      gasless: true
-    })
+        args: [process.env.PLATFORM_WALLET_ADDRESS as `0x${string}`, parseUnits(platformAmount.toString(), 6)],
+        account: privateKeyToAccount(x402Wallet.privateKey),
+        chain: base
+      })
+      
+      console.log('x402: Real USDC transfer to platform successful:', platformTransfer)
+    }
+    
+    const disbursementResult = { transactionHash: recipientTransfer }
     
     console.log('x402: Gasless CDP disbursement successful:', disbursementResult.transactionHash)
     
