@@ -34,7 +34,7 @@ export function middleware(request: Request) {
             resource: url.pathname,
             description: "Send tip to content creator",
             mimeType: "application/json",
-            payTo: "0xf635FFE1d82bF0EC93587F4b24eDc296998d8436", // Default recipient address
+            payTo: "0xf635FFE1d82bF0EC93587F4b24eDc296998d8436", // Default recipient address - updated
             maxTimeoutSeconds: 30,
             asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base
             extra: {
