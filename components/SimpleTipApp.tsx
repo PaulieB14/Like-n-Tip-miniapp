@@ -151,51 +151,28 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         return
       }
       
-      // Create x402 payment payload with validated address
-      const paymentPayload = {
-        x402Version: 1,
-        scheme: "exact",
-        network: "base",
-        payload: {
-          amount: Math.floor(amount * 1e6).toString(), // Convert to USDC units (6 decimals)
-          recipient: recipientAddress, // Use the validated address
-          asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" // USDC on Base
-        }
-      }
+      // Use official x402 protocol with CDP Server Wallet
+      console.log('x402: Using official x402 protocol with CDP Server Wallet')
       
-      console.log('Payment payload created with recipient:', paymentPayload.payload.recipient)
-      console.log('Payment payload recipient length:', paymentPayload.payload.recipient.length)
-      console.log('Payment payload recipient format:', paymentPayload.payload.recipient.startsWith('0x') ? 'Valid' : 'Invalid')
-      
-      // Encode payment payload as base64
-      const paymentHeader = btoa(JSON.stringify(paymentPayload))
-      
-      // Make the tip request using x402 payment protocol
-      // First, try without payment header to get 402 response
-      let tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          postUrl: postUrl,
-          amount: amount,
-          recipient: recipientAddress, // Resolved wallet address
-          recipientUsername: postAuthor // Keep the username for display
-        })
-      })
-
-      // If we get 402, retry with payment header (x402 protocol)
-      if (tipResponse.status === 402) {
-        console.log('x402: Got 402 response, retrying with payment header')
-        console.log('x402: Payment header being sent:', paymentHeader.substring(0, 50) + '...')
-        console.log('x402: Payment payload:', JSON.stringify(paymentPayload))
+      try {
+        // Import x402-fetch for proper x402 implementation
+        const { wrapFetchWithPayment } = await import('x402-fetch')
         
-        tipResponse = await fetch(`/api/tip?userAddress=${address}`, {
+        // Create CDP account for x402 payments
+        const { CdpClient } = await import('@coinbase/cdp-sdk')
+        const cdp = new CdpClient()
+        const cdpAccount = await cdp.evm.createAccount()
+        const { toAccount } = await import('viem/accounts')
+        const account = toAccount(cdpAccount)
+        
+        // Wrap fetch with x402 payment handling
+        const fetchWithPayment = wrapFetchWithPayment(fetch, account)
+        
+        // Make the tip request using x402 protocol
+        const tipResponse = await fetchWithPayment(`/api/tip?userAddress=${address}`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            'X-PAYMENT': paymentHeader // Send base64-encoded payment payload
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
             postUrl: postUrl,
@@ -205,30 +182,24 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
           })
         })
         
-        console.log('x402: Retry response status:', tipResponse.status)
-      }
-
-      if (!tipResponse.ok) {
-        if (tipResponse.status === 402) {
-          setTipError('x402 payment required - insufficient x402 wallet balance')
-        } else {
-          let errorMessage = 'Failed to send tip'
-          try {
-            const errorData = await tipResponse.json()
-            errorMessage = errorData.error || errorData.message || errorMessage
-            console.error('Tip API error:', errorData)
-          } catch (parseError) {
-            console.error('Could not parse error response:', parseError)
-            errorMessage = `Server error (${tipResponse.status}): ${tipResponse.statusText}`
-          }
-          setTipError(errorMessage)
+        console.log('x402: Response status:', tipResponse.status)
+        
+        if (!tipResponse.ok) {
+          const errorData = await tipResponse.json().catch(() => ({}))
+          throw new Error(errorData.error || `HTTP ${tipResponse.status}: ${tipResponse.statusText}`)
         }
+        
+        const result = await tipResponse.json()
+        console.log('x402: Tip successful!', result)
+        
+        setTipSuccess(`Tip of $${amount} sent to @${postAuthor}! Transaction: ${result.txHash}`)
+        setTipError('')
+        
+      } catch (x402Error) {
+        console.error('x402: x402 protocol failed:', x402Error)
+        setTipError(`x402 payment failed: ${x402Error.message}`)
         return
       }
-
-      const tipData = await tipResponse.json()
-      console.log('x402: Tip response data:', tipData)
-      console.log('x402: Response status:', tipResponse.status)
       console.log('x402: Response ok:', tipResponse.ok)
       
       if (tipData.success && tipData.txHash) {
