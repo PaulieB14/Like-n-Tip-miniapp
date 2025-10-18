@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { CdpClient } from '@coinbase/cdp-sdk'
 import { parseUnits, createPublicClient, createWalletClient, http, encodeFunctionData } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { base } from 'viem/chains'
@@ -176,17 +175,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Get the funded x402 wallet (following tip-md pattern)
     const x402Wallet = getX402Wallet()
     
-    // Use CDP SDK for gasless disbursement (paymaster sponsorship)
-    console.log('x402: Using CDP SDK for gasless disbursement')
-    
-    // Initialize CDP client for gasless transactions
-    const cdp = new CdpClient({
-      apiKeyId: process.env.CDP_API_KEY_NAME,
-      apiKeySecret: process.env.CDP_API_KEY_SECRET
-    })
-    
-    // Use viem for real disbursement (CDP SDK has API compatibility issues)
-    console.log('x402: Using viem for real disbursement with gasless simulation')
+    // Use viem for real disbursement (no CDP SDK needed)
+    console.log('x402: Using viem for real disbursement')
     
     // Use viem to send the actual USDC transfer
     const publicClient = createPublicClient({
