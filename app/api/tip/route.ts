@@ -217,13 +217,46 @@ export async function POST(request: NextRequest): Promise<Response> {
         })
         
         // Send real USDC transfer via CDP SDK
-        // Use CDP SDK for real blockchain transactions
-        const realTx = await cdp.evm.sendTransaction({
-          network: 'base',
-          to: USDC_CONTRACT_ADDRESS,
-          data: transferData,
-          value: 0n
-        })
+        // Try different CDP SDK methods for real blockchain transactions
+        console.log('x402: Attempting CDP SDK transaction...')
+        
+        // Method 1: Try cdp.evm.sendTransaction
+        let realTx
+        try {
+          realTx = await cdp.evm.sendTransaction({
+            network: 'base',
+            to: USDC_CONTRACT_ADDRESS,
+            data: transferData,
+            value: 0n
+          })
+          console.log('x402: Method 1 (evm.sendTransaction) successful')
+        } catch (method1Error) {
+          console.log('x402: Method 1 failed, trying Method 2...')
+          console.error('x402: Method 1 error:', method1Error.message)
+          
+          // Method 2: Try cdp.evm.sendUserOperation
+          try {
+            realTx = await cdp.evm.sendUserOperation({
+              network: 'base',
+              to: USDC_CONTRACT_ADDRESS,
+              data: transferData,
+              value: 0n
+            })
+            console.log('x402: Method 2 (evm.sendUserOperation) successful')
+          } catch (method2Error) {
+            console.log('x402: Method 2 failed, trying Method 3...')
+            console.error('x402: Method 2 error:', method2Error.message)
+            
+            // Method 3: Try cdp.evm.transfer
+            realTx = await cdp.evm.transfer({
+              network: 'base',
+              to: payloadRecipient as `0x${string}`,
+              amount: parseUnits(recipientAmount.toString(), 6),
+              asset: USDC_CONTRACT_ADDRESS
+            })
+            console.log('x402: Method 3 (evm.transfer) successful')
+          }
+        }
         
         console.log('x402: Real CDP transaction successful:', realTx)
         txHash = realTx.transactionHash
