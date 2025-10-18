@@ -224,9 +224,9 @@ export async function POST(request: NextRequest): Promise<Response> {
         
         // Step 1: Verify payment with facilitator
         console.log('x402: Step 1 - Verifying payment with facilitator...')
-        console.log('x402: Facilitator URL:', `${process.env.NEXT_PUBLIC_BASE_URL}/api/facilitator/verify`)
+        console.log('x402: Facilitator URL:', `/api/facilitator/verify`)
         
-        const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/facilitator/verify`, {
+        const verifyResponse = await fetch(`/api/facilitator/verify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -265,7 +265,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         
         // Step 2: Settle payment with facilitator
         console.log('x402: Step 2 - Settling payment with facilitator...')
-        const settleResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/facilitator/settle`, {
+        const settleResponse = await fetch(`/api/facilitator/settle`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
