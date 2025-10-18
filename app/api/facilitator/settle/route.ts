@@ -60,17 +60,23 @@ export async function POST(request: NextRequest) {
 
     // Use CDP SDK for gasless transaction
     try {
-      console.log('🔍 FACILITATOR: Attempting CDP SDK gasless transaction...')
+      console.log('🔍 FACILITATOR: Attempting CDP SDK gasless transfer...')
       
-      // Try CDP SDK method for gasless transaction
-      const realTx = await cdp.evm.sendTransaction({
-        network: 'base',
-        to: USDC_CONTRACT_ADDRESS,
-        data: transferData,
-        value: 0n
+      // Use CDP SDK transfer method with gasless=True
+      // First get or create a wallet
+      const wallet = await cdp.accounts.getOrCreateAccount({
+        network: 'base'
       })
+      
+      // Then transfer with gasless=True
+      const realTx = await wallet.transfer(
+        parseUnits(amount.toString(), 6),
+        USDC_CONTRACT_ADDRESS,
+        recipient as `0x${string}`,
+        { gasless: true }
+      )
 
-      console.log('✅ FACILITATOR: CDP gasless transaction successful:', realTx)
+      console.log('✅ FACILITATOR: CDP gasless transfer successful:', realTx)
       
       return NextResponse.json({
         success: true,
@@ -80,7 +86,7 @@ export async function POST(request: NextRequest) {
       })
 
     } catch (cdpError) {
-      console.error('❌ FACILITATOR: CDP gasless transaction failed:', cdpError)
+      console.error('❌ FACILITATOR: CDP gasless transfer failed:', cdpError)
       console.error('❌ FACILITATOR: CDP error message:', cdpError.message)
       
       // Fallback to viem with x402 wallet (requires gas)
