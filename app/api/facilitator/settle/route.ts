@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         error: null,
-        txHash: realTx.hash || realTx.userOpHash || realTx,
+        txHash: (realTx as any).hash || (realTx as any).userOpHash || (realTx as any).transactionHash || JSON.stringify(realTx),
         networkId: 'base'
       })
 
