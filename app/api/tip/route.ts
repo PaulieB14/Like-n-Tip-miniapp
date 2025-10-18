@@ -180,36 +180,53 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('x402: Disbursing to recipient:', recipientAmount, 'USDC')
       console.log('x402: Platform fee:', platformAmount, 'USDC')
       
+      // Use CDP SDK for real disbursement (following tip-md pattern)
+      console.log('x402: Using CDP SDK for automatic disbursement')
+      
+      // Get the funded x402 wallet (following tip-md pattern)
+      const x402Wallet = getX402Wallet()
+      
+      // Create CDP account for the x402 wallet
+      const x402Account = await cdp.accounts.getOrCreateAccount({
+        name: `x402-wallet-${userAddress.slice(0, 8)}`,
+        privateKey: x402Wallet.privateKey
+      })
+      
+      console.log('x402: CDP account created:', x402Account.address)
+      
       // Use CDP SDK for real disbursement
-      console.log('x402: Sending real USDC transfer via CDP SDK')
-      
-      // Get the agent wallet for sending the transaction
-      const agentWallet = generateUserAgentWallet(userAddress)
-      
-      // Use viem to send the actual USDC transfer
-      const publicClient = createPublicClient({
-        chain: base,
-        transport: http('https://mainnet.base.org')
+      // Send 96% to recipient via CDP
+      const recipientTransfer = await cdp.evm.sendTransaction({
+        accountId: x402Account.id,
+        to: payloadRecipient,
+        value: parseUnits(recipientAmount.toString(), 6).toString(),
+        data: encodeFunctionData({
+          abi: USDC_ABI,
+          functionName: 'transfer',
+          args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)]
+        })
       })
       
-      const walletClient = createWalletClient({
-        chain: base,
-        transport: http('https://mainnet.base.org'),
-        account: privateKeyToAccount(agentWallet.privateKey)
-      })
+      console.log('x402: CDP disbursement to recipient successful:', recipientTransfer.transactionHash)
       
-      // Send real USDC transfer to recipient
-      const transferResult = await walletClient.writeContract({
-        address: USDC_CONTRACT_ADDRESS,
-        abi: USDC_ABI,
-        functionName: 'transfer',
-        args: [payloadRecipient as `0x${string}`, parseUnits(recipientAmount.toString(), 6)],
-        account: privateKeyToAccount(agentWallet.privateKey),
-        chain: base
-      })
+      // Send 4% to platform (if platformAmount > 0)
+      if (platformAmount > 0) {
+        const platformTransfer = await cdp.evm.sendTransaction({
+          accountId: x402Account.id,
+          to: process.env.PLATFORM_WALLET_ADDRESS || '0x0000000000000000000000000000000000000000',
+          value: parseUnits(platformAmount.toString(), 6).toString(),
+          data: encodeFunctionData({
+            abi: USDC_ABI,
+            functionName: 'transfer',
+            args: [process.env.PLATFORM_WALLET_ADDRESS as `0x${string}`, parseUnits(platformAmount.toString(), 6)]
+          })
+        })
+        
+        console.log('x402: CDP disbursement to platform successful:', platformTransfer.transactionHash)
+      }
       
-      txHash = transferResult
-      console.log('x402: Real USDC transfer successful:', txHash)
+      txHash = recipientTransfer.transactionHash
+      console.log('x402: CDP automatic disbursement successful:', txHash)
       
     } catch (error) {
       console.error('x402: Facilitator settlement failed:', error)
