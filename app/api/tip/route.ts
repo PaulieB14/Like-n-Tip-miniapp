@@ -231,6 +231,8 @@ export async function POST(request: NextRequest): Promise<Response> {
         
       } catch (cdpError) {
         console.error('x402: CDP transaction failed:', cdpError)
+        console.error('x402: CDP error message:', cdpError.message)
+        console.error('x402: CDP error stack:', cdpError.stack)
         console.log('x402: Falling back to simulation due to CDP error')
         
         // Fallback to simulation if CDP fails
