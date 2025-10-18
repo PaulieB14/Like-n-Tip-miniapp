@@ -89,22 +89,29 @@ export async function POST(request: NextRequest) {
 
     console.log('🔍 FACILITATOR: Transfer data created')
 
-    // Use CDP SDK with Server Wallet for gasless transactions
+    // Use CDP SDK with Paymaster for gasless transactions
     try {
-      console.log('🔍 FACILITATOR: Attempting CDP SDK gasless transaction with Server Wallet...')
+      console.log('🔍 FACILITATOR: Attempting CDP SDK gasless transaction with Paymaster...')
       
-      // Create CDP account for gasless transactions
-      const cdpAccount = await cdp.evm.createAccount({
-        network: 'base'
+      // Create CDP smart account for gasless transactions
+      const cdpAccount = await cdp.evm.createAccount()
+      
+      const smartAccount = await cdp.evm.createSmartAccount({ 
+        owner: cdpAccount
       })
       
-      // Use CDP SDK sendUserOperation for gasless transactions
+      // Use CDP SDK sendUserOperation with Paymaster for gasless transactions
       const realTx = await cdp.evm.sendUserOperation({
+        smartAccount: smartAccount,
         network: 'base',
-        to: USDC_CONTRACT_ADDRESS,
-        data: transferData,
-        value: 0n,
-        account: cdpAccount
+        calls: [
+          {
+            to: USDC_CONTRACT_ADDRESS,
+            value: 0n,
+            data: transferData
+          }
+        ],
+        paymasterUrl: process.env.CDP_PAYMASTER_URL // Paymaster URL for gas sponsorship
       })
 
       console.log('✅ FACILITATOR: CDP gasless transaction successful:', realTx)
