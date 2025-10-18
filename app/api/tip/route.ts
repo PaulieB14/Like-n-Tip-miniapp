@@ -208,6 +208,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Get the funded x402 wallet for real transactions
       const x402Wallet = getX402Wallet()
       console.log('x402: Using funded x402 wallet:', x402Wallet.address)
+      console.log('x402: About to execute real USDC transfer...')
       
       // Create public and wallet clients for Base network
       const publicClient = createPublicClient({
@@ -248,6 +249,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       
     } catch (error) {
       console.error('x402: x402 gasless disbursement failed:', error)
+      console.error('x402: Error details:', error.message)
+      console.error('x402: Error stack:', error.stack)
       
       // Return the actual error
       console.log('x402: x402 gasless disbursement failed, returning error')
