@@ -217,49 +217,28 @@ export async function POST(request: NextRequest): Promise<Response> {
         })
         
         // Send real USDC transfer via CDP SDK
-        // Try different CDP SDK methods for real blockchain transactions
-        console.log('x402: Attempting CDP SDK transaction...')
+        // The CDP SDK methods we tried don't exist or work
+        // Let's try a different approach - use viem directly with CDP wallet
+        console.log('x402: CDP SDK methods failed, trying viem direct approach...')
         
-        // Method 1: Try cdp.evm.sendTransaction
-        let realTx
-        try {
-          realTx = await cdp.evm.sendTransaction({
-            network: 'base',
-            to: USDC_CONTRACT_ADDRESS,
-            data: transferData,
-            value: 0n
-          })
-          console.log('x402: Method 1 (evm.sendTransaction) successful')
-        } catch (method1Error) {
-          console.log('x402: Method 1 failed, trying Method 2...')
-          console.error('x402: Method 1 error:', method1Error.message)
-          
-          // Method 2: Try cdp.evm.sendUserOperation
-          try {
-            realTx = await cdp.evm.sendUserOperation({
-              network: 'base',
-              to: USDC_CONTRACT_ADDRESS,
-              data: transferData,
-              value: 0n
-            })
-            console.log('x402: Method 2 (evm.sendUserOperation) successful')
-          } catch (method2Error) {
-            console.log('x402: Method 2 failed, trying Method 3...')
-            console.error('x402: Method 2 error:', method2Error.message)
-            
-            // Method 3: Try cdp.evm.transfer
-            realTx = await cdp.evm.transfer({
-              network: 'base',
-              to: payloadRecipient as `0x${string}`,
-              amount: parseUnits(recipientAmount.toString(), 6),
-              asset: USDC_CONTRACT_ADDRESS
-            })
-            console.log('x402: Method 3 (evm.transfer) successful')
-          }
-        }
+        // Use viem with the x402 wallet private key for real transactions
+        const x402Wallet = privateKeyToAccount(process.env.X402_WALLET_PRIVATE_KEY as `0x${string}`)
+        const walletClient = createWalletClient({
+          account: x402Wallet,
+          chain: base,
+          transport: http(process.env.BASE_RPC_URL)
+        })
         
-        console.log('x402: Real CDP transaction successful:', realTx)
-        txHash = realTx.transactionHash
+        // Send real USDC transfer using viem
+        const realTx = await walletClient.sendTransaction({
+          to: USDC_CONTRACT_ADDRESS,
+          data: transferData,
+          value: 0n,
+          gas: 100000n
+        })
+        
+        console.log('x402: Real viem transaction successful:', realTx)
+        txHash = realTx
         console.log('x402: Real blockchain transaction hash:', txHash)
         
       } catch (cdpError) {
