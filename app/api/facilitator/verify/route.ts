@@ -1,14 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { CdpClient } from '@coinbase/cdp-sdk'
-import { parseUnits, createPublicClient, createWalletClient, http, encodeFunctionData } from 'viem'
-import { privateKeyToAccount } from 'viem/accounts'
-import { base } from 'viem/chains'
-
-// Initialize CDP client
-const cdp = new CdpClient({
-  apiKeyId: process.env.CDP_API_KEY_ID!,
-  apiKeySecret: process.env.CDP_API_KEY_SECRET!,
-})
 
 // USDC contract on Base
 const USDC_CONTRACT_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
