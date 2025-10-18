@@ -76,6 +76,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     console.log('🚀 User address:', userAddress)
     console.log('🚀 Amount:', amount)
     console.log('🚀 Recipient:', recipient)
+    console.log('🚀 Full request body:', JSON.stringify(body, null, 2))
 
     if (!userAddress) {
       return NextResponse.json({ error: 'User address required' }, { status: 400 })
