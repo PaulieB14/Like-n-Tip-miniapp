@@ -145,17 +145,25 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       
       console.log('Using resolved address for payment:', recipientAddress)
       
-      // Create x402 payment payload
+      // Double-check the address format before creating payment payload
+      if (!recipientAddress.startsWith('0x') || recipientAddress.length !== 42) {
+        setTipError(`Invalid address format: ${recipientAddress}`)
+        return
+      }
+      
+      // Create x402 payment payload with validated address
       const paymentPayload = {
         x402Version: 1,
         scheme: "exact",
         network: "base",
         payload: {
           amount: Math.floor(amount * 1e6).toString(), // Convert to USDC units (6 decimals)
-          recipient: recipientAddress,
+          recipient: recipientAddress, // Use the validated address
           asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" // USDC on Base
         }
       }
+      
+      console.log('Payment payload created with recipient:', paymentPayload.payload.recipient)
       
       // Encode payment payload as base64
       const paymentHeader = btoa(JSON.stringify(paymentPayload))

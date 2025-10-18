@@ -144,6 +144,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       payloadAmount = amount
       payloadRecipient = recipient
       console.log('x402: Payment details - Amount:', payloadAmount, 'Recipient:', payloadRecipient)
+      console.log('x402: Request body recipient:', recipient)
+      console.log('x402: Addresses match:', payloadRecipient === recipient)
+      console.log('x402: Payload recipient length:', payloadRecipient.length)
+      console.log('x402: Request recipient length:', recipient.length)
       
     } catch (error) {
       console.error('x402: Failed to parse payment header:', error)
