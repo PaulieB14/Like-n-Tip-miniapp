@@ -182,7 +182,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // Initialize CDP client for gasless transactions
     const cdp = new CdpClient({
       apiKeyId: process.env.CDP_API_KEY_NAME,
-      apiKeySecret: process.env.CDP_API_KEY_SECRET
+      apiKeySecret: process.env.CDP_PRIVATE_KEY
     })
     
     console.log('x402: CDP client initialized for gasless transactions')
@@ -211,12 +211,12 @@ export async function POST(request: NextRequest): Promise<Response> {
       if (platformAmount > 0) {
         const platformTransfer = await cdp.evm.sendTransaction({
           privateKey: x402Wallet.privateKey,
-          to: process.env.PLATFORM_WALLET_ADDRESS || '0x0000000000000000000000000000000000000000',
+          to: process.env.PLATFORM_FEE_RECIPIENT || '0x0000000000000000000000000000000000000000',
           value: parseUnits(platformAmount.toString(), 6).toString(),
           data: encodeFunctionData({
             abi: USDC_ABI,
             functionName: 'transfer',
-            args: [process.env.PLATFORM_WALLET_ADDRESS as `0x${string}`, parseUnits(platformAmount.toString(), 6)]
+            args: [process.env.PLATFORM_FEE_RECIPIENT as `0x${string}`, parseUnits(platformAmount.toString(), 6)]
           }),
           gasless: true
         })
