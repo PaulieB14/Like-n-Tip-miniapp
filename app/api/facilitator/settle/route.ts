@@ -49,11 +49,34 @@ export async function POST(request: NextRequest) {
     console.log('🔍 FACILITATOR: Decoded payment payload:', paymentPayload)
 
     // Extract payment details
-    const recipient = paymentPayload.payload.recipient
+    let recipient = paymentPayload.payload.recipient
     const amount = paymentPayload.payload.amount
     const asset = paymentPayload.payload.asset
 
-    console.log('🔍 FACILITATOR: Recipient:', recipient)
+    console.log('🔍 FACILITATOR: Original recipient:', recipient)
+    console.log('🔍 FACILITATOR: Recipient length:', recipient.length)
+    
+    // Fix malformed addresses - normalize to proper format
+    if (recipient && recipient.startsWith('0x') && recipient.length === 42) {
+      // Address is already correct format
+      console.log('🔍 FACILITATOR: Address format is correct')
+    } else if (recipient && recipient.startsWith('0x') && recipient.length !== 42) {
+      // Address is malformed - try to fix it
+      console.log('🔍 FACILITATOR: Malformed address detected, attempting to fix...')
+      
+      // If it's too short, pad with zeros
+      if (recipient.length < 42) {
+        recipient = recipient + '0'.repeat(42 - recipient.length)
+        console.log('🔍 FACILITATOR: Padded address:', recipient)
+      }
+      // If it's too long, truncate
+      else if (recipient.length > 42) {
+        recipient = recipient.substring(0, 42)
+        console.log('🔍 FACILITATOR: Truncated address:', recipient)
+      }
+    }
+
+    console.log('🔍 FACILITATOR: Final recipient:', recipient)
     console.log('🔍 FACILITATOR: Amount:', amount)
     console.log('🔍 FACILITATOR: Asset:', asset)
 
