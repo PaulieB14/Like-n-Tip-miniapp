@@ -87,65 +87,15 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
   }, [isConnected, userAddress, connectors])
 
   const loadAgentInfo = async () => {
-    // Prevent multiple simultaneous calls
-    if (isLoadingAgentInfo) {
-      console.log('Agent info already loading, skipping...')
-      return
-    }
+    // Skip agent wallet loading - using x402 + CDP gasless integration
+    console.log('x402: Skipping agent wallet loading - using x402 + CDP gasless integration')
     
-    try {
-      setIsLoadingAgentInfo(true)
-      setIsLoading(true)
-      
-      if (!userAddress) {
-        // Show placeholder when no wallet connected
-        setAgentInfo({
-          address: 'Connect wallet to see agent address',
-          balance: 0,
-          hasEnoughFunds: false
-        })
-        return
-      }
-      
-      console.log('Loading agent info for user:', userAddress)
-      
-      // Get user-specific agent wallet info from API with cache busting
-      const response = await fetch(`/api/user-agent-wallet?userAddress=${userAddress}&t=${Date.now()}`)
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Agent info response:', data)
-        setAgentInfo(data)
-      } else {
-        console.error('Failed to load agent info:', response.status, response.statusText)
-        const errorText = await response.text()
-        console.error('Error response body:', errorText)
-        
-        // Try to parse error message from response body
-        try {
-          const errorData = JSON.parse(errorText)
-          console.error('Parsed error message:', errorData.message || errorData.error)
-        } catch (parseError) {
-          console.error('Could not parse error response as JSON')
-        }
-        
-        // Fallback if API not available
-        setAgentInfo({
-          address: '0x1234...5678',
-          balance: 0,
-          hasEnoughFunds: false
-        })
-      }
-    } catch (error) {
-      console.error('Error loading agent info:', error)
-      setAgentInfo({
-        address: '0x1234...5678',
-        balance: 0,
-        hasEnoughFunds: false
-      })
-    } finally {
-      setIsLoading(false)
-      setIsLoadingAgentInfo(false)
-    }
+    setAgentInfo({
+      address: 'Not needed - using x402 + CDP gasless integration',
+      balance: 0,
+      hasEnoughFunds: true // Always true since no funding needed
+    })
+    setIsLoading(false)
   }
 
   const handleFundWallet = async (amount: number) => {
@@ -465,15 +415,15 @@ export default function AgentWalletFunding({ onFundingComplete }: AgentWalletFun
         </div>
       )}
 
-      {/* Success State */}
+      {/* Success State - x402 + CDP Integration */}
       {agentInfo.hasEnoughFunds && (
         <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
           <div className="flex items-center space-x-3">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <div>
-              <h3 className="font-semibold text-green-900">Ready for Micropayments!</h3>
+              <h3 className="font-semibold text-green-900">x402 + CDP Gasless Integration Active!</h3>
               <p className="text-sm text-green-700">
-                Agent wallet has sufficient funds for autonomous micropayments ($0.001-$0.005 per tip)
+                No agent wallet funding needed - using x402 payment protocol with CDP gasless disbursement
               </p>
             </div>
           </div>
