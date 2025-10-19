@@ -29,14 +29,14 @@ export function middleware(request: Request) {
           x402Version: 1,
           accepts: [{
             scheme: "exact",
-              network: "base-sepolia",
+            network: "base",
             maxAmountRequired: "5000", // $0.005 in USDC units (6 decimals)
             resource: url.pathname,
-            description: "Send tip to content creator (Base Sepolia Testnet)",
+            description: "Send tip to content creator",
             mimeType: "application/json",
             payTo: "0xf635FFE1d82bF0EC93587F4b24eDc296998d8436", // Default recipient address - updated
             maxTimeoutSeconds: 30,
-            asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e", // USDC on Base Sepolia
+            asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base Mainnet
             extra: {
               name: "USD Coin",
               version: "2"

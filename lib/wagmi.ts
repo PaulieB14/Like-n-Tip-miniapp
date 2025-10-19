@@ -1,10 +1,10 @@
 import { createConfig, http } from 'wagmi'
-import { base, baseSepolia } from 'wagmi/chains'
+import { base } from 'wagmi/chains'
 import { farcasterMiniApp as miniAppConnector } from '@farcaster/miniapp-wagmi-connector'
 import { injected } from 'wagmi/connectors'
 
 export const config = createConfig({
-  chains: [baseSepolia], // Using Base Sepolia for testing
+  chains: [base], // Using Base Mainnet for production
   connectors: [
     // Farcaster Mini App connector (primary for Farcaster)
     miniAppConnector(),
@@ -14,7 +14,7 @@ export const config = createConfig({
     }),
   ],
   transports: {
-    [baseSepolia.id]: http('https://sepolia.base.org'),
+    [base.id]: http('https://mainnet.base.org'),
   },
   ssr: false, // Disable SSR to prevent hydration issues
 })

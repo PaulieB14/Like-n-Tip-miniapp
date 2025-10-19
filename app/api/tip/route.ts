@@ -3,7 +3,7 @@ import { CdpClient } from '@coinbase/cdp-sdk'
 import { facilitator, createFacilitatorConfig } from '@coinbase/x402'
 import { ethers } from 'ethers'
 
-const USDC_CONTRACT_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e' // USDC on Base Sepolia
+const USDC_CONTRACT_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // USDC on Base Mainnet
 
 export async function POST(request: NextRequest) {
   try {
@@ -130,7 +130,7 @@ export async function POST(request: NextRequest) {
       // Build PaymentRequirements object for x402 protocol
       const paymentRequirements = {
         scheme: "exact" as const,
-        network: "base-sepolia" as const,
+        network: "base" as const,
         payTo: payloadRecipient,
         asset: USDC_CONTRACT_ADDRESS, // USDC on Base Sepolia: 0x036CbD53842c5426634e7929541eC2318f3dCF7e
         maxAmountRequired: tipAmount.toString(),
@@ -234,8 +234,8 @@ export async function POST(request: NextRequest) {
           message: `Tip sent via x402 + CDP gasless disbursement (100% to recipient, 0% platform fee)`,
           timestamp: new Date().toISOString(),
           agentWallet: signer.address,
-          network: 'base-sepolia',
-          blockExplorer: `https://sepolia.basescan.org/tx/${txHash}`
+          network: 'base',
+          blockExplorer: `https://basescan.org/tx/${txHash}`
         })
         
       } catch (facilitatorError) {

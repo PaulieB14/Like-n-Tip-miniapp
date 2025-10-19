@@ -169,11 +169,11 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         const paymentPayload = {
           x402Version: 1,
           scheme: "exact",
-          network: "base-sepolia",
+          network: "base",
           payload: {
             amount: Math.floor(amount * 1e6).toString(), // Convert to USDC units (6 decimals)
             recipient: validatedRecipientAddress, // Use the ethers-validated address
-            asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e" // USDC on Base Sepolia
+            asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913" // USDC on Base Mainnet
           }
         }
         
