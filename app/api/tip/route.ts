@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { CdpClient } from '@coinbase/cdp-sdk'
-import { facilitator, createFacilitatorConfig } from '@coinbase/x402'
+import * as x402 from '@coinbase/x402'
 import { ethers } from 'ethers'
 
 const USDC_CONTRACT_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' // USDC on Base Mainnet
@@ -154,9 +154,9 @@ export async function POST(request: NextRequest) {
       // Use CDP x402 facilitator for verification and settlement
       console.log('x402: Using CDP x402 facilitator for verification and settlement')
       
-      // Create facilitator config for CDP
-      const facilitatorConfig = createFacilitatorConfig({
-        url: facilitator.url, // CDP x402 facilitator URL
+      // Create facilitator config for CDP using x402 package
+      const facilitatorConfig = x402.createFacilitatorConfig({
+        url: x402.facilitator.url, // CDP x402 facilitator URL
         apiKey: process.env.CDP_API_KEY_ID,
         apiSecret: process.env.CDP_API_KEY_SECRET,
         walletSecret: process.env.CDP_WALLET_SECRET // Add wallet secret for x402 facilitator
@@ -168,8 +168,8 @@ export async function POST(request: NextRequest) {
       console.log('x402: Calling real CDP facilitator service')
       
       try {
-        // Create auth headers for CDP facilitator
-        const authHeaders = await facilitator.createAuthHeaders(facilitatorConfig)
+        // Create auth headers for CDP facilitator using x402 package
+        const authHeaders = await x402.facilitator.createAuthHeaders(facilitatorConfig)
         console.log('x402: Created auth headers for CDP facilitator')
         console.log('x402: Auth headers type:', typeof authHeaders)
         console.log('x402: Auth headers value:', authHeaders)
@@ -255,166 +255,17 @@ export async function POST(request: NextRequest) {
         console.error('❌ x402: CDP facilitator service failed:', facilitatorError)
         console.log('🔄 x402: Falling back to direct transaction approach')
         
-        // Fallback to EIP-3009 gasless transaction when CDP facilitator fails
-        try {
-          console.log('🚀 x402: Creating gasless EIP-3009 transaction for Base mainnet')
-          
-          // Create USDC contract instance with EIP-3009 support
-          const usdcContract = new ethers.Contract(
-            USDC_CONTRACT_ADDRESS,
-            [
-              'function transferWithAuthorization(address from, address to, uint256 value, uint256 validAfter, uint256 validBefore, bytes32 nonce, uint8 v, bytes32 r, bytes32 s) returns (bool)',
-              'function balanceOf(address account) view returns (uint256)',
-              'function decimals() view returns (uint8)',
-              'function nonces(address owner) view returns (uint256)',
-              'function DOMAIN_SEPARATOR() view returns (bytes32)'
-            ],
-            signer
-          )
-          
-          // Check USDC balance
-          const balance = await usdcContract.balanceOf(signer.address)
-          const decimals = await usdcContract.decimals()
-          const balanceFormatted = ethers.formatUnits(balance, decimals)
-          
-          console.log(`🚀 Gasless EIP-3009 transaction on Base mainnet`)
-          console.log(`Wallet address: ${signer.address}`)
-          console.log(`USDC Balance: ${balanceFormatted} USDC`)
-          console.log(`Recipient: ${payloadRecipient}`)
-          console.log(`Amount: ${tipAmount} USDC`)
-          
-          // Check if we have enough USDC
-          const requiredAmount = ethers.parseUnits(tipAmount.toString(), decimals)
-          if (balance < requiredAmount) {
-            throw new Error(`Insufficient USDC balance. Required: ${tipAmount} USDC, Available: ${balanceFormatted} USDC`)
-          }
-          
-          // Get current nonce for EIP-3009
-          const nonce = await usdcContract.nonces(signer.address)
-          console.log('🔐 EIP-3009 nonce:', nonce.toString())
-          
-          // Convert nonce to proper format for EIP-3009
-          const nonceBytes = '0x' + nonce.toString(16).padStart(64, '0')
-          console.log('🔐 EIP-3009 nonce bytes:', nonceBytes)
-          
-          // Get the domain separator from the contract
-          const domainSeparator = await usdcContract.DOMAIN_SEPARATOR()
-          console.log('🔐 Using contract domain separator:', domainSeparator)
-          
-          // Create EIP-3009 authorization parameters
-          const validAfter = Math.floor(Date.now() / 1000) - 60 // 1 minute ago
-          const validBefore = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
-          
-          console.log('🔐 EIP-3009 parameters:')
-          console.log('  - validAfter:', validAfter)
-          console.log('  - validBefore:', validBefore)
-          console.log('  - nonce:', nonce.toString())
-          console.log('  - nonceBytes:', nonceBytes)
-          console.log('  - amount:', requiredAmount.toString())
-          
-          // Create the struct hash for TransferWithAuthorization
-          const structHash = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
-            ['bytes32', 'address', 'address', 'uint256', 'uint256', 'uint256', 'bytes32'],
-            [
-              ethers.keccak256(ethers.toUtf8Bytes('TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)')),
-              signer.address,
-              payloadRecipient,
-              requiredAmount,
-              validAfter,
-              validBefore,
-              nonceBytes
-            ]
-          ))
-          
-          console.log('🔐 Struct hash:', structHash)
-          
-          // Create the final message hash
-          const messageHash = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
-            ['bytes1', 'bytes1', 'bytes32', 'bytes32'],
-            ['0x19', '0x01', domainSeparator, structHash]
-          ))
-          
-          console.log('🔐 Message hash:', messageHash)
-          
-          // Sign the authorization
-          const signature = await signer.signMessage(ethers.getBytes(messageHash))
-          const sig = ethers.Signature.from(signature)
-          
-          console.log('🔐 EIP-3009 signature created:')
-          console.log('  - v:', sig.v)
-          console.log('  - r:', sig.r)
-          console.log('  - s:', sig.s)
-          
-          console.log('🚀 Sending gasless EIP-3009 transfer...')
-          
-          // Execute gasless transfer using EIP-3009
-          const tx = await usdcContract.transferWithAuthorization(
-            signer.address,
-            payloadRecipient,
-            requiredAmount,
-            validAfter,
-            validBefore,
-            nonceBytes,
-            sig.v,
-            sig.r,
-            sig.s
-          )
-          
-          console.log('🚀 Gasless transaction sent, waiting for confirmation...')
-          console.log('🚀 Transaction hash:', tx.hash)
-          
-          // Wait for transaction confirmation
-          const receipt = await tx.wait()
-          console.log('✅ Gasless transaction confirmed!')
-          console.log('✅ Block number:', receipt.blockNumber)
-          console.log('✅ Gas used:', receipt.gasUsed.toString())
-          console.log('✅ Transaction hash:', receipt.hash)
-          
-          return NextResponse.json({
-            success: true,
-            txHash: receipt.hash,
-            amount: tipAmount,
-            recipient: payloadRecipient,
-            postUrl: postUrl,
-            network: 'base',
-            blockExplorer: `https://basescan.org/tx/${receipt.hash}`,
-            blockNumber: receipt.blockNumber,
-            gasUsed: receipt.gasUsed.toString(),
-            message: `Tip sent successfully via gasless EIP-3009 transaction on Base mainnet!`,
-            note: 'Gasless on-chain transaction completed successfully - no ETH required!'
-          })
-          
-        } catch (gaslessError) {
-          console.error('❌ x402: Gasless EIP-3009 transaction failed:', gaslessError)
-          console.error('❌ Error details:', {
-            message: gaslessError.message,
-            code: gaslessError.code,
-            reason: gaslessError.reason,
-            transaction: gaslessError.transaction
-          })
-          
-          // Final fallback: return success with note about funding
-          console.log('🔄 x402: Final fallback - returning success with funding note')
-          
-          return NextResponse.json({
-            success: true,
-            txHash: `gasless-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            amount: tipAmount,
-            recipient: payloadRecipient,
-            postUrl: postUrl,
-            network: 'base',
-            blockExplorer: `https://basescan.org/address/${signer.address}`,
-            message: `Tip processed via x402 protocol (gasless)`,
-            note: 'x402 protocol processed successfully. For real on-chain transactions, ensure CDP facilitator is properly configured or implement EIP-3009 gasless transfers.',
-            error: gaslessError.message,
-            funding: {
-              walletAddress: signer.address,
-              usdcBalance: '0.3 USDC',
-              ethNeeded: '0.001 ETH for gas fees',
-              note: 'x402 is designed to be gasless - no ETH should be required'
-            }
-          })
-        }
+        // x402 protocol should handle gasless transactions through CDP facilitator
+        // If CDP facilitator fails, return error instead of manual implementation
+        console.log('❌ x402: CDP facilitator failed - x402 protocol requires proper facilitator configuration')
+        
+        return NextResponse.json({
+          success: false,
+          error: 'x402 protocol requires CDP facilitator for gasless transactions',
+          message: 'The x402 protocol is designed to be gasless through the CDP facilitator. Please ensure proper CDP configuration.',
+          documentation: 'https://docs.cdp.coinbase.com/x402/quickstart-for-buyers',
+          setup: 'Configure CDP API keys and wallet secret for gasless x402 transactions'
+        }, { status: 500 })
       }
       
     } catch (cdpError) {
