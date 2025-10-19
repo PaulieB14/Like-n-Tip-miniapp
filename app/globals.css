@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  /* Design System - Following Base Guidelines */
+  
+  /* Spacing - 8px base unit */
+  .spacing-xs { @apply p-2; }    /* 8px */
+  .spacing-sm { @apply p-4; }    /* 16px */
+  .spacing-md { @apply p-6; }    /* 24px */
+  .spacing-lg { @apply p-8; }    /* 32px */
+  
+  /* Touch targets - minimum 44px */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Primary CTA buttons */
+  .btn-primary {
+    @apply bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-600 transition-colors touch-target;
+  }
+  
+  /* Secondary buttons */
+  .btn-secondary {
+    @apply bg-slate-100 text-slate-700 font-medium py-3 px-6 rounded-xl hover:bg-slate-200 transition-colors touch-target;
+  }
+  
+  /* Card components */
+  .card {
+    @apply bg-white rounded-2xl shadow-lg border border-slate-200;
+  }
+  
+  /* Navigation items */
+  .nav-item {
+    @apply flex flex-col items-center py-2 px-3 rounded-lg transition-colors touch-target;
+  }
+  
+  .nav-item.active {
+    @apply text-blue-500;
+  }
+  
+  .nav-item.inactive {
+    @apply text-slate-500;
+  }
+  
+  /* Typography - Following Inter recommendations */
+  .text-display {
+    @apply text-2xl font-bold text-slate-900;
+  }
+  
+  .text-heading {
+    @apply text-xl font-semibold text-slate-900;
+  }
+  
+  .text-body {
+    @apply text-base text-slate-700;
+  }
+  
+  .text-caption {
+    @apply text-sm text-slate-600;
+  }
+  
+  /* Color tokens for theming */
+  :root {
+    --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
+    --color-secondary: #64748b;
+    --color-background: #f8fafc;
+    --color-surface: #ffffff;
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-border: #e2e8f0;
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-background: #0f172a;
+      --color-surface: #1e293b;
+      --color-text-primary: #f1f5f9;
+      --color-text-secondary: #cbd5e1;
+      --color-border: #334155;
+    }
+  }
+  
+  /* Smooth transitions */
+  .transition-smooth {
+    @apply transition-all duration-200 ease-in-out;
+  }
+}
+
+@layer utilities {
+  /* Hide scrollbars */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Safe area for mobile */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Focus states for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  }
+}

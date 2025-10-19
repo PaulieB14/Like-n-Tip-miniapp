@@ -1,0 +1,34 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "baseBuilder": {
+    "allowedAddresses": [""]
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "LIke n Tip",
+    "homeUrl": "https://your-domain.vercel.app",
+    "iconUrl": "https://your-domain.vercel.app/icon.png",
+    "splashImageUrl": "https://your-domain.vercel.app/splash.png",
+    "splashBackgroundColor": "#000000",
+    "webhookUrl": "https://your-domain.vercel.app/api/webhook",
+    "subtitle": "Send tips with style!",
+    "description": "A fun and catchy way to tip your favorite Base app users with emojis and personalized messages. Perfect for group chats and showing appreciation!",
+    "screenshotUrls": [
+      "https://your-domain.vercel.app/screenshot-tip-form.png",
+      "https://your-domain.vercel.app/screenshot-history.png",
+      "https://your-domain.vercel.app/screenshot-success.png"
+    ],
+    "primaryCategory": "social",
+    "tags": ["tipping", "social", "fun", "base", "x402", "group-chat", "usdc"],
+    "heroImageUrl": "https://your-domain.vercel.app/hero.png",
+    "tagline": "Tip with style!",
+    "ogTitle": "LIke n Tip - Catchy Tipping for Base App",
+    "ogDescription": "Send tips to your favorite Base app users with catchy messages and emojis! Perfect for group chats and social interactions.",
+    "ogImageUrl": "https://your-domain.vercel.app/og-image.png",
+    "noindex": true
+  }
+}
