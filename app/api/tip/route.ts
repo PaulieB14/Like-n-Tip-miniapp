@@ -255,45 +255,67 @@ export async function POST(request: NextRequest) {
         console.error('❌ x402: CDP facilitator service failed:', facilitatorError)
         console.log('🔄 x402: Falling back to direct transaction approach')
         
-        // Fallback to simulation when CDP facilitator fails
+        // Fallback to real blockchain transaction when CDP facilitator fails
         try {
-          console.log('🚀 x402: Creating simulated gasless transaction for Base mainnet')
+          console.log('🚀 x402: Creating real blockchain transaction for Base mainnet')
           
-          // For demonstration purposes, create a simulated transaction hash
-          // In production, this would be a real gasless transaction via EIP-3009 or CDP facilitator
-          const simulatedTxHash = `0x${Math.random().toString(16).substr(2, 64)}`
-          const simulatedBlockNumber = Math.floor(Math.random() * 1000000) + 10000000
+          // Create USDC contract instance
+          const usdcContract = new ethers.Contract(
+            USDC_CONTRACT_ADDRESS,
+            [
+              'function transfer(address to, uint256 amount) returns (bool)',
+              'function balanceOf(address account) view returns (uint256)',
+              'function decimals() view returns (uint8)'
+            ],
+            signer
+          )
           
-          console.log(`🚀 Simulated gasless transaction on Base mainnet`)
+          // Check USDC balance
+          const balance = await usdcContract.balanceOf(signer.address)
+          const decimals = await usdcContract.decimals()
+          const balanceFormatted = ethers.formatUnits(balance, decimals)
+          
+          console.log(`🚀 Real blockchain transaction on Base mainnet`)
           console.log(`Wallet address: ${signer.address}`)
+          console.log(`USDC Balance: ${balanceFormatted} USDC`)
           console.log(`Recipient: ${payloadRecipient}`)
           console.log(`Amount: ${tipAmount} USDC`)
-          console.log(`Simulated tx hash: ${simulatedTxHash}`)
           
-          console.log('✅ x402: Simulated gasless transaction created:', {
-            success: true,
-            transactionHash: simulatedTxHash,
-            blockNumber: simulatedBlockNumber,
-            network: 'base',
-            blockExplorer: `https://basescan.org/tx/${simulatedTxHash}`,
-            note: 'This is a simulated transaction for demonstration. In production, use real CDP facilitator or EIP-3009.'
-          })
+          // Check if we have enough USDC
+          const requiredAmount = ethers.parseUnits(tipAmount.toString(), decimals)
+          if (balance < requiredAmount) {
+            throw new Error(`Insufficient USDC balance. Required: ${tipAmount} USDC, Available: ${balanceFormatted} USDC`)
+          }
+          
+          // Send real USDC transfer transaction
+          console.log('🚀 Sending real USDC transfer transaction...')
+          const tx = await usdcContract.transfer(payloadRecipient, requiredAmount)
+          console.log('🚀 Transaction sent, waiting for confirmation...')
+          
+          // Wait for transaction confirmation
+          const receipt = await tx.wait()
+          console.log('✅ Transaction confirmed!')
+          console.log('✅ Block number:', receipt.blockNumber)
+          console.log('✅ Gas used:', receipt.gasUsed.toString())
+          console.log('✅ Transaction hash:', receipt.hash)
           
           return NextResponse.json({
             success: true,
-            txHash: simulatedTxHash,
+            txHash: receipt.hash,
             amount: tipAmount,
             recipient: payloadRecipient,
             postUrl: postUrl,
             network: 'base',
-            blockExplorer: `https://basescan.org/tx/${simulatedTxHash}`,
-            message: 'Tip sent successfully via simulated gasless transaction on Base mainnet! (Demo mode)',
-            note: 'This is a simulated transaction. In production, configure proper CDP facilitator or EIP-3009 for real gasless transactions.'
+            blockExplorer: `https://basescan.org/tx/${receipt.hash}`,
+            blockNumber: receipt.blockNumber,
+            gasUsed: receipt.gasUsed.toString(),
+            message: `Tip sent successfully via real blockchain transaction on Base mainnet!`,
+            note: 'Real on-chain transaction completed successfully.'
           })
           
-        } catch (simulationError) {
-          console.error('❌ x402: Simulation failed:', simulationError)
-          throw new Error(`Both CDP facilitator and simulation failed: ${simulationError.message}`)
+        } catch (transactionError) {
+          console.error('❌ x402: Real transaction failed:', transactionError)
+          throw new Error(`Real blockchain transaction failed: ${transactionError.message}`)
         }
       }
       
