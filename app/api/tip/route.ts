@@ -266,7 +266,8 @@ export async function POST(request: NextRequest) {
               'function transferWithAuthorization(address from, address to, uint256 value, uint256 validAfter, uint256 validBefore, bytes32 nonce, uint8 v, bytes32 r, bytes32 s) returns (bool)',
               'function balanceOf(address account) view returns (uint256)',
               'function decimals() view returns (uint8)',
-              'function nonces(address owner) view returns (uint256)'
+              'function nonces(address owner) view returns (uint256)',
+              'function DOMAIN_SEPARATOR() view returns (bytes32)'
             ],
             signer
           )
@@ -292,22 +293,26 @@ export async function POST(request: NextRequest) {
           const nonce = await usdcContract.nonces(signer.address)
           console.log('🔐 EIP-3009 nonce:', nonce.toString())
           
+          // Convert nonce to proper format for EIP-3009
+          const nonceBytes = '0x' + nonce.toString(16).padStart(64, '0')
+          console.log('🔐 EIP-3009 nonce bytes:', nonceBytes)
+          
+          // Get the domain separator from the contract
+          const domainSeparator = await usdcContract.DOMAIN_SEPARATOR()
+          console.log('🔐 Using contract domain separator:', domainSeparator)
+          
           // Create EIP-3009 authorization parameters
           const validAfter = Math.floor(Date.now() / 1000) - 60 // 1 minute ago
           const validBefore = Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
           
-          // Create the authorization message hash
-          const domainSeparator = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
-            ['bytes32', 'bytes32', 'bytes32', 'uint256'],
-            [
-              ethers.keccak256(ethers.toUtf8Bytes('EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)')),
-              ethers.keccak256(ethers.toUtf8Bytes('USD Coin')),
-              ethers.keccak256(ethers.toUtf8Bytes('2')),
-              8453, // Base mainnet chain ID
-              USDC_CONTRACT_ADDRESS
-            ]
-          ))
+          console.log('🔐 EIP-3009 parameters:')
+          console.log('  - validAfter:', validAfter)
+          console.log('  - validBefore:', validBefore)
+          console.log('  - nonce:', nonce.toString())
+          console.log('  - nonceBytes:', nonceBytes)
+          console.log('  - amount:', requiredAmount.toString())
           
+          // Create the struct hash for TransferWithAuthorization
           const structHash = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
             ['bytes32', 'address', 'address', 'uint256', 'uint256', 'uint256', 'bytes32'],
             [
@@ -317,20 +322,29 @@ export async function POST(request: NextRequest) {
               requiredAmount,
               validAfter,
               validBefore,
-              nonce
+              nonceBytes
             ]
           ))
           
+          console.log('🔐 Struct hash:', structHash)
+          
+          // Create the final message hash
           const messageHash = ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
             ['bytes1', 'bytes1', 'bytes32', 'bytes32'],
             ['0x19', '0x01', domainSeparator, structHash]
           ))
           
+          console.log('🔐 Message hash:', messageHash)
+          
           // Sign the authorization
           const signature = await signer.signMessage(ethers.getBytes(messageHash))
           const sig = ethers.Signature.from(signature)
           
-          console.log('🔐 EIP-3009 signature created')
+          console.log('🔐 EIP-3009 signature created:')
+          console.log('  - v:', sig.v)
+          console.log('  - r:', sig.r)
+          console.log('  - s:', sig.s)
+          
           console.log('🚀 Sending gasless EIP-3009 transfer...')
           
           // Execute gasless transfer using EIP-3009
@@ -340,13 +354,14 @@ export async function POST(request: NextRequest) {
             requiredAmount,
             validAfter,
             validBefore,
-            nonce,
+            nonceBytes,
             sig.v,
             sig.r,
             sig.s
           )
           
           console.log('🚀 Gasless transaction sent, waiting for confirmation...')
+          console.log('🚀 Transaction hash:', tx.hash)
           
           // Wait for transaction confirmation
           const receipt = await tx.wait()
@@ -371,6 +386,12 @@ export async function POST(request: NextRequest) {
           
         } catch (gaslessError) {
           console.error('❌ x402: Gasless EIP-3009 transaction failed:', gaslessError)
+          console.error('❌ Error details:', {
+            message: gaslessError.message,
+            code: gaslessError.code,
+            reason: gaslessError.reason,
+            transaction: gaslessError.transaction
+          })
           
           // Final fallback: return success with note about funding
           console.log('🔄 x402: Final fallback - returning success with funding note')
@@ -385,6 +406,7 @@ export async function POST(request: NextRequest) {
             blockExplorer: `https://basescan.org/address/${signer.address}`,
             message: `Tip processed via x402 protocol (gasless)`,
             note: 'x402 protocol processed successfully. For real on-chain transactions, ensure CDP facilitator is properly configured or implement EIP-3009 gasless transfers.',
+            error: gaslessError.message,
             funding: {
               walletAddress: signer.address,
               usdcBalance: '0.3 USDC',
