@@ -98,20 +98,20 @@ export async function POST(request: NextRequest) {
     const signer = new ethers.Wallet(privateKey, provider)
     console.log('x402: Created ethers signer wallet:', signer.address)
 
-    // x402 protocol requires CDP Project ID for gasless transactions
-    console.log('x402: Checking for CDP Project ID for gasless transactions')
+    // x402 protocol requires CDP API keys for gasless transactions
+    console.log('x402: Checking for CDP API keys for gasless transactions')
     
-    if (!process.env.CDP_PROJECT_ID) {
-      console.log('❌ x402: CDP Project ID not configured - cannot perform gasless transactions')
-      console.log('x402: Please configure CDP_PROJECT_ID environment variable')
-      console.log('x402: Get Project ID from: https://portal.cdp.coinbase.com/')
+    if (!process.env.CDP_API_KEY_ID || !process.env.CDP_API_KEY_SECRET) {
+      console.log('❌ x402: CDP API keys not configured - cannot perform gasless transactions')
+      console.log('x402: Please configure CDP_API_KEY_ID and CDP_API_KEY_SECRET environment variables')
+      console.log('x402: Get API keys from: https://portal.cdp.coinbase.com/')
       
       return NextResponse.json({
         success: false,
-        error: 'CDP Project ID not configured',
-        message: 'Gasless x402 transactions require CDP Project ID. Please configure CDP_PROJECT_ID environment variable.',
+        error: 'CDP API keys not configured',
+        message: 'Gasless x402 transactions require CDP API keys. Please configure CDP_API_KEY_ID and CDP_API_KEY_SECRET environment variables.',
         documentation: 'https://docs.base.org/base-account/framework-integrations/cdp',
-        setup: 'Get Project ID from: https://portal.cdp.coinbase.com/'
+        setup: 'Get API keys from: https://portal.cdp.coinbase.com/'
       }, { status: 500 })
     }
 
@@ -119,11 +119,12 @@ export async function POST(request: NextRequest) {
     console.log('x402: Using CDP hosted facilitator service for gasless payments')
     
     try {
-      // Initialize CDP client with Project ID for gasless transactions
+      // Initialize CDP client with API keys for gasless transactions
       const cdp = new CdpClient({
-        projectId: process.env.CDP_PROJECT_ID,
+        apiKeyId: process.env.CDP_API_KEY_ID,
+        apiKeySecret: process.env.CDP_API_KEY_SECRET,
       })
-      console.log('x402: CDP client initialized with Project ID for gasless transactions')
+      console.log('x402: CDP client initialized with API keys for gasless transactions')
 
       // Use CDP Embedded Wallets for gasless USDC transfers
       console.log('x402: Using CDP Embedded Wallets for gasless USDC transfer')
