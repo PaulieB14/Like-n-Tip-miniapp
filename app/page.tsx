@@ -1,9 +1,12 @@
 import UltimateBaseIntegration from '@/components/UltimateBaseIntegration'
+import ErrorBoundary from '@/components/ErrorBoundary'
 
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <UltimateBaseIntegration />
+      <ErrorBoundary>
+        <UltimateBaseIntegration />
+      </ErrorBoundary>
     </main>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Heart, User, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react'
 import { useAccount } from 'wagmi'
 import { ethers } from 'ethers'
@@ -29,6 +29,82 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const [isSendingTip, setIsSendingTip] = useState(false)
   const [tipSuccess, setTipSuccess] = useState('')
   const [tipError, setTipError] = useState('')
+  const [usdcBalance, setUsdcBalance] = useState<string | null>(null)
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
+  const [x402WalletBalance, setX402WalletBalance] = useState<string | null>(null)
+  const [isLoadingX402Balance, setIsLoadingX402Balance] = useState(false)
+  const [x402WalletAddress, setX402WalletAddress] = useState<string | null>(null)
+
+  // Function to fetch USDC balance
+  const fetchUsdcBalance = async (walletAddress: string) => {
+    // Prevent duplicate calls
+    if (isLoadingBalance) {
+      console.log('Already loading USDC balance, skipping...')
+      return
+    }
+
+    try {
+      setIsLoadingBalance(true)
+      console.log('Fetching USDC balance for:', walletAddress)
+      
+      const response = await fetch(`/api/get-usdc-balance?address=${walletAddress}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setUsdcBalance(data.balance)
+        console.log('USDC balance:', data.balance)
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to fetch USDC balance:', response.status, errorText)
+        setUsdcBalance('0.0')
+      }
+    } catch (error) {
+      console.error('Error fetching USDC balance:', error)
+      setUsdcBalance('0.0')
+    } finally {
+      setIsLoadingBalance(false)
+    }
+  }
+
+  // Function to fetch x402 wallet info
+  const fetchX402WalletInfo = async () => {
+    if (isLoadingX402Balance) {
+      console.log('Already loading x402 wallet info, skipping...')
+      return
+    }
+
+    try {
+      setIsLoadingX402Balance(true)
+      console.log('Fetching x402 wallet info...')
+      
+      const response = await fetch('/api/x402-wallet-info', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Failed to fetch x402 wallet info:', response.status, errorText)
+        return
+      }
+
+      const data = await response.json()
+      console.log('x402 wallet info:', data)
+      setX402WalletAddress(data.address)
+      setX402WalletBalance(data.usdcBalance || '0.0')
+    } catch (error) {
+      console.error('Error fetching x402 wallet info:', error)
+    } finally {
+      setIsLoadingX402Balance(false)
+    }
+  }
 
   // Function to resolve Farcaster username to wallet address
   const resolveFarcasterAddress = async (username: string): Promise<string | null> => {
@@ -64,6 +140,19 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   }
 
   const quickAmounts = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05]
+
+  // x402 is gasless - no need to check user's USDC balance
+  // The x402 facilitator handles all payments gaslessly
+  useEffect(() => {
+    if (!isConnected) {
+      setUsdcBalance(null)
+    }
+  }, [isConnected])
+
+  // Fetch x402 wallet info on component mount
+  useEffect(() => {
+    fetchX402WalletInfo()
+  }, [])
 
   const loadPost = async () => {
     if (!postUrl.trim()) return
@@ -130,6 +219,9 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       return
     }
 
+    // x402 is gasless - no need to check user's USDC balance
+    // The x402 facilitator handles all payments
+
     setIsSendingTip(true)
     setTipError('')
     setTipSuccess('')
@@ -169,7 +261,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         const paymentPayload = {
           x402Version: 1,
           scheme: "exact",
-          network: "base",
+          network: "base-mainnet",
           payload: {
             amount: Math.floor(amount * 1e6).toString(), // Convert to USDC units (6 decimals)
             recipient: validatedRecipientAddress, // Use the ethers-validated address
@@ -235,8 +327,11 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         const result = await tipResponse.json()
         console.log('x402: Tip successful!', result)
         
-        setTipSuccess(`Tip of $${amount} sent to @${postAuthor}! Transaction: ${result.txHash}`)
+        setTipSuccess(`Gasless tip of $${amount} sent to @${postAuthor}! x402 Tx: ${result.txHash}`)
         setTipError('')
+        
+        // x402 is gasless - no need to refresh user's USDC balance
+        // The x402 facilitator handles all payments
         
       } catch (error: any) {
         console.error('x402: x402 protocol failed:', error)
@@ -258,16 +353,96 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
         <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Heart className="h-8 w-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Simple Tip App</h1>
-        <p className="text-slate-600">Paste any post URL and send real USDC tips to creators</p>
-        <p className="text-sm text-blue-600 mt-2">💡 Agent wallet handles payments - fund once, tip freely</p>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">x402 Gasless Tips</h1>
+        <p className="text-slate-600">Paste any post URL and send gasless USDC tips to creators</p>
+        <p className="text-sm text-green-600 mt-2">⚡ x402 protocol - completely gasless, no ETH required!</p>
       </div>
 
-      {/* Simple Wallet */}
-      <SimpleWallet />
+      {/* Wallet Connection */}
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
+        <h3 className="font-semibold text-slate-900 mb-4">1. Connect Wallet</h3>
+        <SimpleWallet />
+        
+        {/* x402 Gasless Info */}
+        {isConnected && address && (
+          <div className="mt-4 p-4 rounded-xl border bg-green-50 border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-900">
+                  ✅ x402 Gasless Protocol
+                </p>
+                <p className="text-lg font-bold text-green-900">
+                  No USDC Required!
+                </p>
+              </div>
+              <div className="text-2xl">⚡</div>
+            </div>
+            <p className="text-xs mt-2 text-green-700">
+              💡 Your wallet only signs the payment request - x402 facilitator covers all costs!
+            </p>
+          </div>
+        )}
 
-      {/* Agent Wallet Funding */}
-      <AgentWalletFunding />
+        {/* x402 Facilitator Wallet Info */}
+        <div className="mt-4 p-4 rounded-xl border bg-green-50 border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-900">
+                x402 Facilitator Wallet
+                {x402WalletBalance && parseFloat(x402WalletBalance) < 0.01 && (
+                  <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                    Needs Funding
+                  </span>
+                )}
+              </p>
+              <p className="text-lg font-bold text-green-900">
+                {isLoadingX402Balance ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  `${x402WalletBalance || '0.0'} USDC`
+                )}
+              </p>
+              {x402WalletAddress && (
+                <p className="text-xs text-green-700 font-mono">
+                  {x402WalletAddress.slice(0, 6)}...{x402WalletAddress.slice(-4)}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={fetchX402WalletInfo}
+              disabled={isLoadingX402Balance}
+              className={`px-3 py-1 text-xs rounded-lg transition-colors disabled:opacity-50 ${
+                x402WalletBalance && parseFloat(x402WalletBalance) < 0.01
+                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+              }`}
+            >
+              {isLoadingX402Balance ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+          <p className="text-xs mt-2 text-green-700">
+            {x402WalletBalance && parseFloat(x402WalletBalance) < 0.01 ? (
+              '⚠️ x402 wallet needs USDC to process tips! Send USDC to this address.'
+            ) : (
+              '✅ x402 facilitator ready to process gasless tips'
+            )}
+          </p>
+          {x402WalletAddress && (
+            <div className="mt-2">
+              <button
+                onClick={() => navigator.clipboard.writeText(x402WalletAddress)}
+                className="text-xs text-green-600 hover:text-green-800 underline"
+              >
+                📋 Copy x402 wallet address
+              </button>
+            </div>
+          )}
+        </div>
+        
+        <p className="text-sm text-slate-600 mt-3">
+          Connect your wallet to sign x402 payment requests. No ETH needed - x402 is completely gasless!
+        </p>
+      </div>
 
       {/* Post URL Input */}
       <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
@@ -320,8 +495,8 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       {postAuthor && !isConnected && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6">
           <div className="text-center">
-            <h3 className="font-semibold text-amber-900 mb-2">Connect Wallet to Send Tips</h3>
-            <p className="text-amber-700">Please connect your wallet using the button above to send tips to creators.</p>
+            <h3 className="font-semibold text-amber-900 mb-2">Connect Wallet to Send Gasless Tips</h3>
+            <p className="text-amber-700">Please connect your wallet to sign x402 payment requests. No ETH needed - completely gasless!</p>
           </div>
         </div>
       )}
@@ -329,7 +504,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       {/* Tip Interface */}
       {postAuthor && isConnected && (
         <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6">
-          <h3 className="font-semibold text-slate-900 mb-4">4. Send Tip</h3>
+          <h3 className="font-semibold text-slate-900 mb-4">4. Send Gasless Tip</h3>
 
           {/* Quick Tip Amounts */}
           <div className="mb-6">
@@ -371,15 +546,22 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       )}
 
       {/* How It Works */}
-      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-        <h3 className="font-semibold text-blue-900 mb-3">How x402 Tipping Works</h3>
-        <div className="space-y-2 text-sm text-blue-800">
-          <p>• <strong>Fund agent wallet</strong> with USDC (one-time setup)</p>
+      <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
+        <h3 className="font-semibold text-green-900 mb-3">How x402 Gasless Tipping Works</h3>
+        <div className="space-y-2 text-sm text-green-800">
+          <p>• <strong>Connect your wallet</strong> to sign x402 payment requests (NO USDC needed!)</p>
           <p>• <strong>Paste any social platform post URL</strong> (Farcaster, Base app, etc.)</p>
-          <p>• <strong>Choose micropayment amount</strong> ($0.001-$0.005) from quick buttons</p>
-          <p>• <strong>Click send</strong> to trigger x402 autonomous micropayment</p>
-          <p>• <strong>Agent wallet sends USDC</strong> instantly without user approval</p>
-          <p>• <strong>Automatic comment</strong> posted to the original post</p>
+          <p>• <strong>Choose micropayment amount</strong> ($0.001-$0.05) from quick buttons</p>
+          <p>• <strong>Click send</strong> to trigger x402 gasless payment</p>
+          <p>• <strong>x402 facilitator pays</strong> - you don't need USDC in your wallet!</p>
+          <p>• <strong>Layer-2 settlement</strong> processes payment instantly</p>
+          <p>• <strong>Creator receives USDC</strong> directly to their wallet</p>
+        </div>
+        <div className="mt-4 p-3 bg-green-100 rounded-lg">
+          <p className="text-xs text-green-700">
+            <strong>⚡ x402 Benefits:</strong> Completely gasless • No ETH required • Instant settlement • 
+            Layer-2 scaling • Near-zero fees (~$0.0001)
+          </p>
         </div>
       </div>
     </div>

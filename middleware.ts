@@ -27,27 +27,23 @@ export function middleware(request: Request) {
       return new Response(
         JSON.stringify({
           x402Version: 1,
-          accepts: [{
-            scheme: "exact",
-            network: "base",
-            maxAmountRequired: "5000", // $0.005 in USDC units (6 decimals)
-            resource: url.pathname,
-            description: "Send tip to content creator",
-            mimeType: "application/json",
-            payTo: "0xf635FFE1d82bF0EC93587F4b24eDc296998d8436", // Default recipient address - updated
-            maxTimeoutSeconds: 30,
-            asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base Mainnet
-            extra: {
-              name: "USD Coin",
-              version: "2"
-            }
-          }],
-          debug: "MIDDLEWARE: No X-PAYMENT header found"
+          maxAmountRequired: "0.10", // Max amount in USDC (e.g., $0.10)
+          resource: "/api/tip",
+          description: "Send tip to content creator",
+          payTo: "0xf635FFE1d82bF0EC93587F4b24eDc296998d8436", // Default recipient address
+          asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC on Base Mainnet
+          network: "base-mainnet",
+          assetType: "ERC20",
+          expiresAt: Math.floor(Date.now() / 1000) + 300, // 5 minutes
+          nonce: Math.random().toString(36).substr(2, 9),
+          paymentId: `tip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          debug: "x402: No X-PAYMENT header found - payment required"
         }),
         {
           status: 402,
           headers: {
             'Content-Type': 'application/json',
+            'WWW-Authenticate': 'X402',
             'X-PAYMENT-REQUIRED': 'true',
             'X-DEBUG': 'middleware-no-payment-header'
           }

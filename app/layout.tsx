@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import './console-suppress'
 import Providers from '@/components/WagmiProvider'
 
 const inter = Inter({ subsets: ['latin'] })
