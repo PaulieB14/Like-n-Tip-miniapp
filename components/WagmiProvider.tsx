@@ -2,6 +2,8 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiProvider } from 'wagmi'
+import { OnchainKitProvider } from '@coinbase/onchainkit'
+import { base } from 'wagmi/chains'
 import { config } from '@/lib/wagmi'
 import { useState, useEffect } from 'react'
 
@@ -21,7 +23,19 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        {children}
+        <OnchainKitProvider
+          chain={base}
+          config={{
+            appearance: {
+              name: 'Like n Tip',
+              logo: 'https://like-n-tip-miniapp.vercel.app/icon.png',
+            },
+          }}
+          // Enable MiniKit for Farcaster/Base app integration
+          miniKit={{ enabled: true }}
+        >
+          {children}
+        </OnchainKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   )
