@@ -1,30 +1,39 @@
 'use client'
 
 import { x402Client, wrapFetchWithPayment } from '@x402/fetch'
-import { registerExactEvmScheme, wagmiToClientSigner } from '@x402/evm'
-import type { WalletClient } from 'viem'
+import { registerExactEvmScheme } from '@x402/evm/exact/client'
+import type { ClientEvmSigner } from '@x402/evm'
+import type { WalletClient, Account } from 'viem'
 
-// Create and configure an x402 client for use with wagmi wallet
-export function createX402PaymentFetch(walletClient: WalletClient) {
-  // Create x402 client instance
-  const client = new x402Client()
+/**
+ * Converts a wagmi/viem WalletClient to a ClientEvmSigner for x402Client
+ */
+function wagmiToClientSigner(walletClient: WalletClient): ClientEvmSigner {
+  if (!walletClient.account) {
+    throw new Error('Wallet client must have an account')
+  }
 
-  // Convert wagmi wallet to x402 signer
-  const signer = wagmiToClientSigner(walletClient)
-
-  // Register the EVM exact payment scheme with the signer
-  registerExactEvmScheme(client, { signer })
-
-  // Return wrapped fetch that handles x402 payments automatically
-  return wrapFetchWithPayment(fetch, client)
+  return {
+    address: walletClient.account.address,
+    signTypedData: async (message) => {
+      const signature = await walletClient.signTypedData({
+        account: walletClient.account as Account,
+        domain: message.domain,
+        types: message.types,
+        primaryType: message.primaryType,
+        message: message.message,
+      })
+      return signature
+    },
+  }
 }
 
-// Helper to make x402-enabled API calls
-export async function x402Fetch(
-  walletClient: WalletClient,
-  url: string,
-  options?: RequestInit
-): Promise<Response> {
-  const fetchWithPayment = createX402PaymentFetch(walletClient)
-  return fetchWithPayment(url, options)
+/**
+ * Create an x402-enabled fetch function using a wagmi wallet client
+ */
+export function createX402PaymentFetch(walletClient: WalletClient) {
+  const client = new x402Client()
+  const signer = wagmiToClientSigner(walletClient)
+  registerExactEvmScheme(client, { signer })
+  return wrapFetchWithPayment(fetch, client)
 }

@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withX402, createFacilitatorClient, type PaymentRequirements } from '@x402/next'
-import { registerExactEvmScheme } from '@x402/evm'
+import { withX402 } from '@x402/next'
+import { x402ResourceServer, HTTPFacilitatorClient } from '@x402/core/server'
+import { registerExactEvmScheme } from '@x402/evm/exact/server'
 
-// Base Mainnet USDC
-const USDC_BASE_MAINNET = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+// Base Mainnet config
 const BASE_MAINNET_NETWORK = 'eip155:8453'
 
-// Coinbase CDP facilitator URL
-const FACILITATOR_URL = process.env.FACILITATOR_URL || 'https://x402.org/facilitator'
+// Environment variables
+const facilitatorUrl = process.env.FACILITATOR_URL || 'https://x402.org/facilitator'
+const evmAddress = process.env.TIP_RECIPIENT_ADDRESS as `0x${string}` || '0xf635FFE1d82bF0EC93587F4b24eDc296998d8436'
 
-// Create the facilitator client
-const facilitator = createFacilitatorClient(FACILITATOR_URL)
+// Create HTTP facilitator client
+const facilitatorClient = new HTTPFacilitatorClient({ url: facilitatorUrl })
 
-// Register EVM scheme for Base
-registerExactEvmScheme(facilitator)
+// Create x402 resource server
+const server = new x402ResourceServer(facilitatorClient)
+registerExactEvmScheme(server)
 
 // The actual tip handler - runs after payment is verified
 async function tipHandler(request: NextRequest): Promise<NextResponse> {
@@ -46,13 +48,11 @@ async function tipHandler(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    console.log('✅ x402: Payment verified, processing tip...')
-    console.log('💰 Tip amount:', amount, 'USDC')
-    console.log('👤 Recipient:', recipient)
-    console.log('👤 Username:', recipientUsername)
+    console.log('x402: Payment verified, processing tip...')
+    console.log('Tip amount:', amount, 'USDC')
+    console.log('Recipient:', recipient)
 
     // Payment has been verified and settled by withX402
-    // The tip is complete - return success
     return NextResponse.json({
       success: true,
       amount: amount,
@@ -67,7 +67,7 @@ async function tipHandler(request: NextRequest): Promise<NextResponse> {
     })
 
   } catch (error: any) {
-    console.error('❌ x402: Error processing tip:', error)
+    console.error('x402: Error processing tip:', error)
     return NextResponse.json(
       { error: error.message || 'Failed to process tip' },
       { status: 500 }
@@ -75,38 +75,31 @@ async function tipHandler(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-// Payment configuration for x402
-const paymentConfig: PaymentRequirements = {
-  accepts: [
-    {
-      scheme: 'exact',
-      network: BASE_MAINNET_NETWORK,
-      maxAmountRequired: '100000', // 0.10 USDC (6 decimals)
-      resource: '/api/tip',
-      description: 'Send tip to content creator',
-      mimeType: 'application/json',
-      payTo: process.env.TIP_RECIPIENT_ADDRESS as `0x${string}` || '0xf635FFE1d82bF0EC93587F4b24eDc296998d8436',
-      extra: {
-        asset: USDC_BASE_MAINNET,
-        assetType: 'ERC20'
-      }
-    }
-  ],
-  description: 'x402 micropayment for content creator tip',
-  mimeType: 'application/json'
-}
+// Export the wrapped handler
+export const POST = withX402(
+  tipHandler,
+  {
+    accepts: [
+      {
+        scheme: 'exact',
+        price: '$0.10',
+        network: BASE_MAINNET_NETWORK,
+        payTo: evmAddress,
+      },
+    ],
+    description: 'Send tip to content creator',
+    mimeType: 'application/json',
+  },
+  server
+)
 
-// Export the wrapped handler - withX402 handles 402 responses and payment verification
-export const POST = withX402(tipHandler, paymentConfig, facilitator)
-
-// Also support GET for checking payment requirements
+// GET for checking payment requirements
 export async function GET() {
   return NextResponse.json({
-    x402Version: 1,
+    x402Version: 2,
     description: 'Tip API - use POST with x402 payment to send tips',
     paymentRequired: true,
     network: BASE_MAINNET_NETWORK,
-    asset: USDC_BASE_MAINNET,
-    facilitator: FACILITATOR_URL
+    facilitator: facilitatorUrl
   })
 }
