@@ -24,6 +24,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
   const { data: walletClient } = useWalletClient()
   const [postUrl, setPostUrl] = useState('')
   const [postAuthor, setPostAuthor] = useState('')
+  const [originalAuthor, setOriginalAuthor] = useState('') // Keep original with suffix
   const [postContent, setPostContent] = useState('')
   const [postPlatform, setPostPlatform] = useState('')
   const [isLoadingPost, setIsLoadingPost] = useState(false)
@@ -33,11 +34,14 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
 
   const quickAmounts = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05]
 
-  // Resolve Farcaster username to wallet address
-  const resolveFarcasterAddress = async (username: string): Promise<string | null> => {
+  // Resolve username to wallet address (Farcaster or Basename)
+  const resolveAddress = async (username: string, original: string): Promise<string | null> => {
     try {
-      console.log('Resolving Farcaster username:', username)
-      const response = await fetch(`/api/resolve-farcaster-address?username=${username}`)
+      console.log('Resolving username:', username, 'original:', original)
+      const params = new URLSearchParams({ username })
+      if (original) params.append('originalName', original)
+
+      const response = await fetch(`/api/resolve-farcaster-address?${params}`)
 
       if (response.ok) {
         const data = await response.json()
@@ -47,7 +51,7 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       }
       return null
     } catch (error) {
-      console.error('Error resolving Farcaster address:', error)
+      console.error('Error resolving address:', error)
       return null
     }
   }
@@ -87,10 +91,12 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       }
 
       setPostPlatform(platform)
-      // Strip common suffixes (.eth, .base, etc.)
+      // Keep original username for Basename resolution
+      setOriginalAuthor(username)
+      // Strip common suffixes (.eth, .base, etc.) for display
       const cleanUsername = username.replace(/\.(eth|base|cb\.id)$/i, '')
       setPostAuthor(cleanUsername)
-      setPostContent(`Post from @${cleanUsername} on ${platform} (ID: ${postId})`)
+      setPostContent(`Post from @${username} on ${platform} (ID: ${postId})`)
     } catch (error: any) {
       setTipError(error.message || 'Invalid URL format')
     } finally {
@@ -119,11 +125,11 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
     setTipSuccess('')
 
     try {
-      // Resolve the recipient address
-      const recipientAddress = await resolveFarcasterAddress(postAuthor)
+      // Resolve the recipient address (tries Farcaster then Basename)
+      const recipientAddress = await resolveAddress(postAuthor, originalAuthor)
 
       if (!recipientAddress) {
-        setTipError(`Could not resolve wallet address for @${postAuthor}`)
+        setTipError(`Could not resolve wallet address for @${originalAuthor || postAuthor}. Not found on Farcaster or Base Name Service.`)
         return
       }
 
