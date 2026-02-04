@@ -1,225 +1,221 @@
-# Simple Tip App
+<p align="center">
+  <img src="public/icon.png" alt="Like n Tip" width="120" height="120" />
+</p>
 
-A professional mini app for Farcaster and Base that enables micropayments for social media posts. Fund an agent wallet once, then send autonomous tips to any post using the x402 payment protocol.
+<h1 align="center">Like n Tip</h1>
 
-## 🚀 Features
+<p align="center">
+  <strong>Micropayments for the Creator Economy</strong>
+</p>
 
-- **Universal Post Support**: Works with Farcaster and Base app post URLs
-- **Agent Wallet System**: Fund once, tip autonomously forever
-- **Micropayments**: Send tips as small as $0.001 USDC
-- **x402 Protocol**: Uses Coinbase's x402 for autonomous payments
-- **Cross-Platform**: Works on both Farcaster and Base app
-- **Real USDC**: Actual transactions on Base network
+<p align="center">
+  Send instant USDC tips to creators on Farcaster and Base — powered by the x402 protocol.
+</p>
 
-## 🎯 How It Works
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#how-it-works">How It Works</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#deployment">Deployment</a> •
+  <a href="#tech-stack">Tech Stack</a>
+</p>
 
-### 1. **Fund Your Agent Wallet**
-- Connect your Base wallet
-- Send USDC to your personal agent wallet
-- Agent wallet handles all future tips autonomously
+---
 
-### 2. **Paste Any Post URL**
-- Copy any Farcaster or Base app post URL
-- App loads the post and author information
-- Ready to send tips
+## Features
 
-### 3. **Send Micropayments**
-- Choose from preset amounts ($0.001 - $0.05)
-- Agent wallet automatically sends USDC to the author
-- No additional wallet confirmations needed
+- **Instant Micropayments** — Send tips as small as $0.001 USDC
+- **Cross-Platform** — Works on Farcaster (Warpcast) and Base app (Coinbase Wallet)
+- **x402 Protocol** — HTTP-native payments with automatic settlement
+- **No Gas Hassle** — Facilitator handles on-chain settlement
+- **Simple UX** — Paste a post URL, pick an amount, sign once
 
-## 🛠 Tech Stack
+## How It Works
 
-- **Frontend**: Next.js 15, React 18, TypeScript
-- **Styling**: Tailwind CSS
-- **Payments**: x402 protocol, USDC on Base
-- **Wallet**: Wagmi with Farcaster Mini App connector
-- **Blockchain**: Base network
-- **Protocol**: Coinbase x402 for autonomous payments
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   User      │────▶│   MiniApp   │────▶│  x402 API   │────▶│ Facilitator │
+│  (Wallet)   │     │  (Next.js)  │     │  (withX402) │     │  (Coinbase) │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+      │                    │                    │                    │
+      │  1. Connect        │                    │                    │
+      │─────────────────▶  │                    │                    │
+      │                    │  2. POST /api/tip  │                    │
+      │                    │───────────────────▶│                    │
+      │                    │     402 Payment    │                    │
+      │                    │◀───────────────────│                    │
+      │  3. Sign Payment   │                    │                    │
+      │◀───────────────────│                    │                    │
+      │─────────────────▶  │                    │                    │
+      │                    │  4. Retry w/ sig   │                    │
+      │                    │───────────────────▶│                    │
+      │                    │                    │  5. Verify & Settle│
+      │                    │                    │───────────────────▶│
+      │                    │     200 OK         │                    │
+      │                    │◀───────────────────│◀───────────────────│
+      │  6. Success!       │                    │                    │
+      │◀───────────────────│                    │                    │
+```
 
-## 🚀 Getting Started
+1. User connects wallet (Coinbase Wallet or Farcaster)
+2. User pastes a post URL and selects tip amount
+3. App requests payment via x402 protocol
+4. User signs the payment with their wallet
+5. Facilitator verifies signature and settles USDC on-chain
+6. Creator receives USDC instantly
+
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- Base wallet with USDC
-- Farcaster or Base app account
+- npm or pnpm
 
 ### Installation
 
-1. Clone the repository:
 ```bash
+# Clone the repository
 git clone https://github.com/PaulieB14/Like-n-Tip-miniapp.git
 cd Like-n-Tip-miniapp
-```
 
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
+
+# Copy environment variables
+cp .env.example .env
 ```
 
-3. Set up environment variables:
-```bash
-cp .env.local.example .env.local
-# Edit .env.local with your configuration
+### Configuration
+
+Edit `.env` with your values:
+
+```env
+# x402 facilitator (Coinbase hosted)
+FACILITATOR_URL=https://x402.org/facilitator
+
+# Your wallet address to receive tips
+TIP_RECIPIENT_ADDRESS=0xYourWalletAddress
+
+# App URL (for minikit manifest)
+NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
+
+# OnchainKit API key (get from portal.cdp.coinbase.com)
+NEXT_PUBLIC_ONCHAINKIT_API_KEY=your_api_key
 ```
 
-4. Run the development server:
+### Development
+
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000)
 
-## 🔧 Environment Variables
+## Deployment
+
+### Vercel (Recommended)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/PaulieB14/Like-n-Tip-miniapp)
+
+1. Click the button above
+2. Add environment variables in Vercel dashboard
+3. Deploy
+
+### Manual
 
 ```bash
-# WalletConnect Project ID
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your-project-id
-
-# App URLs
-NEXTAUTH_URL=https://your-domain.vercel.app
-NEXT_PUBLIC_ROOT_URL=https://your-domain.vercel.app
-
-# USDC Contract Address on Base
-USDC_CONTRACT_ADDRESS=0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913
+npm run build
+npm start
 ```
 
-## 📁 Project Structure
-
-```
-like-n-tip/
-├── app/
-│   ├── api/
-│   │   ├── tip/                    # x402 payment endpoint
-│   │   ├── agent-wallet/           # Agent wallet management
-│   │   └── user-agent-wallet/      # User-specific agent info
-│   ├── globals.css                 # Global styles
-│   ├── layout.tsx                  # Root layout
-│   └── page.tsx                    # Main app page
-├── components/
-│   ├── UltimateBaseIntegration.tsx # Main app wrapper
-│   ├── SimpleTipApp.tsx           # Core tipping interface
-│   ├── AgentWalletFunding.tsx     # Agent wallet funding
-│   └── WagmiProvider.tsx          # Wallet provider
-├── lib/
-│   ├── agentWallet.ts             # Agent wallet management
-│   ├── fundingService.ts          # Wallet funding service
-│   ├── simpleTipService.ts        # x402 tip service
-│   └── wagmi.ts                   # Wallet configuration
-├── minikit.config.ts              # Mini app configuration
-└── package.json                   # Dependencies
-```
-
-## 🏗 Mini App Setup
-
-### For Farcaster
-
-1. Update `minikit.config.ts` with your domain
-2. Deploy to Vercel or your hosting platform
-3. Test with Farcaster's mini app preview
-4. Share your app URL in Farcaster
-
-### For Base App
-
-1. Update `minikit.config.ts` with your domain
-2. Generate credentials via Base Build
-3. Deploy to Vercel
-4. Test with Base Build preview tool
-5. Post your app URL in Base app
-
-## 💡 Supported URLs
-
-The app works with these URL formats:
+## Publishing as a MiniApp
 
 ### Farcaster
-- `https://warpcast.com/username/post-id`
-- `https://farcaster.xyz/username/post-id`
 
-### Base App
-- `https://base.org/username/post-id`
-- `https://base.xyz/username/post-id`
+1. Generate account association in `minikit.config.ts`
+2. Sign the manifest with your wallet
+3. Submit to Farcaster miniapp directory
 
-### Generic Social Platforms
-- Any URL with username/post-id structure
+### Base App (Coinbase Wallet)
 
-## 🔧 x402 Protocol
+The app automatically works in Coinbase Wallet when using MiniKit. No additional configuration needed.
 
-This app implements the x402 payment protocol for autonomous micropayments:
+## Tech Stack
 
-1. **Initial Request**: App requests tip with payment details
-2. **402 Response**: Server responds with payment requirements
-3. **Payment Creation**: Agent wallet creates payment payload
-4. **Autonomous Payment**: Agent sends USDC without user interaction
+| Layer | Technology |
+|-------|------------|
+| Framework | [Next.js 15](https://nextjs.org/) |
+| Payments | [x402 Protocol](https://x402.org/) |
+| Wallet | [wagmi](https://wagmi.sh/) + [OnchainKit](https://onchainkit.xyz/) |
+| Network | [Base](https://base.org/) (Mainnet) |
+| Styling | [Tailwind CSS](https://tailwindcss.com/) |
 
-## 🚀 Deployment
+### x402 Packages
 
-### Deploy to Vercel
+- `@x402/next` — Server-side payment protection with `withX402()`
+- `@x402/fetch` — Client-side payment wrapper
+- `@x402/evm` — EVM chain support (Base, Ethereum)
 
-1. Push your code to GitHub
-2. Connect your repo to Vercel
-3. Set environment variables in Vercel dashboard
-4. Deploy!
+## Project Structure
 
-### Configure Mini App
+```
+├── app/
+│   ├── api/
+│   │   ├── tip/                      # x402-protected tip endpoint
+│   │   └── resolve-farcaster-address/
+│   ├── layout.tsx
+│   └── page.tsx
+├── components/
+│   ├── SimpleTipApp.tsx              # Main tipping interface
+│   ├── OnchainKitWallet.tsx          # Wallet connection UI
+│   ├── WagmiProvider.tsx             # Providers setup
+│   └── ...
+├── lib/
+│   ├── wagmi.ts                      # Wallet config
+│   └── x402Client.ts                 # x402 client setup
+└── minikit.config.ts                 # MiniApp manifest
+```
 
-1. Update `minikit.config.ts` with your domain
-2. Test with platform preview tools
-3. Share your app URL to publish
+## API Reference
 
-## 🎯 Use Cases
+### `POST /api/tip`
 
-### **For Users:**
-- Support creators with micropayments
-- Fund once, tip forever
-- Seamless tipping experience
+Send a tip to a creator. Protected by x402 — requires signed payment.
 
-### **For Creators:**
-- Receive tips from engaged users
-- Build sustainable creator economy
-- Focus on content creation
+**Request:**
+```json
+{
+  "amount": 0.01,
+  "recipient": "0x...",
+  "recipientUsername": "alice",
+  "postUrl": "https://warpcast.com/alice/0x123"
+}
+```
 
-### **For Platforms:**
-- Enable value flow between users
-- Build stronger creator economy
-- Increase engagement and retention
+**Response:**
+```json
+{
+  "success": true,
+  "amount": 0.01,
+  "recipient": "0x...",
+  "message": "Tip of $0.01 sent to @alice",
+  "protocol": "x402"
+}
+```
 
-## 🔧 Features
+## Resources
 
-- ✅ **Agent Wallet System**: Fund once, tip autonomously
-- ✅ **Micropayments**: Tips as small as $0.001
-- ✅ **x402 Protocol**: Autonomous payment system
-- ✅ **Cross-Platform**: Works on Farcaster and Base
-- ✅ **Real USDC**: Actual transactions on Base network
-- ✅ **Mobile Optimized**: Perfect for mobile experience
-- ✅ **Wallet Integration**: Seamless wallet connection
+- [x402 Protocol Documentation](https://docs.cdp.coinbase.com/x402/welcome)
+- [x402 GitHub](https://github.com/coinbase/x402)
+- [OnchainKit Docs](https://onchainkit.xyz/getting-started)
+- [Farcaster MiniApps](https://docs.farcaster.xyz/developers/mini-apps)
 
-## 🤝 Contributing
+## License
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 Resources
-
-- [Farcaster Mini Apps Documentation](https://miniapps.farcaster.xyz/)
-- [Base Mini Apps Guide](https://miniapps.farcaster.xyz/)
-- [x402 Protocol Documentation](https://docs.base.org/base-app/agents/x402-agents)
-- [Base Network Documentation](https://docs.base.org/)
-- [Wagmi Documentation](https://wagmi.sh/)
-
-## 💬 Support
-
-For support, join the Farcaster or Base Discord community or open an issue on GitHub.
+MIT
 
 ---
 
-Built with ❤️ for the creator economy
-
-**Simple tipping that makes every interaction valuable!** 🚀
+<p align="center">
+  Built with x402 on Base
+</p>
