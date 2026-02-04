@@ -87,8 +87,10 @@ export default function SimpleTipApp({ onTipSent }: SimpleTipAppProps) {
       }
 
       setPostPlatform(platform)
-      setPostAuthor(username.replace('.eth', ''))
-      setPostContent(`Post from @${username} on ${platform} (ID: ${postId})`)
+      // Strip common suffixes (.eth, .base, etc.)
+      const cleanUsername = username.replace(/\.(eth|base|cb\.id)$/i, '')
+      setPostAuthor(cleanUsername)
+      setPostContent(`Post from @${cleanUsername} on ${platform} (ID: ${postId})`)
     } catch (error: any) {
       setTipError(error.message || 'Invalid URL format')
     } finally {
